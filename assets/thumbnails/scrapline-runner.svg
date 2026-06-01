@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-labelledby="title desc">
+  <title id="title">Scrapline Runner thumbnail</title>
+  <desc id="desc">A rough dark road with a green rider, rust barricades, and gold sparks.</desc>
+  <rect width="640" height="360" fill="#15120e"/>
+  <path d="M0 0h640v360H0z" fill="url(#grid)" opacity=".55"/>
+  <path d="M194 52h252l112 308H82z" fill="#29302c"/>
+  <path d="M230 52h24L206 360h-36zM386 52h24l64 308h-36z" fill="#d8cbb6" opacity=".2"/>
+  <path d="M98 360 218 52M542 360 422 52" fill="none" stroke="#b5492e" stroke-width="10" opacity=".65"/>
+  <g transform="translate(320 240)">
+    <path d="M0-58 48 10 24 50h-48l-24-40z" fill="#76b78a" stroke="#080706" stroke-width="8" stroke-linejoin="round"/>
+    <rect x="-18" y="-34" width="36" height="24" fill="#f3b63b"/>
+    <rect x="-42" y="10" width="84" height="14" fill="#b5492e"/>
+    <rect x="-56" y="48" width="112" height="16" fill="#080706"/>
+  </g>
+  <g fill="#8f3c28" stroke="#080706" stroke-width="6">
+    <rect x="158" y="190" width="74" height="52" rx="5"/>
+    <rect x="420" y="132" width="60" height="68" rx="12"/>
+  </g>
+  <g fill="#f3b63b" stroke="#fff2b8" stroke-width="4">
+    <path d="M500 246 514 268 539 278 514 288 500 310 486 288 461 278 486 268z"/>
+    <path d="M145 110 155 126 174 134 155 142 145 158 135 142 116 134 135 126z"/>
+  </g>
+  <path d="M32 54h220" stroke="#f4efe2" stroke-width="8"/>
+  <path d="M32 78h146" stroke="#b5492e" stroke-width="8"/>
+  <text x="32" y="328" fill="#f4efe2" font-family="Arial, sans-serif" font-size="44" font-weight="900">SCRAPLINE</text>
+  <text x="356" y="328" fill="#b5492e" font-family="Arial, sans-serif" font-size="44" font-weight="900">RUNNER</text>
+  <defs>
+    <pattern id="grid" width="22" height="22" patternUnits="userSpaceOnUse">
+      <path d="M22 0H0v22" fill="none" stroke="#f4efe2" stroke-width="1" opacity=".08"/>
+    </pattern>
+  </defs>
+</svg>

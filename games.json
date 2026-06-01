@@ -1,0 +1,338 @@
+[
+  {
+    "id": "pocket-drift-signal-run",
+    "title": "Pocket Drift: Signal Run",
+    "description": "A one-thumb mobile canvas game. Drag through shifting signal gates, collect pulses, and keep the run alive as the lane tightens.",
+    "status": "Ready",
+    "playUrl": "/games/pocket-drift-signal-run/",
+    "codeUrl": "",
+    "image": "/assets/thumbnails/pocket-drift-signal-run.svg",
+    "tags": [
+      "Canvas",
+      "Mobile",
+      "Touch"
+    ],
+    "learned": "A mobile-only game works best when the whole rule set fits under one thumb: hold to steer, release to pause, restart instantly.",
+    "accent": "gold"
+  },
+  {
+    "id": "spine-laser-dino-duel",
+    "title": "Spine Laser Dino Duel",
+    "description": "Explore a massive Zelda-style dinosaur overworld with generated trees, rocks, climbable mountains, back lasers, and roaming NPC theropods.",
+    "status": "Ready",
+    "playUrl": "/games/spine-laser-dino-duel/",
+    "codeUrl": "",
+    "image": "/assets/thumbnails/spine-laser-dino-duel.svg",
+    "tags": [
+      "Canvas",
+      "Dinosaur",
+      "Overworld"
+    ],
+    "learned": "An action game feels bigger when the world scrolls far beyond the window, the camera follows one player, and generated assets make the world feel unified.",
+    "accent": "coral"
+  },
+  {
+    "id": "scrapline-runner",
+    "title": "Scrapline Runner",
+    "description": "Ride a rough service road, dodge scrapyard barricades, collect sparks, and keep the run alive as speed climbs.",
+    "status": "Ready",
+    "playUrl": "/games/scrapline-runner/",
+    "codeUrl": "",
+    "image": "/assets/thumbnails/scrapline-runner.svg",
+    "tags": [
+      "Canvas",
+      "Arcade",
+      "Runner"
+    ],
+    "learned": "Lane games feel tougher when the controls stay simple but the speed, spacing, and pickups keep pressure rising.",
+    "accent": "coral"
+  },
+  {
+    "id": "goose-flag-arena",
+    "title": "Goose Flag Arena",
+    "description": "Command autonomous geese, trigger clouds and loons, avoid skunks, and capture the other team's flag.",
+    "status": "Testing",
+    "playUrl": "/games/goose-flag-arena/",
+    "codeUrl": "",
+    "image": "/assets/thumbnails/goose-flag-arena.svg",
+    "tags": [
+      "Phaser",
+      "Strategy",
+      "Multiplayer"
+    ],
+    "learned": "Autonomous characters need readable rules, fair team balance, and a calm entry screen before the match begins.",
+    "accent": "sky"
+  },
+  {
+    "id": "bamboo-fort",
+    "title": "Bamboo Fort",
+    "description": "Collect bamboo, craft tools, build walls, and survive long enough to finish the fort.",
+    "status": "Testing",
+    "playUrl": "/games/bamboo-fort/",
+    "codeUrl": "",
+    "image": "/assets/thumbnails/bamboo-fort.svg",
+    "tags": [
+      "JavaScript",
+      "Survival",
+      "Crafting"
+    ],
+    "learned": "A game can feel better when the resource rules are simple and the controls are clear.",
+    "accent": "lime"
+  },
+  {
+    "id": "dino-growth-explorer",
+    "title": "Dino Growth Explorer",
+    "description": "Choose a dinosaur, grow from hatchling to titan, cross ancient biomes, solve shrine trials, and unlock new areas.",
+    "status": "Ready",
+    "playUrl": "/games/dino-growth-explorer/",
+    "codeUrl": "",
+    "image": "/assets/thumbnails/dino-growth-explorer.svg",
+    "tags": [
+      "HTML",
+      "Three.js",
+      "Dinosaur"
+    ],
+    "learned": "A 3D browser game can still be shipped as one HTML file when the engine loads from a CDN.",
+    "accent": "violet"
+  },
+  {
+    "id": "dino-growth-ancient-isles-reborn",
+    "title": "Dino Growth: Ancient Isles Reborn",
+    "description": "Grow a dinosaur across a handcrafted island chain, unlock regions, and survive the Ancient Isles.",
+    "status": "Ready",
+    "playUrl": "/games/dino-growth-ancient-isles-reborn/",
+    "codeUrl": "",
+    "image": "/assets/thumbnails/dino-growth-ancient-isles-reborn.svg",
+    "tags": [
+      "HTML",
+      "Dinosaur",
+      "Adventure"
+    ],
+    "learned": "Big world games need clear regions and goals so exploration does not feel random.",
+    "accent": "violet"
+  },
+  {
+    "id": "dino-forge-trial-grounds",
+    "title": "Dino Forge Trial Grounds",
+    "description": "Earlier Dino Forge trial build with custom dinosaur choices, scores, and live controls.",
+    "status": "Ready",
+    "playUrl": "/games/dino-forge-trial-grounds/",
+    "codeUrl": "",
+    "image": "/assets/thumbnails/dino-forge-trial-grounds.svg",
+    "tags": [
+      "HTML",
+      "Dinosaur",
+      "Simulator"
+    ],
+    "learned": "Stat choices are more fun when the game immediately shows how they change the trial result.",
+    "accent": "gold"
+  },
+  {
+    "id": "purrfect-pest-pounce",
+    "title": "Purrfect Pest Pounce",
+    "description": "Drop cardboard-box traps, catch racing bugs, and chase combo points before the timer runs out.",
+    "status": "Ready",
+    "playUrl": "/games/purrfect-pest-pounce/",
+    "codeUrl": "",
+    "image": "/assets/thumbnails/purrfect-pest-pounce.svg",
+    "tags": [
+      "Canvas",
+      "Arcade",
+      "Touch"
+    ],
+    "learned": "Pointer controls make the same canvas game work for mouse, trackpad, and fingers.",
+    "accent": "coral"
+  },
+  {
+    "id": "dino-farm-tag-feed",
+    "title": "Dino Farm Tag & Feed",
+    "description": "Tag wild dinosaurs, bring them into the pasture, feed the herd, and earn enough points to keep the farm growing.",
+    "status": "Ready",
+    "playUrl": "/games/dino-farm-tag-feed/",
+    "codeUrl": "",
+    "image": "/assets/thumbnails/dino-farm-tag-feed.svg",
+    "tags": [
+      "Canvas",
+      "Dinosaur",
+      "Farm"
+    ],
+    "learned": "Collection games are clearer when every creature has an obvious state and need.",
+    "accent": "lime"
+  },
+  {
+    "id": "reef-hunter",
+    "title": "Reef Hunter",
+    "description": "Dive under the waves, manage oxygen, collect shells, upgrade weapons, and chase bigger catches.",
+    "status": "Ready",
+    "playUrl": "/games/reef-hunter/",
+    "codeUrl": "",
+    "image": "/assets/thumbnails/reef-hunter.svg",
+    "tags": [
+      "Canvas",
+      "Ocean",
+      "Upgrades"
+    ],
+    "learned": "Upgrade loops feel better when the next tool changes how the player moves or aims.",
+    "accent": "sky"
+  },
+  {
+    "id": "abyss-spear-hunter",
+    "title": "Abyss Spear Hunter",
+    "description": "Charge spear shots, dash through hazards, collect relics, and wake the Abyss Leviathan in a deeper reef hunt.",
+    "status": "Ready",
+    "playUrl": "/games/abyss-spear-hunter/",
+    "codeUrl": "",
+    "image": "/assets/thumbnails/abyss-spear-hunter.svg",
+    "tags": [
+      "Canvas",
+      "Ocean",
+      "Boss Fight"
+    ],
+    "learned": "A familiar game loop feels bigger when movement, collectibles, combos, and a boss all reinforce the same goal.",
+    "accent": "sky"
+  },
+  {
+    "id": "hextris",
+    "title": "Hextris",
+    "description": "Spin the hexagon, match falling colors, and keep the stack from closing in.",
+    "status": "Bonus",
+    "playUrl": "/games/hextris/",
+    "codeUrl": "https://github.com/Hextris/hextris",
+    "image": "/assets/thumbnails/hextris.svg",
+    "tags": [
+      "Puzzle",
+      "HTML5",
+      "Open Source"
+    ],
+    "learned": "Fast puzzle games feel fair when the controls are simple and the feedback is instant.",
+    "accent": "violet"
+  },
+  {
+    "id": "coffee-snake",
+    "title": "Coffee Snake",
+    "description": "A clean browser snake game with quick turns, dots to collect, and classic arcade pressure.",
+    "status": "Bonus",
+    "playUrl": "/games/coffee-snake/",
+    "codeUrl": "https://github.com/dommmel/coffee-snake",
+    "image": "/assets/thumbnails/coffee-snake.svg",
+    "tags": [
+      "Arcade",
+      "Snake",
+      "Open Source"
+    ],
+    "learned": "A tiny rule set can still create tension when the score keeps climbing.",
+    "accent": "lime"
+  },
+  {
+    "id": "clumsy-bird",
+    "title": "Clumsy Bird",
+    "description": "Tap to flap through gaps in a bright side-scrolling arcade challenge.",
+    "status": "Bonus",
+    "playUrl": "/games/clumsy-bird/",
+    "codeUrl": "https://github.com/ellisonleao/clumsy-bird",
+    "image": "/assets/thumbnails/clumsy-bird.svg",
+    "tags": [
+      "Arcade",
+      "MelonJS",
+      "Open Source"
+    ],
+    "learned": "One-button games need crisp timing and readable obstacles.",
+    "accent": "sky"
+  },
+  {
+    "id": "ski-free",
+    "title": "Ski Free",
+    "description": "Race downhill, dodge trees, and chase distance in a playful browser remake.",
+    "status": "Bonus",
+    "playUrl": "/games/ski-free/",
+    "codeUrl": "https://github.com/basicallydan/skifree.js",
+    "image": "/assets/thumbnails/ski-free.svg",
+    "tags": [
+      "Arcade",
+      "JavaScript",
+      "Open Source"
+    ],
+    "learned": "Simple movement feels better when the screen gives you a clear sense of speed.",
+    "accent": "sky"
+  },
+  {
+    "id": "green-mahjong",
+    "title": "Green Mahjong",
+    "description": "A calm solitaire mahjong board for matching tiles and clearing the stack.",
+    "status": "Bonus",
+    "playUrl": "/games/green-mahjong/",
+    "codeUrl": "https://github.com/danbeck/green-mahjong",
+    "image": "/assets/thumbnails/green-mahjong.svg",
+    "tags": [
+      "Board",
+      "Puzzle",
+      "Open Source"
+    ],
+    "learned": "Quiet games still need strong visual hierarchy so choices are easy to scan.",
+    "accent": "lime"
+  },
+  {
+    "id": "coil",
+    "title": "Coil",
+    "description": "Draw loops around moving targets in a fast HTML5 canvas experiment.",
+    "status": "Bonus",
+    "playUrl": "/games/coil/",
+    "codeUrl": "https://github.com/leereilly/Coil",
+    "image": "/assets/thumbnails/coil.svg",
+    "tags": [
+      "Canvas",
+      "Arcade",
+      "Open Source"
+    ],
+    "learned": "Mouse movement can be the whole game when the goal is visual and immediate.",
+    "accent": "coral"
+  },
+  {
+    "id": "2048",
+    "title": "2048",
+    "description": "Slide number tiles, merge matches, and try to build the 2048 tile before the board fills up.",
+    "status": "Bonus",
+    "playUrl": "/games/2048/",
+    "codeUrl": "https://github.com/gabrielecirulli/2048",
+    "image": "/assets/thumbnails/2048.svg",
+    "tags": [
+      "Puzzle",
+      "Numbers",
+      "Open Source"
+    ],
+    "learned": "A tiny grid can become a deep game when every move changes the whole board.",
+    "accent": "gold"
+  },
+  {
+    "id": "alien-invasion",
+    "title": "Alien Invasion",
+    "description": "Defend the screen from waves of invaders in a compact HTML5 arcade shooter.",
+    "status": "Bonus",
+    "playUrl": "/games/alien-invasion/",
+    "codeUrl": "https://github.com/cykod/AlienInvasion",
+    "image": "/assets/thumbnails/alien-invasion.svg",
+    "tags": [
+      "Arcade",
+      "Shooter",
+      "Open Source"
+    ],
+    "learned": "Arcade shooters need clear enemy waves, readable shots, and quick restart loops.",
+    "accent": "lime"
+  },
+  {
+    "id": "asteroids",
+    "title": "Asteroids",
+    "description": "Pilot a tiny ship through drifting rocks, turn carefully, and survive as long as you can.",
+    "status": "Bonus",
+    "playUrl": "/games/asteroids/",
+    "codeUrl": "https://github.com/dmcinnes/HTML5-Asteroids",
+    "image": "/assets/thumbnails/asteroids.svg",
+    "tags": [
+      "Arcade",
+      "Canvas",
+      "Open Source"
+    ],
+    "learned": "Momentum-based controls make a simple screen feel big and skillful.",
+    "accent": "violet"
+  }
+]

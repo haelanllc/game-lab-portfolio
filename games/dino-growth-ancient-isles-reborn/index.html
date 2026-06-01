@@ -1,0 +1,3804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dino Growth Explorer: Ancient Isles Reborn</title>
+<style>
+  :root{
+    --bg:#061019;
+    --panel:rgba(8,16,25,0.88);
+    --panel-border:rgba(190,220,240,0.14);
+    --text:#eef6fb;
+    --muted:#b4cad8;
+    --accent:#d8f088;
+    --danger:#ff8a71;
+    --gold:#ffd47c;
+    --sea:#2db4ff;
+    --forest:#1d6a2d;
+    --shadow:rgba(0,0,0,0.36);
+  }
+  *{box-sizing:border-box}
+  html,body{
+    margin:0;
+    padding:0;
+    overflow:hidden;
+    background:
+      radial-gradient(circle at top, rgba(96,150,210,0.18), transparent 38%),
+      linear-gradient(180deg, #08121b, #04090e 74%);
+    color:var(--text);
+    font-family:"Avenir Next","Segoe UI",sans-serif;
+  }
+  canvas{
+    display:block;
+    width:100vw;
+    height:100vh;
+    background:#09131b;
+  }
+  .overlay{
+    position:fixed;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+    background:
+      radial-gradient(circle at 18% 12%, rgba(78,138,203,0.12), transparent 28%),
+      linear-gradient(180deg, rgba(3,8,12,0.42), rgba(3,8,12,0.84));
+    backdrop-filter:blur(10px);
+    z-index:10;
+    transition:opacity .24s ease, visibility .24s ease;
+  }
+  .overlay.hidden{
+    opacity:0;
+    visibility:hidden;
+    pointer-events:none;
+  }
+  .menu-shell{
+    width:min(1320px,100%);
+    max-height:92vh;
+    overflow:auto;
+    padding:28px;
+    border-radius:32px;
+    border:1px solid var(--panel-border);
+    background:
+      linear-gradient(180deg, rgba(18,31,44,0.96), rgba(8,16,24,0.94)),
+      radial-gradient(circle at top right, rgba(124,175,220,0.10), transparent 34%);
+    box-shadow:0 44px 120px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06);
+  }
+  .eyebrow{
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:.18em;
+    font-size:12px;
+    font-weight:800;
+    margin-bottom:12px;
+  }
+  h1{
+    margin:0 0 12px;
+    font-family:"Arial Black","Avenir Next Condensed","Impact",sans-serif;
+    font-size:clamp(34px, 5vw, 58px);
+    line-height:0.98;
+    letter-spacing:.01em;
+    text-shadow:0 8px 28px rgba(0,0,0,0.38);
+  }
+  .lead{
+    max-width:980px;
+    margin:0 0 18px;
+    color:#d9e9f4;
+    font-size:17px;
+    line-height:1.6;
+  }
+  .legend-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+    gap:12px;
+    margin-bottom:22px;
+  }
+  .legend-card{
+    padding:14px 16px;
+    border-radius:18px;
+    background:linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+    border:1px solid rgba(255,255,255,0.10);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.04);
+    color:#cfe0ea;
+    font-size:14px;
+    line-height:1.45;
+  }
+  .kbd{
+    display:inline-flex;
+    min-width:24px;
+    height:24px;
+    padding:2px 8px;
+    align-items:center;
+    justify-content:center;
+    border-radius:10px;
+    background:rgba(255,255,255,0.12);
+    border:1px solid rgba(255,255,255,0.12);
+    color:#fff;
+    font-size:12px;
+    font-weight:800;
+  }
+  .section-label{
+    margin-top:26px;
+    margin-bottom:10px;
+    color:#e7f3fb;
+    font-size:13px;
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    font-weight:800;
+  }
+  .class-section{
+    margin-top:22px;
+  }
+  .class-head{
+    display:flex;
+    align-items:end;
+    justify-content:space-between;
+    gap:18px;
+    margin-bottom:12px;
+  }
+  .class-head h2{
+    margin:0;
+    font-size:28px;
+  }
+  .class-head p{
+    margin:0;
+    color:#a7c0cf;
+    font-size:14px;
+  }
+  .species-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+    gap:14px;
+  }
+  .species-card{
+    appearance:none;
+    border:none;
+    text-align:left;
+    width:100%;
+    padding:16px;
+    border-radius:24px;
+    color:var(--text);
+    cursor:pointer;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.04)),
+      radial-gradient(circle at top right, rgba(139,207,255,0.08), transparent 38%);
+    border:1px solid rgba(255,255,255,0.12);
+    box-shadow:0 18px 36px rgba(0,0,0,0.16), inset 0 1px 0 rgba(255,255,255,0.05);
+    transition:transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+  }
+  .species-card:hover{
+    transform:translateY(-4px);
+    border-color:rgba(216,240,136,0.55);
+    box-shadow:0 24px 44px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.07);
+  }
+  .species-card .kind{
+    display:inline-flex;
+    padding:4px 10px;
+    border-radius:999px;
+    text-transform:uppercase;
+    font-size:11px;
+    letter-spacing:.08em;
+    font-weight:800;
+    color:#07121b;
+    background:var(--gold);
+    margin-bottom:10px;
+  }
+  .species-card h3{
+    margin:0 0 8px;
+    font-size:22px;
+  }
+  .species-card p{
+    margin:0;
+    color:#d2e4ef;
+    font-size:14px;
+    line-height:1.46;
+  }
+  .species-meta{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-top:12px;
+  }
+  .meta-pill{
+    display:inline-flex;
+    align-items:center;
+    padding:6px 10px;
+    border-radius:999px;
+    background:rgba(255,255,255,0.07);
+    border:1px solid rgba(255,255,255,0.10);
+    color:#edf7ff;
+    font-size:12px;
+    font-weight:800;
+  }
+  .meta-pill.friendly{
+    background:rgba(216,240,136,0.16);
+    border-color:rgba(216,240,136,0.26);
+    color:#effad1;
+  }
+  .species-stats{
+    display:grid;
+    grid-template-columns:repeat(3, minmax(0,1fr));
+    gap:8px;
+    margin-top:12px;
+  }
+  .stat-chip{
+    padding:10px 10px 9px;
+    border-radius:14px;
+    background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,255,255,0.08);
+  }
+  .stat-chip strong{
+    display:block;
+    color:#98b5c7;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    margin-bottom:4px;
+  }
+  .stat-chip span{
+    color:#fff;
+    font-size:20px;
+    font-weight:800;
+    font-variant-numeric:tabular-nums;
+  }
+  .footer-note{
+    margin-top:24px;
+    color:#adc6d6;
+    font-size:13px;
+    line-height:1.45;
+  }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<div class="overlay" id="menu">
+  <div class="menu-shell">
+    <div class="eyebrow">Adventure Growth Sandbox</div>
+    <h1>Dino Growth Explorer: Ancient Isles Reborn</h1>
+    <p class="lead">
+      Start as a tiny hatchling and grow into an ancient titan across a handcrafted island chain inspired by the feeling
+      of a top-down Zelda adventure. Choose a land, sea, or sky dinosaur, learn what it eats, clear shrines, unlock
+      sealed gates with relics, explore hidden sea caves, fight rival apex predators, and uncover pirate treasure in a
+      world built for discovery first.
+    </p>
+
+    <div class="legend-grid">
+      <div class="legend-card"><strong>Grow with intent:</strong> stage upgrades take longer now, so every new tier feels earned instead of automatic.</div>
+      <div class="legend-card"><strong>Solve real shrines:</strong> puzzles mix <span class="kbd">Step</span>, <span class="kbd">Space</span> pulse, timed relays, and combat trials.</div>
+      <div class="legend-card"><strong>Adventure rules:</strong> relics from shrines power the late gates, so exploration matters as much as XP.</div>
+      <div class="legend-card"><strong>Controls:</strong> <span class="kbd">WASD</span> move, <span class="kbd">Shift</span> sprint, <span class="kbd">F</span> attack, <span class="kbd">Space</span> pulse, <span class="kbd">Esc</span> pause.</div>
+    </div>
+
+    <div class="section-label">Choose Your Dinosaur</div>
+    <div id="speciesSections"></div>
+
+    <div class="footer-note">
+      Rebuilt from scratch with a stronger adventure structure, cleaner game systems, clearer biome art, bigger progression gates,
+      tougher shrine design, richer creature ecology, and a much more deliberate sense of place.
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
+  const menu = document.getElementById("menu");
+  const speciesSections = document.getElementById("speciesSections");
+
+  function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resizeCanvas();
+  window.addEventListener("resize", resizeCanvas);
+
+  const WORLD = { width: 10000, height: 5600 };
+
+  const AGE_STAGES = [
+    { xp: 0, label: "Hatchling", scale: 1.00, speedBonus: 1.00, attackBonus: 1.00, armorBonus: 0, visualPower: 0 },
+    { xp: 280, label: "Juvenile", scale: 1.22, speedBonus: 1.05, attackBonus: 1.18, armorBonus: 4, visualPower: 1 },
+    { xp: 760, label: "Adult", scale: 1.54, speedBonus: 1.12, attackBonus: 1.46, armorBonus: 9, visualPower: 2 },
+    { xp: 1600, label: "Ancient", scale: 1.90, speedBonus: 1.18, attackBonus: 1.82, armorBonus: 17, visualPower: 3 },
+    { xp: 3000, label: "Elder", scale: 2.16, speedBonus: 1.24, attackBonus: 2.14, armorBonus: 25, visualPower: 4 },
+    { xp: 5000, label: "Titan", scale: 2.44, speedBonus: 1.30, attackBonus: 2.55, armorBonus: 34, visualPower: 5 }
+  ];
+
+  const s = (name, classType, diet, description, color, accent, baseRadius, speed, maxHunger, boostStrength, attack, head, back, tail) => ({
+    name, classType, diet, description, color, accent, baseRadius, speed, maxHunger, boostStrength, attack, head, back, tail
+  });
+  const f = (name, color, radius, xp, hunger, terrains, moving = false, speed = 0, shape = "orb") => ({
+    name, color, radius, xp, hunger, terrains, moving, speed, shape
+  });
+  const e = (name, classType, color, accent, radius, speed, health, damage, xp, sight, terrains, bounds, head, back, tail) => ({
+    name, classType, color, accent, radius, speed, health, damage, xp, sight, terrains, bounds, head, back, tail
+  });
+  const n = (x, y, interaction, order) => ({ x, y, interaction, order });
+
+  const SPECIES = {
+    triceratops: s("Triceratops", "land", ["berry", "fern", "amberFruit", "starBloom"], "Reliable horned herbivore with a forgiving diet and sturdy growth.", "#8ecb5f", "#f4e6ba", 16, 208, 114, 1.40, 26, "horns", "frill", "heavy"),
+    velociraptor: s("Velociraptor", "land", ["egg", "boarling", "herdling", "carcass"], "Quick hunting specialist that snowballs once it starts winning fights.", "#ef8750", "#ffe2c7", 14, 246, 98, 1.58, 24, "jaw", "feathers", "blade"),
+    ankylosaurus: s("Ankylosaurus", "land", ["fern", "berry", "caveMushroom", "starBloom"], "Tanky bruiser that gets stronger the longer the fight lasts.", "#799d65", "#eee0ba", 17, 190, 120, 1.32, 30, "beak", "armor", "club"),
+    tyrannosaurus: s("Tyrannosaurus", "land", ["boarling", "herdling", "carcass", "egg"], "Late-game terror with huge attack and strong gate-breaking presence.", "#c35e46", "#ffe0bb", 17, 214, 110, 1.46, 34, "jaw", "scars", "heavy"),
+    stegosaurus: s("Stegosaurus", "land", ["fern", "berry", "amberFruit"], "Plated wall that shrugs off chaos and punishes overcommits.", "#72a25d", "#f4d39e", 18, 188, 124, 1.30, 31, "beak", "plates", "club"),
+    parasaurolophus: s("Parasaurolophus", "land", ["fern", "berry", "starBloom", "caveMushroom"], "Fast herbivore built for long-range exploration and clever routing.", "#9bcf6c", "#fff2c4", 15, 226, 114, 1.48, 25, "crest", "smooth", "heavy"),
+    pachyrhinosaurus: s("Pachyrhinosaurus", "land", ["berry", "fern", "amberFruit", "starBloom"], "Bulky grazer with excellent survival and confident midgame control.", "#87af68", "#f7e6bb", 17, 206, 120, 1.38, 29, "horns", "frill", "heavy"),
+    styracosaurus: s("Styracosaurus", "land", ["fern", "berry", "starBloom", "caveMushroom"], "Aggressive ceratopsian that rewards bold positioning.", "#7eb468", "#fff0c4", 16, 210, 117, 1.42, 28, "horns", "frill", "heavy"),
+    iguanodon: s("Iguanodon", "land", ["fern", "berry", "starBloom", "amberFruit"], "All-terrain browser with steady speed and stable recovery.", "#8db765", "#f0edbe", 16, 220, 116, 1.46, 26, "beak", "smooth", "heavy"),
+    therizinosaurus: s("Therizinosaurus", "land", ["fern", "berry", "egg", "dragonfly"], "Weird omnivore built for jungle routes and shrine-side scavenging.", "#6a9d69", "#ffe0b7", 17, 214, 118, 1.42, 33, "beak", "feathers", "feather"),
+    allosaurus: s("Allosaurus", "land", ["boarling", "herdling", "carcass", "egg"], "Classic hunter with balanced power, speed, and clean combat flow.", "#c96d4e", "#ffe0ba", 16, 236, 108, 1.54, 33, "jaw", "scars", "heavy"),
+    gallimimus: s("Gallimimus", "land", ["insect", "dragonfly", "berry", "egg"], "Blindingly fast scavenger that turns movement skill into progression.", "#d5b46d", "#fff1cb", 13, 268, 94, 1.70, 18, "snout", "smooth", "light"),
+
+    spinosaurus: s("Spinosaurus", "swimming", ["fish", "reefEel", "herdling", "carcass"], "Amphibious bruiser that owns river mouths and coastal fights.", "#47b3c3", "#d7f7ff", 16, 220, 112, 1.55, 29, "croc", "sail", "fin"),
+    plesiosaur: s("Plesiosaur", "swimming", ["fish", "shellfish", "squid", "ammonite"], "Long-necked survivor with strong cave and reef routing.", "#38b59e", "#d7fff8", 15, 208, 118, 1.60, 22, "longneck", "smooth", "fin"),
+    mosasaurus: s("Mosasaurus", "swimming", ["fish", "reefEel", "squid", "shellfish"], "Predator of the open blue with excellent finishing pressure.", "#2ea8bc", "#dbfaff", 18, 216, 118, 1.56, 32, "jaw", "ridge", "fin"),
+    ichthyosaur: s("Ichthyosaur", "swimming", ["fish", "reefEel", "squid", "ammonite"], "Quick darting swimmer that levels by staying in motion.", "#61c5e3", "#ecfcff", 14, 236, 102, 1.66, 21, "snout", "smooth", "fin"),
+    elasmosaurus: s("Elasmosaurus", "swimming", ["fish", "squid", "shellfish", "ammonite"], "Graceful ocean giant with huge reserves and smooth handling.", "#49a9c2", "#defdff", 17, 212, 124, 1.58, 26, "longneck", "smooth", "fin"),
+    liopleurodon: s("Liopleurodon", "swimming", ["fish", "reefEel", "squid", "ammonite"], "Massive hunter that owns deep water and trench dives.", "#2fa0b6", "#dcfbff", 18, 220, 122, 1.58, 34, "croc", "ridge", "fin"),
+    dunkleosteus: s("Dunkleosteus", "swimming", ["fish", "reefEel", "ammonite", "shellfish"], "Armored sea crusher with crushing survival and bite power.", "#3f8ca4", "#e7fbff", 18, 204, 128, 1.48, 35, "jaw", "armor", "fin"),
+    nothosaurus: s("Nothosaurus", "swimming", ["fish", "shellfish", "reefEel", "crab"], "Coastal ambusher that weaves between shallows and beaches.", "#4eb1ad", "#e1fffb", 15, 232, 110, 1.62, 25, "snout", "smooth", "fin"),
+    kronosaurus: s("Kronosaurus", "swimming", ["fish", "reefEel", "squid", "ammonite"], "Trench tyrant with vicious burst damage and control.", "#2f9ab2", "#defbff", 19, 224, 124, 1.58, 35, "croc", "ridge", "fin"),
+    archelon: s("Archelon", "swimming", ["shellfish", "crab", "ammonite", "starBloom"], "Ancient sea turtle with absurd endurance and safe progression.", "#5f9b87", "#efffe7", 18, 198, 136, 1.44, 24, "beak", "armor", "fin"),
+    ophthalmosaurus: s("Ophthalmosaurus", "swimming", ["fish", "squid", "ammonite", "reefEel"], "Fast deep diver built for weaving through danger.", "#63c0d7", "#eefcff", 15, 242, 104, 1.68, 22, "snout", "smooth", "fin"),
+    placodus: s("Placodus", "swimming", ["shellfish", "crab", "ammonite", "starBloom"], "Reef crusher that grows by cracking hard prey near shore.", "#5e8d84", "#f4efc8", 16, 202, 126, 1.46, 28, "beak", "armor", "fin"),
+
+    pteranodon: s("Pteranodon", "air", ["fish", "reefEel", "egg", "crab"], "Fast fisher that crosses the whole overworld with ease.", "#c19dff", "#f6ecff", 14, 236, 100, 1.54, 21, "crest", "wings", "light"),
+    microraptor: s("Microraptor", "air", ["insect", "dragonfly", "berry", "egg"], "Tiny thrill-seeker that rewards daring routes and quick pickups.", "#8590ff", "#edf0ff", 12, 254, 94, 1.60, 18, "feather", "wings", "blade"),
+    quetzalcoatlus: s("Quetzalcoatlus", "air", ["fish", "herdling", "egg", "boarling"], "Massive sky predator with commanding reach and map control.", "#a681ff", "#efe3ff", 16, 226, 106, 1.50, 28, "crest", "wings", "light"),
+    archaeopteryx: s("Archaeopteryx", "air", ["insect", "dragonfly", "berry", "crab", "starBloom"], "Flexible flyer that thrives on mixed diets and puzzle hunting.", "#7db8ff", "#eff7ff", 12, 248, 96, 1.62, 19, "feather", "wings", "feather"),
+    dimorphodon: s("Dimorphodon", "air", ["fish", "insect", "crab", "egg"], "Compact hunter with strong bite pressure and crisp movement.", "#6d89da", "#eff4ff", 13, 244, 100, 1.62, 23, "jaw", "wings", "blade"),
+    tapejara: s("Tapejara", "air", ["starBloom", "dragonfly", "egg", "berry"], "Bright-crested omnivore built for islands and shrine routes.", "#ef9e69", "#fff2dc", 13, 248, 100, 1.64, 20, "crest", "wings", "light"),
+    tropeognathus: s("Tropeognathus", "air", ["fish", "reefEel", "egg", "crab"], "Power flyer with fast travel energy and clean coast control.", "#9d8bd8", "#f5efff", 15, 238, 104, 1.58, 24, "crest", "wings", "light"),
+    rhamphorhynchus: s("Rhamphorhynchus", "air", ["fish", "insect", "dragonfly", "egg"], "Long-tailed dart flyer that chains tiny wins into steady growth.", "#7ea0e8", "#eef4ff", 12, 256, 95, 1.68, 19, "snout", "wings", "light"),
+    hatzegopteryx: s("Hatzegopteryx", "air", ["boarling", "herdling", "egg", "crab"], "Towering aerial hunter that hits like a falling ruin.", "#8f82d8", "#f6eeff", 17, 228, 108, 1.54, 31, "crest", "wings", "light"),
+    tupandactylus: s("Tupandactylus", "air", ["starBloom", "dragonfly", "berry", "egg"], "Fruit-loving glider built for island routes and precision puzzle work.", "#ec8a64", "#fff1df", 13, 248, 100, 1.64, 20, "crest", "wings", "light"),
+    nyctosaurus: s("Nyctosaurus", "air", ["fish", "reefEel", "dragonfly", "egg"], "Fragile but blisteringly fast sky racer for expert routes.", "#88a4f6", "#eef2ff", 12, 264, 92, 1.72, 18, "crest", "wings", "light"),
+    cearadactylus: s("Cearadactylus", "air", ["fish", "reefEel", "crab", "egg"], "Ocean-side hunter with a broad snout and forgiving glide feel.", "#9db0ec", "#f1f5ff", 14, 240, 102, 1.58, 22, "snout", "wings", "light")
+  };
+
+  const FOOD = {
+    berry: f("Berries", "#ff4f7a", 8, 10, 18, ["berry", "meadow", "forest", "jungle", "island"], false, 0, "berry"),
+    fern: f("Ferns", "#7bdc51", 9, 9, 17, ["meadow", "forest", "berry", "jungle", "island"], false, 0, "fern"),
+    insect: f("Insects", "#ffd45d", 6, 11, 14, ["meadow", "forest", "berry", "jungle"], true, 34, "insect"),
+    dragonfly: f("Dragonflies", "#7cefff", 6, 13, 15, ["forest", "berry", "marsh", "jungle"], true, 38, "dragonfly"),
+    egg: f("Eggs", "#fff2d6", 10, 14, 17, ["meadow", "cliffs", "beach", "storm", "highlands", "island"], false, 0, "egg"),
+    boarling: f("Boarlings", "#9d7050", 10, 22, 24, ["meadow", "forest", "jungle"], true, 28, "boarling"),
+    herdling: f("Herdlings", "#d8bd88", 11, 24, 26, ["meadow", "forest", "ember", "jungle", "island"], true, 27, "herdling"),
+    carcass: f("Carrion", "#9b6543", 12, 18, 23, ["meadow", "forest", "ember", "cliffs", "beach", "storm", "jungle", "highlands", "island"], false, 0, "carcass"),
+    fish: f("Fish", "#74dbff", 9, 15, 20, ["water", "abyss"], true, 36, "fish"),
+    shellfish: f("Shellfish", "#f7dca6", 9, 12, 16, ["beach", "water", "abyss"], false, 0, "shellfish"),
+    crab: f("Crabs", "#f28e63", 8, 14, 18, ["beach", "island", "marsh"], true, 22, "crab"),
+    reefEel: f("Reef Eels", "#7fd8c0", 8, 18, 21, ["beach", "water", "abyss"], true, 32, "reefEel"),
+    squid: f("Squid", "#d9b7ff", 10, 18, 22, ["water", "abyss"], true, 28, "squid"),
+    caveMushroom: f("Cave Mushrooms", "#9ce9ff", 8, 16, 19, ["cave"], false, 0, "caveMushroom"),
+    amberFruit: f("Amber Fruit", "#ff8c5c", 9, 13, 19, ["ember"], false, 0, "amberFruit"),
+    starBloom: f("Star Bloom", "#e2ff89", 9, 17, 20, ["beach", "island", "storm", "highlands"], false, 0, "starBloom"),
+    ammonite: f("Ammonites", "#f0d39a", 9, 19, 20, ["water", "abyss"], true, 18, "ammonite")
+  };
+
+  const FOOD_COUNTS = {
+    berry: 56,
+    fern: 58,
+    insect: 46,
+    dragonfly: 36,
+    egg: 30,
+    boarling: 28,
+    herdling: 24,
+    carcass: 18,
+    fish: 88,
+    shellfish: 26,
+    crab: 28,
+    reefEel: 30,
+    squid: 26,
+    caveMushroom: 16,
+    amberFruit: 24,
+    starBloom: 22,
+    ammonite: 22
+  };
+
+  const ENEMY_TYPES = {
+    ramclaw: e("Ramclaw", "land", "#c8a26e", "#fff1c4", 19, 176, 74, 11, 42, 220, ["meadow", "island"], { xMin: 500, xMax: 1400, yMin: 700, yMax: 1800 }, "dome", "smooth", "heavy"),
+    moonfang: e("Moonfang", "land", "#d7784b", "#ffd7b6", 18, 196, 66, 12, 50, 300, ["forest", "berry"], { xMin: 1500, xMax: 3100, yMin: 240, yMax: 1880 }, "jaw", "feathers", "blade"),
+    sunmaw: e("Sunmaw", "land", "#cb5a43", "#ffd2ac", 24, 206, 102, 17, 72, 340, ["ember"], { xMin: 3240, xMax: 4860, yMin: 260, yMax: 1880 }, "horns", "ridge", "heavy"),
+    galebeak: e("Galebeak", "air", "#9a8bdb", "#f2e9ff", 21, 220, 82, 14, 64, 340, ["cliffs", "storm", "highlands"], { xMin: 5000, xMax: 9400, yMin: 120, yMax: 1700 }, "crest", "wings", "light"),
+    tidefang: e("Tidefang", "swimming", "#33aac0", "#dbfbff", 27, 214, 118, 18, 82, 380, ["water"], { xMin: 5600, xMax: 9400, yMin: 1700, yMax: 4700 }, "jaw", "ridge", "fin"),
+    caveprowler: e("Cave Prowler", "land", "#8a9f63", "#f0edb9", 15, 186, 54, 10, 40, 230, ["cave"], { xMin: 5600, xMax: 9200, yMin: 2300, yMax: 4100 }, "snout", "spikes", "blade"),
+    marshstalker: e("Marshstalker", "land", "#708a5b", "#ffe3b5", 22, 192, 90, 15, 68, 300, ["jungle", "island"], { xMin: 7020, xMax: 8920, yMin: 1880, yMax: 3800 }, "beak", "plates", "heavy"),
+    titanbreaker: e("Titanbreaker", "land", "#bb6248", "#ffdcb6", 26, 218, 138, 22, 106, 360, ["highlands", "storm"], { xMin: 8720, xMax: 9860, yMin: 720, yMax: 2450 }, "horns", "scars", "heavy"),
+    abyssmaw: e("Abyss Maw", "swimming", "#2a89a2", "#d7fbff", 30, 222, 148, 24, 138, 420, ["abyss"], { xMin: 7240, xMax: 9800, yMin: 3820, yMax: 5480 }, "croc", "ridge", "fin"),
+    shrinewarden: e("Shrine Warden", "land", "#8d78c6", "#f0e6ff", 20, 198, 86, 14, 0, 360, ["meadow", "forest", "ember", "cliffs", "storm", "jungle", "highlands"], { xMin: 0, xMax: 0, yMin: 0, yMax: 0 }, "crest", "armor", "blade")
+  };
+
+  const ENEMY_COUNTS = {
+    ramclaw: 4,
+    moonfang: 6,
+    sunmaw: 4,
+    galebeak: 6,
+    tidefang: 6,
+    caveprowler: 5,
+    marshstalker: 5,
+    titanbreaker: 4,
+    abyssmaw: 5
+  };
+
+  const GATES = [
+    { x: 1450, name: "Moonfern Arch", openingY: 1880, openingHeight: 440, requiredStage: 1, requiredRelics: 0, color: "#4e4536" },
+    { x: 3150, name: "Sunscar Gate", openingY: 1420, openingHeight: 520, requiredStage: 2, requiredRelics: 0, color: "#694331" },
+    { x: 5050, name: "Galewatch Lift", openingY: 1960, openingHeight: 540, requiredStage: 3, requiredRelics: 1, color: "#365168" },
+    { x: 6950, name: "Tidebreaker Causeway", openingY: 2140, openingHeight: 620, requiredStage: 4, requiredRelics: 3, color: "#325b60" },
+    { x: 8650, name: "Sunroot Seal", openingY: 1880, openingHeight: 720, requiredStage: 5, requiredRelics: 6, color: "#5f5a3a" }
+  ];
+
+  const BERRY_GLADE = { x: 150, y: 340, w: 960, h: 1260 };
+  const MOONFERN_WOODS = { x: 1520, y: 250, w: 1600, h: 1700 };
+  const EMBER_BASIN = { x: 3240, y: 220, w: 1640, h: 1760 };
+  const SKYWATCH_CLIFFS = { x: 5100, y: 120, w: 1760, h: 1120 };
+  const STORM_CROWN = { x: 7080, y: 120, w: 1500, h: 1580 };
+  const SUNROOT_JUNGLE = { x: 7060, y: 1850, w: 1800, h: 1940 };
+  const SUNROOT_HIGHLANDS = { x: 8750, y: 760, w: 1120, h: 1620 };
+  const ABYSS_ZONE = { x: 7240, y: 3820, w: 2550, h: 1580 };
+
+  const STARTER_POND = { x: 980, y: 920, rx: 250, ry: 190 };
+  const MOON_LAKE = { x: 2530, y: 2520, rx: 360, ry: 240 };
+  const OASIS = { x: 4300, y: 1490, rx: 230, ry: 150 };
+  const STORM_POOL = { x: 7700, y: 1220, rx: 280, ry: 200 };
+  const ROOT_POOL = { x: 7900, y: 3160, rx: 340, ry: 250 };
+
+  const RIVERS = [
+    { x: 1300, y: 2260, w: 1220, h: 300 },
+    { x: 2500, y: 2320, w: 1120, h: 240 },
+    { x: 4100, y: 2080, w: 1000, h: 210 },
+    { x: 7100, y: 2200, w: 1450, h: 230 }
+  ];
+
+  const HOT_POOLS = [
+    { x: 3720, y: 1340, rx: 150, ry: 90 },
+    { x: 4270, y: 840, rx: 132, ry: 84 },
+    { x: 4590, y: 1650, rx: 108, ry: 74 }
+  ];
+
+  const ISLANDS = [
+    { name: "Palmcoil Cay", x: 6000, y: 2060, rx: 210, ry: 150, interior: "island" },
+    { name: "Turtleback Isle", x: 5650, y: 2840, rx: 280, ry: 200, interior: "marsh" },
+    { name: "Booty Key", x: 6480, y: 3320, rx: 330, ry: 240, interior: "forest" },
+    { name: "Skullfin Isle", x: 7600, y: 2580, rx: 260, ry: 190, interior: "cliffs" },
+    { name: "Sunroot Cay", x: 9020, y: 2540, rx: 380, ry: 260, interior: "forest" },
+    { name: "Highspire Isle", x: 9400, y: 1630, rx: 300, ry: 210, interior: "cliffs" }
+  ];
+
+  const SEA_CAVES = [
+    { name: "Whisper Sea Cave", x: 5700, y: 2910, rx: 95, ry: 66, chestX: 5700, chestY: 2915, xp: 140, hint: "Salt and old coin" },
+    { name: "Pirate Booty Grotto", x: 6480, y: 3340, rx: 110, ry: 84, chestX: 6480, chestY: 3345, xp: 180, hint: "Treasure in the dark" },
+    { name: "Skull Reef Cavern", x: 7650, y: 2620, rx: 88, ry: 64, chestX: 7655, chestY: 2624, xp: 170, hint: "A cavern opens in the reef" },
+    { name: "Thunder Maw Hollow", x: 8560, y: 3820, rx: 118, ry: 88, chestX: 8570, chestY: 3825, xp: 240, hint: "Thunder shakes the stone" },
+    { name: "Whalebone Vault", x: 9320, y: 4250, rx: 126, ry: 92, chestX: 9330, chestY: 4256, xp: 320, hint: "Bones guard a richer prize" }
+  ];
+
+  const SHRINE_DEFS = [
+    {
+      id: "moonfern-song",
+      type: "sequence",
+      name: "Moonfern Song",
+      clue: "Walk the fern sigils in the order the song rises.",
+      centerX: 2470,
+      centerY: 2880,
+      rewardX: 2470,
+      rewardY: 2880,
+      rewardXp: 220,
+      rewardRelics: 1,
+      timerLimit: 0,
+      nodes: [
+        n(2310, 2890, "step", 1),
+        n(2470, 2720, "step", 2),
+        n(2630, 2890, "step", 3),
+        n(2470, 3050, "step", 4)
+      ]
+    },
+    {
+      id: "raptor-trial",
+      type: "trial",
+      name: "Raptor Trial",
+      clue: "Enter the circle and survive the warden pack.",
+      centerX: 3420,
+      centerY: 1360,
+      rewardX: 3420,
+      rewardY: 1360,
+      rewardXp: 280,
+      rewardRelics: 1,
+      arenaRadius: 240,
+      wave: ["shrinewarden", "moonfang", "moonfang"]
+    },
+    {
+      id: "sunscar-crucible",
+      type: "sequence",
+      name: "Sunscar Crucible",
+      clue: "Strike the braziers from weakest flame to strongest before the heat resets.",
+      centerX: 4180,
+      centerY: 1230,
+      rewardX: 4180,
+      rewardY: 1230,
+      rewardXp: 340,
+      rewardRelics: 1,
+      timerLimit: 8.5,
+      nodes: [
+        n(4020, 1330, "attack", 1),
+        n(4180, 1160, "attack", 2),
+        n(4340, 1330, "attack", 3)
+      ]
+    },
+    {
+      id: "reef-choir",
+      type: "sequence",
+      name: "Reef Choir",
+      clue: "Pulse the shells twice, strike the center, then tread the anchor.",
+      centerX: 6120,
+      centerY: 2240,
+      rewardX: 6120,
+      rewardY: 2240,
+      rewardXp: 310,
+      rewardRelics: 1,
+      timerLimit: 0,
+      nodes: [
+        n(5960, 2310, "sense", 1),
+        n(6120, 2150, "sense", 2),
+        n(6280, 2310, "attack", 3),
+        n(6120, 2460, "step", 4)
+      ]
+    },
+    {
+      id: "gale-constellation",
+      type: "constellation",
+      name: "Gale Constellation",
+      clue: "Wake every windstone before the gale fades. Any order works.",
+      centerX: 7680,
+      centerY: 1280,
+      rewardX: 7680,
+      rewardY: 1280,
+      rewardXp: 360,
+      rewardRelics: 1,
+      timerLimit: 12.0,
+      nodes: [
+        n(7480, 1360, "sense", 1),
+        n(7660, 1120, "step", 2),
+        n(7880, 1360, "attack", 3),
+        n(7680, 1560, "step", 4)
+      ]
+    },
+    {
+      id: "tidebreaker-trial",
+      type: "trial",
+      name: "Tidebreaker Trial",
+      clue: "Break the causeway wardens and claim the relic of the surf.",
+      centerX: 7440,
+      centerY: 2710,
+      rewardX: 7440,
+      rewardY: 2710,
+      rewardXp: 420,
+      rewardRelics: 1,
+      arenaRadius: 250,
+      wave: ["tidefang", "tidefang", "shrinewarden"]
+    },
+    {
+      id: "fernbreaker-relay",
+      type: "constellation",
+      name: "Fernbreaker Relay",
+      clue: "Run the relay before the drums go silent.",
+      centerX: 8350,
+      centerY: 2960,
+      rewardX: 8350,
+      rewardY: 2960,
+      rewardXp: 450,
+      rewardRelics: 1,
+      timerLimit: 10.0,
+      nodes: [
+        n(8120, 3040, "step", 1),
+        n(8280, 2840, "step", 2),
+        n(8460, 2720, "step", 3),
+        n(8640, 2860, "step", 4),
+        n(8560, 3080, "step", 5)
+      ]
+    },
+    {
+      id: "sunroot-spiral",
+      type: "sequence",
+      name: "Sunroot Spiral",
+      clue: "Step, pulse, strike, pulse, step. The jungle listens in layers.",
+      centerX: 9000,
+      centerY: 2560,
+      rewardX: 9000,
+      rewardY: 2560,
+      rewardXp: 520,
+      rewardRelics: 1,
+      timerLimit: 0,
+      nodes: [
+        n(8820, 2640, "step", 1),
+        n(9000, 2430, "sense", 2),
+        n(9180, 2640, "attack", 3),
+        n(9000, 2880, "sense", 4),
+        n(8840, 3030, "step", 5)
+      ]
+    },
+    {
+      id: "skyfang-mirror",
+      type: "constellation",
+      name: "Skyfang Mirror",
+      clue: "Wake the mirror points with pulse and steel before the lens goes dark.",
+      centerX: 9180,
+      centerY: 1370,
+      rewardX: 9180,
+      rewardY: 1370,
+      rewardXp: 540,
+      rewardRelics: 1,
+      timerLimit: 11.0,
+      nodes: [
+        n(9000, 1450, "sense", 1),
+        n(9180, 1230, "attack", 2),
+        n(9360, 1450, "sense", 3),
+        n(9180, 1660, "attack", 4)
+      ]
+    },
+    {
+      id: "primordial-vault",
+      type: "trial",
+      name: "Primordial Vault",
+      clue: "Only a true apex can clear the final vault.",
+      centerX: 9340,
+      centerY: 4620,
+      rewardX: 9340,
+      rewardY: 4620,
+      rewardXp: 760,
+      rewardRelics: 2,
+      arenaRadius: 280,
+      wave: ["abyssmaw", "titanbreaker", "shrinewarden", "abyssmaw"]
+    }
+  ];
+
+  const CLASS_LABELS = {
+    land: { title: "Land Dinosaurs", note: "Stable starts, durable progression, strong gate pressure." },
+    swimming: { title: "Sea Giants", note: "Fastest growth in water, best cave and coast routes." },
+    air: { title: "Sky Hunters", note: "Fastest traversal, best scouting, highest skill ceiling." }
+  };
+
+  const input = {
+    up: false,
+    down: false,
+    left: false,
+    right: false,
+    boost: false,
+    pulsePress: false,
+    attackPress: false
+  };
+
+  let game = null;
+  const VIEW_3D = {
+    pitch: 0.84,
+    horizonOffset: 0.10
+  };
+
+  function randomRange(min, max) {
+    return min + Math.random() * (max - min);
+  }
+
+  function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+  }
+
+  function lerp(a, b, t) {
+    return a + (b - a) * t;
+  }
+
+  function getScreenDepthScale(screenY) {
+    return clamp(0.78 + ((screenY + canvas.height * 0.12) / Math.max(canvas.height, 1)) * 0.34, 0.72, 1.22);
+  }
+
+  function beginWorldProjection() {
+    ctx.save();
+    ctx.translate(0, canvas.height * VIEW_3D.horizonOffset);
+    ctx.scale(1, VIEW_3D.pitch);
+  }
+
+  function drawSkyBackdrop() {
+    const sky = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    sky.addColorStop(0, "#06131d");
+    sky.addColorStop(0.34, "#12324a");
+    sky.addColorStop(0.68, "#214966");
+    sky.addColorStop(1, "#355b74");
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const sunGlow = ctx.createRadialGradient(canvas.width * 0.74, canvas.height * 0.16, 20, canvas.width * 0.74, canvas.height * 0.16, canvas.width * 0.42);
+    sunGlow.addColorStop(0, "rgba(255,224,174,0.28)");
+    sunGlow.addColorStop(0.35, "rgba(148,206,255,0.14)");
+    sunGlow.addColorStop(1, "rgba(148,206,255,0)");
+    ctx.fillStyle = sunGlow;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    function drawRidge(baseY, amplitude, step, color, phase) {
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(0, baseY);
+      for (let x = 0; x <= canvas.width + step; x += step) {
+        const y = baseY + Math.sin(x * 0.004 + phase) * amplitude + Math.cos(x * 0.010 + phase * 0.6) * amplitude * 0.35;
+        ctx.lineTo(x, y);
+      }
+      ctx.lineTo(canvas.width, canvas.height);
+      ctx.lineTo(0, canvas.height);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    drawRidge(canvas.height * 0.46, 56, 90, "rgba(13,24,37,0.44)", 0.2);
+    drawRidge(canvas.height * 0.56, 74, 84, "rgba(10,20,30,0.62)", 1.4);
+    drawRidge(canvas.height * 0.68, 42, 72, "rgba(9,18,26,0.84)", 2.1);
+  }
+
+  function drawRaisedRegion(rect, topColor, sideColor, edgeColor, depth) {
+    const minX = rect.x - game.camera.x + game.cameraShakeX;
+    const minY = rect.y - game.camera.y + game.cameraShakeY;
+    const maxX = minX + rect.w;
+    const maxY = minY + rect.h + depth;
+    if (maxX < -120 || minX > canvas.width + 120 || maxY < -120 || minY > canvas.height + 120) return;
+
+    ctx.fillStyle = sideColor;
+    ctx.fillRect(minX, minY + rect.h - 2, rect.w, depth);
+    ctx.fillStyle = withAlpha(sideColor, 0.42);
+    ctx.fillRect(maxX - Math.min(18, rect.w * 0.08), minY + 4, Math.min(18, rect.w * 0.08), rect.h + depth);
+
+    ctx.fillStyle = topColor;
+    ctx.fillRect(minX, minY, rect.w, rect.h);
+    ctx.fillStyle = "rgba(255,255,255,0.05)";
+    ctx.fillRect(minX, minY, rect.w, Math.max(10, rect.h * 0.12));
+    ctx.fillStyle = withAlpha(edgeColor, 0.42);
+    ctx.fillRect(minX, minY + rect.h - Math.min(10, rect.h * 0.1), rect.w, Math.min(10, rect.h * 0.1));
+  }
+
+  function drawExtrudedEllipse(cx, cy, rx, ry, depth, topColor, highlightColor, sideColor) {
+    const p = worldToScreen(cx, cy);
+    const scaledDepth = depth * p.scale;
+    if (p.x < -rx - 120 || p.x > canvas.width + rx + 120 || p.y < -ry - 120 || p.y > canvas.height + ry + 120) return;
+
+    ctx.fillStyle = sideColor;
+    ctx.beginPath();
+    ctx.ellipse(p.x, p.y + scaledDepth, rx, ry, 0, 0, Math.PI);
+    ctx.ellipse(p.x, p.y, rx, ry, 0, Math.PI, 0, true);
+    ctx.closePath();
+    ctx.fill();
+
+    const top = ctx.createRadialGradient(p.x - rx * 0.24, p.y - ry * 0.28, Math.max(12, rx * 0.18), p.x, p.y, rx * 1.18);
+    top.addColorStop(0, highlightColor);
+    top.addColorStop(1, topColor);
+    ctx.fillStyle = top;
+    ctx.beginPath();
+    ctx.ellipse(p.x, p.y, rx, ry, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = withAlpha("#081018", 0.22);
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.ellipse(p.x, p.y, rx, ry, 0, Math.PI * 1.05, Math.PI * 1.94);
+    ctx.stroke();
+  }
+
+  function drawPickupShadow(radius, lift = 0, alpha = 0.20) {
+    const spread = 1 + lift * 0.02;
+    ctx.fillStyle = withAlpha("#000000", clamp(alpha - lift * 0.005, 0.06, alpha));
+    ctx.beginPath();
+    ctx.ellipse(0, radius * 0.95 + lift * 0.16, radius * 1.05 * spread, radius * 0.36 * spread, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function getCreatureLift(classType, x, y) {
+    if (classType === "air") return 18 + Math.sin(game.time * 4 + x * 0.008 + y * 0.006) * 7;
+    if (classType === "swimming") return 4 + Math.sin(game.time * 3 + x * 0.004 + y * 0.003) * 2.5;
+    return 0;
+  }
+
+  function dist(x1, y1, x2, y2) {
+    return Math.hypot(x2 - x1, y2 - y1);
+  }
+
+  function circleInEllipse(x, y, cx, cy, rx, ry) {
+    const dx = (x - cx) / rx;
+    const dy = (y - cy) / ry;
+    return dx * dx + dy * dy <= 1;
+  }
+
+  function ellipseStrength(x, y, cx, cy, rx, ry) {
+    const dx = (x - cx) / rx;
+    const dy = (y - cy) / ry;
+    return dx * dx + dy * dy;
+  }
+
+  function rectContains(x, y, rect) {
+    return x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h;
+  }
+
+  function rectContainsBounds(x, y, bounds) {
+    return x >= bounds.xMin && x <= bounds.xMax && y >= bounds.yMin && y <= bounds.yMax;
+  }
+
+  function withAlpha(color, alpha) {
+    if (color.startsWith("rgba")) {
+      const parts = color.replace("rgba(", "").replace(")", "").split(",");
+      return `rgba(${parts[0]},${parts[1]},${parts[2]},${alpha})`;
+    }
+    if (color.startsWith("rgb")) {
+      const parts = color.replace("rgb(", "").replace(")", "").split(",");
+      return `rgba(${parts[0]},${parts[1]},${parts[2]},${alpha})`;
+    }
+    if (color.startsWith("#")) {
+      let hex = color.slice(1);
+      if (hex.length === 3) hex = hex.split("").map(char => char + char).join("");
+      const intVal = parseInt(hex, 16);
+      const r = (intVal >> 16) & 255;
+      const g = (intVal >> 8) & 255;
+      const b = intVal & 255;
+      return `rgba(${r},${g},${b},${alpha})`;
+    }
+    return color;
+  }
+
+  function capitalize(text) {
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  }
+
+  function getSpeciesRating(species) {
+    return {
+      speed: species.speed,
+      power: species.attack,
+      survival: species.maxHunger,
+      beginner: species.classType !== "air" && species.speed <= 230 && species.maxHunger >= 110
+    };
+  }
+
+  function populateSpeciesMenu() {
+    speciesSections.innerHTML = "";
+    ["land", "swimming", "air"].forEach(classType => {
+      const section = document.createElement("section");
+      section.className = "class-section";
+      const head = document.createElement("div");
+      head.className = "class-head";
+      head.innerHTML = `
+        <div>
+          <h2>${CLASS_LABELS[classType].title}</h2>
+          <p>${CLASS_LABELS[classType].note}</p>
+        </div>
+      `;
+      section.appendChild(head);
+
+      const grid = document.createElement("div");
+      grid.className = "species-grid";
+      Object.entries(SPECIES)
+        .filter(([, species]) => species.classType === classType)
+        .forEach(([key, species]) => {
+          const rating = getSpeciesRating(species);
+          const card = document.createElement("button");
+          card.className = "species-card";
+          card.innerHTML = `
+            <div class="kind">${species.classType}</div>
+            <h3>${species.name}</h3>
+            <p>${species.description}</p>
+            <p style="margin-top:8px;color:#fff;"><strong>Eats:</strong> ${species.diet.map(type => FOOD[type].name).join(", ")}</p>
+            <div class="species-meta">
+              <span class="meta-pill ${rating.beginner ? "friendly" : ""}">${rating.beginner ? "Beginner Friendly" : "High Skill Ceiling"}</span>
+              <span class="meta-pill">Boost ${Math.round(species.boostStrength * 100)}%</span>
+            </div>
+            <div class="species-stats">
+              <div class="stat-chip"><strong>Speed</strong><span>${rating.speed}</span></div>
+              <div class="stat-chip"><strong>Power</strong><span>${rating.power}</span></div>
+              <div class="stat-chip"><strong>Survival</strong><span>${rating.survival}</span></div>
+            </div>
+          `;
+          card.addEventListener("click", () => startGame(key));
+          grid.appendChild(card);
+        });
+      section.appendChild(grid);
+      speciesSections.appendChild(section);
+    });
+  }
+  populateSpeciesMenu();
+
+  function getSpawnPoint(species) {
+    if (species.classType === "swimming") return { x: 980, y: 920 };
+    if (species.classType === "air") return { x: 760, y: 560 };
+    return { x: 430, y: 1120 };
+  }
+
+  function cloneShrines() {
+    return SHRINE_DEFS.map(shrine => ({
+      ...shrine,
+      active: false,
+      solved: false,
+      rewardCollected: false,
+      progress: 0,
+      senseGlow: 0,
+      timerRemaining: 0,
+      remainingEnemies: shrine.wave ? shrine.wave.length : 0,
+      nodes: shrine.nodes ? shrine.nodes.map(node => ({
+        ...node,
+        active: false,
+        touching: false
+      })) : []
+    }));
+  }
+
+  function startGame(speciesKey) {
+    const species = SPECIES[speciesKey];
+    const spawn = getSpawnPoint(species);
+
+    game = {
+      state: "play",
+      time: 0,
+      speciesKey,
+      species,
+      camera: { x: 0, y: 0, shake: 0 },
+      cameraShakeX: 0,
+      cameraShakeY: 0,
+      particles: [],
+      texts: [],
+      ripples: [],
+      flashes: [],
+      foods: [],
+      enemies: [],
+      respawns: [],
+      enemyRespawns: [],
+      treasures: SEA_CAVES.map(cave => ({
+        name: cave.name,
+        x: cave.chestX,
+        y: cave.chestY,
+        xp: cave.xp,
+        collected: false
+      })),
+      shrines: cloneShrines(),
+      discoveredRegions: new Set(["Nest Valley"]),
+      discoveredSecrets: new Set(),
+      lastRegion: "Nest Valley",
+      regionPopupTimer: 2.4,
+      pulseCooldown: 0,
+      pulseTimer: 0,
+      boostMeter: 100,
+      gateHintTimer: 0,
+      player: {
+        x: spawn.x,
+        y: spawn.y,
+        vx: 0,
+        vy: 0,
+        radius: species.baseRadius,
+        xp: 0,
+        stage: 0,
+        stageLabel: AGE_STAGES[0].label,
+        hunger: species.maxHunger,
+        maxHunger: species.maxHunger,
+        health: 100,
+        attackCooldown: 0,
+        attackSwing: 0,
+        wrongFoodTimer: 0,
+        hitTimer: 0,
+        morphTimer: 0.8,
+        foodEaten: 0,
+        kills: 0,
+        relics: 0,
+        booty: 0,
+        lowHealthWarn: false,
+        lowHungerWarn: false
+      }
+    };
+
+    seedFoods();
+    seedStarterFoods();
+    seedEnemies();
+    menu.classList.add("hidden");
+  }
+
+  function showMenu() {
+    menu.classList.remove("hidden");
+  }
+
+  function endGame() {
+    if (!game) return;
+    game.state = "gameover";
+    game.camera.shake = 20;
+  }
+
+  function seedFoods() {
+    game.foods.length = 0;
+    Object.entries(FOOD_COUNTS).forEach(([type, count]) => {
+      for (let i = 0; i < count; i++) {
+        const food = createFood(type);
+        if (food) game.foods.push(food);
+      }
+    });
+  }
+
+  function seedStarterFoods() {
+    spawnFoodNear("berry", 160, 780, 480, 1500, 12);
+    spawnFoodNear("fern", 140, 1120, 420, 1650, 10);
+    spawnFoodNear("insect", 200, 960, 520, 1540, 8);
+    spawnFoodNear("dragonfly", 240, 980, 500, 1540, 6);
+    spawnFoodNear("egg", 260, 1320, 420, 1700, 8);
+    spawnFoodNear("boarling", 360, 1240, 780, 1760, 5);
+    spawnFoodNear("herdling", 440, 1300, 760, 1760, 5);
+    spawnFoodNear("fish", 760, 1180, 640, 1120, 12);
+    spawnFoodNear("shellfish", 760, 1180, 640, 1120, 5);
+    spawnFoodNear("reefEel", 760, 1180, 640, 1120, 3);
+  }
+
+  function seedEnemies() {
+    game.enemies.length = 0;
+    Object.entries(ENEMY_COUNTS).forEach(([type, count]) => {
+      for (let i = 0; i < count; i++) {
+        const enemy = createEnemy(type);
+        if (enemy) game.enemies.push(enemy);
+      }
+    });
+  }
+
+  function scheduleFoodRespawn(type) {
+    game.respawns.push({ type, timer: randomRange(4.0, 9.5) });
+  }
+
+  function scheduleEnemyRespawn(type) {
+    game.enemyRespawns.push({ type, timer: randomRange(8.0, 16.0) });
+  }
+
+  function createFood(type) {
+    const def = FOOD[type];
+    for (let attempt = 0; attempt < 140; attempt++) {
+      const x = randomRange(90, WORLD.width - 90);
+      const y = randomRange(90, WORLD.height - 90);
+      const terrain = getTerrainAt(x, y);
+      if (!def.terrains.includes(terrain)) continue;
+      return {
+        type,
+        x,
+        y,
+        radius: def.radius + Math.random() * 2,
+        vx: def.moving ? randomRange(-def.speed, def.speed) : 0,
+        vy: def.moving ? randomRange(-def.speed, def.speed) : 0,
+        wobble: Math.random() * Math.PI * 2,
+        senseGlow: 0
+      };
+    }
+    return null;
+  }
+
+  function spawnFoodNear(type, xMin, xMax, yMin, yMax, count) {
+    const def = FOOD[type];
+    let spawned = 0;
+    let attempts = 0;
+    while (spawned < count && attempts < count * 120) {
+      attempts++;
+      const x = randomRange(xMin, xMax);
+      const y = randomRange(yMin, yMax);
+      if (!def.terrains.includes(getTerrainAt(x, y))) continue;
+      game.foods.push({
+        type,
+        x,
+        y,
+        radius: def.radius + Math.random() * 2,
+        vx: def.moving ? randomRange(-def.speed, def.speed) : 0,
+        vy: def.moving ? randomRange(-def.speed, def.speed) : 0,
+        wobble: Math.random() * Math.PI * 2,
+        senseGlow: 0
+      });
+      spawned++;
+    }
+  }
+
+  function createEnemy(type, overrides = {}) {
+    const def = ENEMY_TYPES[type];
+    const bounds = overrides.bounds || def.bounds;
+    for (let attempt = 0; attempt < 120; attempt++) {
+      const x = overrides.x ?? randomRange(bounds.xMin, bounds.xMax);
+      const y = overrides.y ?? randomRange(bounds.yMin, bounds.yMax);
+      const terrain = getTerrainAt(x, y);
+      if (!def.terrains.includes(terrain)) {
+        if (overrides.x != null && overrides.y != null) continue;
+        continue;
+      }
+      return {
+        type,
+        x,
+        y,
+        vx: 0,
+        vy: 0,
+        radius: def.radius,
+        health: def.health,
+        maxHealth: def.health,
+        attackCooldown: randomRange(0.2, 1.1),
+        hitTimer: 0,
+        wanderAngle: Math.random() * Math.PI * 2,
+        changeTimer: randomRange(1.0, 2.4),
+        senseGlow: 0,
+        bounds: { ...bounds },
+        shrineId: overrides.shrineId || null,
+        arenaRadius: overrides.arenaRadius || 0,
+        homeX: x,
+        homeY: y
+      };
+    }
+    return null;
+  }
+
+  function findIslandAt(x, y) {
+    for (const island of ISLANDS) {
+      const strength = ellipseStrength(x, y, island.x, island.y, island.rx, island.ry);
+      if (strength <= 1) return { island, strength };
+    }
+    return null;
+  }
+
+  function findCaveAt(x, y) {
+    for (const cave of SEA_CAVES) {
+      if (circleInEllipse(x, y, cave.x, cave.y, cave.rx, cave.ry)) return cave;
+    }
+    return null;
+  }
+
+  function isRiver(x, y) {
+    if (circleInEllipse(x, y, STARTER_POND.x, STARTER_POND.y, STARTER_POND.rx, STARTER_POND.ry)) return true;
+    if (circleInEllipse(x, y, MOON_LAKE.x, MOON_LAKE.y, MOON_LAKE.rx, MOON_LAKE.ry)) return true;
+    if (circleInEllipse(x, y, OASIS.x, OASIS.y, OASIS.rx, OASIS.ry)) return true;
+    if (circleInEllipse(x, y, STORM_POOL.x, STORM_POOL.y, STORM_POOL.rx, STORM_POOL.ry)) return true;
+    if (circleInEllipse(x, y, ROOT_POOL.x, ROOT_POOL.y, ROOT_POOL.rx, ROOT_POOL.ry)) return true;
+    for (const river of RIVERS) {
+      if (rectContains(x, y, river)) return true;
+    }
+    return false;
+  }
+
+  function isOcean(x, y) {
+    return (
+      (x > 5200 && y > 2200) ||
+      (x > 6800 && y > 1600) ||
+      (x > 8500 && y > 1300) ||
+      (y > 3980 && x > 4200)
+    );
+  }
+
+  function isLava(x, y) {
+    return HOT_POOLS.some(pool => circleInEllipse(x, y, pool.x, pool.y, pool.rx, pool.ry));
+  }
+
+  function getTerrainAt(x, y) {
+    if (x < 0 || y < 0 || x > WORLD.width || y > WORLD.height) return "void";
+
+    const cave = findCaveAt(x, y);
+    if (cave) return "cave";
+
+    const islandInfo = findIslandAt(x, y);
+    if (islandInfo) {
+      if (islandInfo.strength > 0.74) return "beach";
+      if (islandInfo.island.interior === "forest") return "forest";
+      if (islandInfo.island.interior === "marsh") return "marsh";
+      if (islandInfo.island.interior === "cliffs") return "cliffs";
+      return "island";
+    }
+
+    if (isLava(x, y)) return "lava";
+    if (rectContains(x, y, STORM_CROWN)) return "storm";
+    if (rectContains(x, y, SUNROOT_JUNGLE)) return "jungle";
+    if (rectContains(x, y, SUNROOT_HIGHLANDS)) return "highlands";
+    if (rectContains(x, y, MOONFERN_WOODS)) return "forest";
+    if (rectContains(x, y, BERRY_GLADE)) return "berry";
+    if (rectContains(x, y, EMBER_BASIN)) return "ember";
+    if (rectContains(x, y, SKYWATCH_CLIFFS)) return "cliffs";
+
+    if (rectContains(x, y, ABYSS_ZONE) && isOcean(x, y)) return "abyss";
+    if (isRiver(x, y)) return "water";
+
+    const beachBand = (
+      (x > 5000 && x < 7100 && y > 1820 && y < 2280) ||
+      (x > 6900 && x < 9000 && y > 1500 && y < 1880) ||
+      (x > 8600 && x < WORLD.width && y > 1260 && y < 1600)
+    );
+    if (beachBand) return "beach";
+
+    if (isOcean(x, y)) return "water";
+    return "meadow";
+  }
+
+  function getRegionName(x, y) {
+    const cave = findCaveAt(x, y);
+    if (cave) return cave.name;
+    const islandInfo = findIslandAt(x, y);
+    if (islandInfo) return islandInfo.island.name;
+
+    const terrain = getTerrainAt(x, y);
+    if (x < 1450) return "Nest Valley";
+    if (x < 3150) return "Moonfern Woods";
+    if (x < 5050) return "Ember Basin";
+    if (x < 6950 && terrain === "water") return "Sapphire Reach";
+    if (x < 6950 && y < 1300) return "Skywatch Cliffs";
+    if (x < 6950) return "Shatter Coast";
+    if (x < 8650 && terrain === "abyss") return "Starfall Trench";
+    if (x < 8650 && terrain === "water") return "Ancient Blue";
+    if (x < 8650 && y < 1650) return "Tempest Crown";
+    if (x < 8650) return "Sunroot Frontier";
+    if (terrain === "abyss") return "Titan Deep";
+    if (terrain === "water") return "Whalebone Gulf";
+    if (terrain === "highlands") return "Highspire Heights";
+    return "Sunroot Highlands";
+  }
+
+  function getTerrainSpeedMultiplier(classType, terrain) {
+    if (classType === "land") {
+      if (terrain === "water") return 0.32;
+      if (terrain === "abyss") return 0.18;
+      if (terrain === "beach") return 0.82;
+      if (terrain === "forest") return 0.86;
+      if (terrain === "jungle") return 0.80;
+      if (terrain === "cliffs") return 0.68;
+      if (terrain === "ember") return 0.92;
+      if (terrain === "lava") return 0.56;
+      if (terrain === "storm") return 0.78;
+      if (terrain === "marsh") return 0.82;
+      if (terrain === "cave") return 0.88;
+      return 1.0;
+    }
+    if (classType === "swimming") {
+      if (terrain === "water") return 1.28;
+      if (terrain === "abyss") return 1.36;
+      if (terrain === "beach") return 0.94;
+      if (terrain === "marsh") return 0.98;
+      if (terrain === "cave") return 0.82;
+      if (terrain === "storm") return 0.84;
+      if (terrain === "forest" || terrain === "jungle") return 0.54;
+      if (terrain === "ember" || terrain === "cliffs" || terrain === "highlands") return 0.44;
+      if (terrain === "lava") return 0.22;
+      return 0.64;
+    }
+    if (terrain === "cliffs" || terrain === "highlands") return 1.14;
+    if (terrain === "storm") return 1.18;
+    if (terrain === "cave") return 0.84;
+    if (terrain === "water") return 1.08;
+    return 1.04;
+  }
+
+  function isGateUnlocked(gate) {
+    if (!game) return false;
+    return game.player.stage >= gate.requiredStage && game.player.relics >= gate.requiredRelics;
+  }
+
+  function getNextGate() {
+    if (!game) return null;
+    return GATES.find(gate => !isGateUnlocked(gate)) || null;
+  }
+
+  function getNextStage() {
+    if (!game) return null;
+    return AGE_STAGES[game.player.stage + 1] || null;
+  }
+
+  function getPreferredFoodText() {
+    return game.species.diet.map(type => FOOD[type].name).join(", ");
+  }
+
+  function getFocusedShrine() {
+    if (!game) return null;
+    let best = null;
+    let bestDist = Infinity;
+    for (const shrine of game.shrines) {
+      if (shrine.rewardCollected) continue;
+      const d = dist(game.player.x, game.player.y, shrine.centerX, shrine.centerY);
+      if (d < bestDist) {
+        best = shrine;
+        bestDist = d;
+      }
+    }
+    if (best && bestDist <= 900) return best;
+    return null;
+  }
+
+  function getObjectiveText() {
+    if (!game) return "";
+    const nextGate = getNextGate();
+    if (nextGate) {
+      const stage = AGE_STAGES[nextGate.requiredStage];
+      if (game.player.stage < nextGate.requiredStage) {
+        return `${nextGate.name} opens at ${stage.label} (${stage.xp} XP). Grow stronger and clear the wilds.`;
+      }
+      return `${nextGate.name} also needs ${nextGate.requiredRelics} relics. Solve more shrines to power the seal.`;
+    }
+
+    const shrine = getFocusedShrine();
+    if (shrine && !shrine.solved) {
+      return `${shrine.name}: ${shrine.clue}`;
+    }
+
+    const remainingTreasures = game.treasures.filter(t => !t.collected).length;
+    if (remainingTreasures > 0) {
+      return `${remainingTreasures} pirate cache${remainingTreasures === 1 ? "" : "s"} remain in the sea caves. Pulse near strange coastlines.`;
+    }
+
+    return "You hold the whole island chain now. Hunt apex rivals, finish the shrines, and chase a higher run.";
+  }
+
+  function addText(text, x, y, color = "#ffffff", size = 18, life = 1.2) {
+    game.texts.push({ text, x, y, color, size, life, maxLife: life, rise: 0 });
+  }
+
+  function addParticles(x, y, color, amount = 10, speed = 90) {
+    for (let i = 0; i < amount; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const velocity = Math.random() * speed;
+      game.particles.push({
+        x,
+        y,
+        vx: Math.cos(angle) * velocity,
+        vy: Math.sin(angle) * velocity,
+        size: randomRange(2, 5.8),
+        color,
+        life: randomRange(0.35, 0.8),
+        maxLife: 0.8
+      });
+    }
+  }
+
+  function addRipple(x, y, radius = 12, color = "rgba(255,255,255,0.45)") {
+    game.ripples.push({ x, y, radius, color, life: 0.7, maxLife: 0.7 });
+  }
+
+  function addFlash(color = "rgba(255,255,255,0.18)", life = 0.35) {
+    game.flashes.push({ color, life, maxLife: life });
+  }
+
+  function updateStageAndGrowth() {
+    const player = game.player;
+    const oldStage = player.stage;
+    let newStage = 0;
+    for (let i = AGE_STAGES.length - 1; i >= 0; i--) {
+      if (player.xp >= AGE_STAGES[i].xp) {
+        newStage = i;
+        break;
+      }
+    }
+
+    if (newStage !== oldStage) {
+      player.stage = newStage;
+      player.stageLabel = AGE_STAGES[newStage].label;
+      player.morphTimer = 1.4;
+      addText(player.stageLabel + "!", player.x, player.y - 30, "#ffe18d", 30, 1.7);
+      addParticles(player.x, player.y, "#ffe18d", 24, 150);
+      addFlash("rgba(255,225,141,0.16)", 0.45);
+      game.camera.shake = Math.max(game.camera.shake, 14);
+      player.health = Math.min(100, player.health + 20);
+      player.hunger = Math.min(player.maxHunger + 24, player.hunger + 28);
+      GATES.forEach(gate => {
+        if (oldStage < gate.requiredStage && newStage >= gate.requiredStage && game.player.relics >= gate.requiredRelics) {
+          addText(gate.name + " stirs open!", player.x, player.y - 62, "#b8f3d4", 22, 1.4);
+        }
+      });
+    }
+
+    const stage = AGE_STAGES[player.stage];
+    player.radius = game.species.baseRadius * stage.scale;
+    player.maxHunger = game.species.maxHunger + player.stage * 16;
+    player.hunger = Math.min(player.hunger, player.maxHunger);
+  }
+
+  function giveXp(amount, x, y) {
+    game.player.xp += amount;
+    addText("+" + amount + " XP", x, y, "#ffd47c", 18, 1.1);
+    updateStageAndGrowth();
+  }
+
+  function tryDiscoverRegion(regionName) {
+    if (!game.discoveredRegions.has(regionName)) {
+      game.discoveredRegions.add(regionName);
+      giveXp(28, game.player.x, game.player.y - 42);
+      addText(regionName + " discovered!", game.player.x, game.player.y - 74, "#aaf3d0", 22, 1.6);
+      game.lastRegion = regionName;
+      game.regionPopupTimer = 2.0;
+    }
+  }
+
+  function tryDiscoverSecret(secretName) {
+    if (!game.discoveredSecrets.has(secretName)) {
+      game.discoveredSecrets.add(secretName);
+      giveXp(52, game.player.x, game.player.y - 46);
+      addText(secretName + " found!", game.player.x, game.player.y - 78, "#ffd88d", 24, 1.6);
+      game.lastRegion = secretName;
+      game.regionPopupTimer = 2.2;
+    }
+  }
+
+  function resetShrine(shrine, message = "") {
+    shrine.progress = 0;
+    shrine.timerRemaining = 0;
+    shrine.nodes.forEach(node => {
+      node.active = false;
+      node.touching = false;
+    });
+    if (message) {
+      addText(message, shrine.centerX, shrine.centerY - 36, "#ffb4c3", 16, 0.8);
+    }
+  }
+
+  function getExpectedShrineNode(shrine) {
+    return shrine.nodes[shrine.progress] || null;
+  }
+
+  function getShrineActionLabel(action) {
+    if (action === "sense") return "Pulse";
+    if (action === "attack") return "Strike";
+    return "Step";
+  }
+
+  function solveShrine(shrine) {
+    shrine.solved = true;
+    shrine.timerRemaining = 0;
+    addText("Shrine unlocked!", shrine.rewardX, shrine.rewardY - 44, "#dab8ff", 24, 1.4);
+    addParticles(shrine.rewardX, shrine.rewardY, "#d8b0ff", 28, 150);
+    addFlash("rgba(216,176,255,0.10)", 0.18);
+    game.camera.shake = Math.max(game.camera.shake, 12);
+  }
+
+  function activateShrineNode(shrine, node, action) {
+    if (shrine.type === "sequence") {
+      const expected = getExpectedShrineNode(shrine);
+      if (expected !== node || node.interaction !== action) {
+        resetShrine(shrine, expected && expected !== node ? "Wrong rune" : "Wrong action");
+        return false;
+      }
+      if (shrine.progress === 0 && shrine.timerLimit > 0) {
+        shrine.timerRemaining = shrine.timerLimit;
+      }
+      node.active = true;
+      shrine.progress += 1;
+    } else if (shrine.type === "constellation") {
+      if (node.active) return false;
+      if (node.interaction !== action) {
+        resetShrine(shrine, "The constellation collapses");
+        return false;
+      }
+      if (shrine.progress === 0 && shrine.timerLimit > 0) {
+        shrine.timerRemaining = shrine.timerLimit;
+      }
+      node.active = true;
+      shrine.progress += 1;
+    } else {
+      return false;
+    }
+
+    shrine.senseGlow = Math.max(shrine.senseGlow, 1.4);
+    addRipple(node.x, node.y, 15, action === "sense" ? "rgba(148,228,255,0.60)" : action === "attack" ? "rgba(255,189,140,0.60)" : "rgba(208,180,255,0.60)");
+    addText(getShrineActionLabel(action), node.x, node.y - 20, action === "sense" ? "#c6efff" : action === "attack" ? "#ffd7ad" : "#eddcff", 16, 0.7);
+    addParticles(node.x, node.y, action === "sense" ? "#8edfff" : action === "attack" ? "#ffbb88" : "#d2aeff", 10, 90);
+
+    if (shrine.progress >= shrine.nodes.length) {
+      solveShrine(shrine);
+    }
+    return true;
+  }
+
+  function triggerShrineAction(action, originX, originY, range) {
+    if (!game) return false;
+    let triggered = false;
+    for (const shrine of game.shrines) {
+      if (shrine.rewardCollected || shrine.solved || !shrine.nodes.length) continue;
+      const candidates = shrine.type === "sequence"
+        ? [getExpectedShrineNode(shrine)].filter(Boolean)
+        : shrine.nodes.filter(node => !node.active);
+      for (const node of candidates) {
+        if (dist(originX, originY, node.x, node.y) <= range) {
+          if (activateShrineNode(shrine, node, action)) {
+            triggered = true;
+            break;
+          }
+        }
+      }
+      if (triggered) break;
+    }
+    return triggered;
+  }
+
+  function startTrialShrine(shrine) {
+    shrine.active = true;
+    shrine.remainingEnemies = shrine.wave.length;
+    addText(shrine.name + " awakens!", shrine.centerX, shrine.centerY - shrine.arenaRadius * 0.4, "#e6d3ff", 22, 1.4);
+    addFlash("rgba(180,150,255,0.10)", 0.16);
+
+    shrine.wave.forEach((type, index) => {
+      const angle = (Math.PI * 2 * index) / shrine.wave.length;
+      const radius = shrine.arenaRadius * 0.55;
+      const enemy = createEnemy(type, {
+        x: shrine.centerX + Math.cos(angle) * radius,
+        y: shrine.centerY + Math.sin(angle) * radius,
+        bounds: {
+          xMin: shrine.centerX - shrine.arenaRadius,
+          xMax: shrine.centerX + shrine.arenaRadius,
+          yMin: shrine.centerY - shrine.arenaRadius,
+          yMax: shrine.centerY + shrine.arenaRadius
+        },
+        shrineId: shrine.id,
+        arenaRadius: shrine.arenaRadius
+      });
+      if (enemy) game.enemies.push(enemy);
+    });
+  }
+
+  function updateShrines(dt) {
+    const player = game.player;
+
+    for (const shrine of game.shrines) {
+      shrine.senseGlow = Math.max(0, shrine.senseGlow - dt);
+
+      if (shrine.type === "trial" && !shrine.solved) {
+        if (!shrine.active && dist(player.x, player.y, shrine.centerX, shrine.centerY) <= shrine.arenaRadius * 0.82) {
+          startTrialShrine(shrine);
+        }
+        if (shrine.active) {
+          shrine.remainingEnemies = game.enemies.filter(enemy => enemy.shrineId === shrine.id).length;
+          if (shrine.remainingEnemies <= 0) {
+            solveShrine(shrine);
+          }
+        }
+      }
+
+      if (!shrine.solved && shrine.timerRemaining > 0) {
+        shrine.timerRemaining = Math.max(0, shrine.timerRemaining - dt);
+        if (shrine.timerRemaining <= 0) {
+          resetShrine(shrine, "The shrine resets");
+          addFlash("rgba(255,120,120,0.07)", 0.12);
+        }
+      }
+
+      if (shrine.solved && !shrine.rewardCollected) {
+        if (dist(player.x, player.y, shrine.rewardX, shrine.rewardY) < player.radius + 20) {
+          shrine.rewardCollected = true;
+          player.relics += shrine.rewardRelics || 1;
+          player.booty += 1;
+          player.health = Math.min(100, player.health + 18);
+          player.hunger = Math.min(player.maxHunger, player.hunger + 24);
+          giveXp(shrine.rewardXp, shrine.rewardX, shrine.rewardY);
+          addText("Relic gained!", shrine.rewardX, shrine.rewardY - 30, "#e2cbff", 22, 1.5);
+          addParticles(shrine.rewardX, shrine.rewardY, "#d7b2ff", 26, 150);
+          GATES.forEach(gate => {
+            if (game.player.relics === gate.requiredRelics && game.player.stage >= gate.requiredStage && gate.requiredRelics > 0) {
+              addText(gate.name + " unlocks!", shrine.rewardX, shrine.rewardY - 56, "#c4f5dd", 20, 1.2);
+            }
+          });
+        }
+      }
+
+      if (!shrine.solved && shrine.nodes.length) {
+        for (const node of shrine.nodes) {
+          if (node.interaction !== "step") {
+            node.touching = dist(player.x, player.y, node.x, node.y) <= player.radius + 20;
+            continue;
+          }
+          const touching = dist(player.x, player.y, node.x, node.y) <= player.radius + 18;
+          if (touching && !node.touching) {
+            node.touching = true;
+            activateShrineNode(shrine, node, "step");
+          } else if (!touching && node.touching) {
+            node.touching = false;
+          }
+        }
+      }
+    }
+  }
+
+  function resolveWorldCollision(circle) {
+    circle.x = clamp(circle.x, circle.radius, WORLD.width - circle.radius);
+    circle.y = clamp(circle.y, circle.radius, WORLD.height - circle.radius);
+  }
+
+  function resolveCircleRect(circle, rect) {
+    const nearestX = clamp(circle.x, rect.x, rect.x + rect.w);
+    const nearestY = clamp(circle.y, rect.y, rect.y + rect.h);
+    let dx = circle.x - nearestX;
+    let dy = circle.y - nearestY;
+    const distanceSq = dx * dx + dy * dy;
+    if (distanceSq >= circle.radius * circle.radius) return;
+
+    if (distanceSq === 0) {
+      const leftPen = Math.abs(circle.x - rect.x);
+      const rightPen = Math.abs(rect.x + rect.w - circle.x);
+      const topPen = Math.abs(circle.y - rect.y);
+      const bottomPen = Math.abs(rect.y + rect.h - circle.y);
+      const minPen = Math.min(leftPen, rightPen, topPen, bottomPen);
+      if (minPen === leftPen) circle.x = rect.x - circle.radius;
+      else if (minPen === rightPen) circle.x = rect.x + rect.w + circle.radius;
+      else if (minPen === topPen) circle.y = rect.y - circle.radius;
+      else circle.y = rect.y + rect.h + circle.radius;
+      return;
+    }
+
+    const distance = Math.sqrt(distanceSq);
+    const overlap = circle.radius - distance;
+    dx /= distance;
+    dy /= distance;
+    circle.x += dx * overlap;
+    circle.y += dy * overlap;
+  }
+
+  function resolveGateCollision(player) {
+    for (const gate of GATES) {
+      const wallTop = { x: gate.x, y: 0, w: 60, h: gate.openingY };
+      const wallBottom = {
+        x: gate.x,
+        y: gate.openingY + gate.openingHeight,
+        w: 60,
+        h: WORLD.height - (gate.openingY + gate.openingHeight)
+      };
+      resolveCircleRect(player, wallTop);
+      resolveCircleRect(player, wallBottom);
+
+      if (!isGateUnlocked(gate)) {
+        const barrier = { x: gate.x, y: gate.openingY, w: 60, h: gate.openingHeight };
+        const beforeX = player.x;
+        resolveCircleRect(player, barrier);
+        if (player.x !== beforeX && game.gateHintTimer <= 0) {
+          game.gateHintTimer = 0.7;
+          const stageName = AGE_STAGES[gate.requiredStage].label;
+          const missingRelics = Math.max(0, gate.requiredRelics - player.relics);
+          const stageReady = player.stage >= gate.requiredStage;
+          const message = stageReady
+            ? `Need ${missingRelics} more relic${missingRelics === 1 ? "" : "s"}`
+            : `Become ${stageName} first`;
+          addText(message, player.x, player.y - 34, "#ffcf7d", 16, 0.65);
+        }
+      }
+    }
+  }
+
+  function updateFoods(dt) {
+    for (let i = game.foods.length - 1; i >= 0; i--) {
+      const food = game.foods[i];
+      const def = FOOD[food.type];
+      food.wobble += dt * (def.moving ? 5 : 2);
+      food.senseGlow = Math.max(0, food.senseGlow - dt);
+      if (!def.moving) continue;
+
+      let dirX = food.vx;
+      let dirY = food.vy;
+      let len = Math.hypot(dirX, dirY);
+      if (len < 1) {
+        const angle = Math.random() * Math.PI * 2;
+        dirX = Math.cos(angle) * def.speed;
+        dirY = Math.sin(angle) * def.speed;
+        len = def.speed;
+      }
+
+      if (["herdling", "boarling", "insect", "dragonfly", "reefEel"].includes(food.type)) {
+        const d = dist(food.x, food.y, game.player.x, game.player.y);
+        if (d < 220) {
+          dirX += (food.x - game.player.x) * 1.4;
+          dirY += (food.y - game.player.y) * 1.4;
+        }
+      }
+
+      food.x += dirX * dt;
+      food.y += dirY * dt;
+      const terrain = getTerrainAt(food.x, food.y);
+      if (!def.terrains.includes(terrain)) {
+        food.x -= dirX * dt * 1.8;
+        food.y -= dirY * dt * 1.8;
+        food.vx = -dirX * 0.7 + randomRange(-12, 12);
+        food.vy = -dirY * 0.7 + randomRange(-12, 12);
+      } else {
+        food.vx = lerp(food.vx, dirX, Math.min(1, dt * 4));
+        food.vy = lerp(food.vy, dirY, Math.min(1, dt * 4));
+      }
+
+      food.x = clamp(food.x, food.radius, WORLD.width - food.radius);
+      food.y = clamp(food.y, food.radius, WORLD.height - food.radius);
+
+      if (["fish", "squid", "reefEel", "ammonite"].includes(food.type) && (terrain === "water" || terrain === "abyss")) {
+        if (Math.random() < 0.03) addRipple(food.x, food.y, food.radius, "rgba(255,255,255,0.12)");
+      }
+    }
+  }
+
+  function updateEnemies(dt) {
+    const player = game.player;
+    for (let i = game.enemies.length - 1; i >= 0; i--) {
+      const enemy = game.enemies[i];
+      const def = ENEMY_TYPES[enemy.type];
+      enemy.attackCooldown = Math.max(0, enemy.attackCooldown - dt);
+      enemy.hitTimer = Math.max(0, enemy.hitTimer - dt);
+      enemy.senseGlow = Math.max(0, enemy.senseGlow - dt);
+      enemy.changeTimer -= dt;
+
+      const terrain = getTerrainAt(enemy.x, enemy.y);
+      const speedMult = getTerrainSpeedMultiplier(def.classType, terrain);
+      const baseSpeed = def.speed * speedMult * (enemy.hitTimer > 0 ? 0.45 : 1);
+      const dToPlayer = dist(enemy.x, enemy.y, player.x, player.y);
+      let targetX = 0;
+      let targetY = 0;
+
+      const chase = enemy.shrineId
+        ? dToPlayer < def.sight * 1.2
+        : dToPlayer < def.sight && getRegionName(enemy.x, enemy.y) === getRegionName(player.x, player.y);
+
+      if (chase) {
+        targetX = player.x - enemy.x;
+        targetY = player.y - enemy.y;
+      } else {
+        if (enemy.changeTimer <= 0) {
+          enemy.changeTimer = randomRange(1.0, 2.3);
+          enemy.wanderAngle += randomRange(-1.1, 1.1);
+        }
+        targetX = Math.cos(enemy.wanderAngle) * 120;
+        targetY = Math.sin(enemy.wanderAngle) * 120;
+        const centerX = enemy.homeX;
+        const centerY = enemy.homeY;
+        if (enemy.shrineId) {
+          const homeDist = dist(enemy.x, enemy.y, centerX, centerY);
+          if (homeDist > enemy.arenaRadius * 0.82) {
+            targetX += (centerX - enemy.x) * 1.8;
+            targetY += (centerY - enemy.y) * 1.8;
+          }
+        } else if (!rectContainsBounds(enemy.x, enemy.y, enemy.bounds)) {
+          targetX += (centerX - enemy.x) * 1.7;
+          targetY += (centerY - enemy.y) * 1.7;
+        }
+      }
+
+      const len = Math.hypot(targetX, targetY) || 1;
+      enemy.vx = lerp(enemy.vx, (targetX / len) * baseSpeed, Math.min(1, dt * 3.6));
+      enemy.vy = lerp(enemy.vy, (targetY / len) * baseSpeed, Math.min(1, dt * 3.6));
+      enemy.x += enemy.vx * dt;
+      enemy.y += enemy.vy * dt;
+      enemy.x = clamp(enemy.x, enemy.radius, WORLD.width - enemy.radius);
+      enemy.y = clamp(enemy.y, enemy.radius, WORLD.height - enemy.radius);
+
+      if (!def.terrains.includes(getTerrainAt(enemy.x, enemy.y))) {
+        enemy.x -= enemy.vx * dt * 1.5;
+        enemy.y -= enemy.vy * dt * 1.5;
+        enemy.wanderAngle += Math.PI * 0.7;
+      }
+
+      if (dToPlayer < enemy.radius + player.radius + 4 && enemy.attackCooldown <= 0) {
+        const armor = AGE_STAGES[player.stage].armorBonus;
+        const rawDamage = Math.max(4, def.damage - armor * 0.42);
+        player.health -= rawDamage;
+        player.hitTimer = 0.35;
+        enemy.attackCooldown = randomRange(0.8, 1.3);
+        addText(def.name + " hit!", player.x, player.y - 36, "#ff8c76", 16, 0.7);
+        addParticles(player.x, player.y, "rgba(255,110,110,0.62)", 12, 110);
+        addFlash("rgba(255,120,120,0.08)", 0.12);
+        game.camera.shake = Math.max(game.camera.shake, 8);
+        const knockX = player.x - enemy.x;
+        const knockY = player.y - enemy.y;
+        const knockLen = Math.hypot(knockX, knockY) || 1;
+        player.vx += (knockX / knockLen) * 110;
+        player.vy += (knockY / knockLen) * 110;
+      }
+    }
+  }
+
+  function updateEatingAndCollisions() {
+    const player = game.player;
+    for (let i = game.foods.length - 1; i >= 0; i--) {
+      const food = game.foods[i];
+      if (dist(player.x, player.y, food.x, food.y) >= player.radius + food.radius + 2) continue;
+      const edible = game.species.diet.includes(food.type);
+      if (edible) {
+        const def = FOOD[food.type];
+        player.hunger = Math.min(player.maxHunger, player.hunger + def.hunger);
+        player.health = Math.min(100, player.health + 4);
+        player.foodEaten += 1;
+        giveXp(def.xp, food.x, food.y);
+        addParticles(food.x, food.y, def.color, 12, 120);
+        game.camera.shake = Math.max(game.camera.shake, 4);
+        scheduleFoodRespawn(food.type);
+        game.foods.splice(i, 1);
+      } else if (player.wrongFoodTimer <= 0) {
+        player.wrongFoodTimer = 0.7;
+        addText("Can't eat " + FOOD[food.type].name.toLowerCase(), food.x, food.y - 12, "#ff9d87", 15, 0.8);
+        addParticles(food.x, food.y, "rgba(255,100,100,0.42)", 6, 55);
+      }
+    }
+  }
+
+  function updateTreasures() {
+    const player = game.player;
+    for (const treasure of game.treasures) {
+      if (treasure.collected) continue;
+      if (dist(player.x, player.y, treasure.x, treasure.y) >= player.radius + 18) continue;
+      treasure.collected = true;
+      player.booty += 1;
+      player.health = Math.min(100, player.health + 18);
+      player.hunger = Math.min(player.maxHunger, player.hunger + 26);
+      giveXp(treasure.xp, treasure.x, treasure.y);
+      addText("Pirate Booty!", treasure.x, treasure.y - 30, "#ffd47c", 24, 1.5);
+      addParticles(treasure.x, treasure.y, "#ffd47c", 26, 160);
+      addFlash("rgba(255,212,124,0.10)", 0.16);
+      game.camera.shake = Math.max(game.camera.shake, 12);
+    }
+  }
+
+  function updateRespawns(dt) {
+    for (let i = game.respawns.length - 1; i >= 0; i--) {
+      const respawn = game.respawns[i];
+      respawn.timer -= dt;
+      if (respawn.timer <= 0) {
+        const food = createFood(respawn.type);
+        if (food) game.foods.push(food);
+        game.respawns.splice(i, 1);
+      }
+    }
+    for (let i = game.enemyRespawns.length - 1; i >= 0; i--) {
+      const respawn = game.enemyRespawns[i];
+      respawn.timer -= dt;
+      if (respawn.timer <= 0) {
+        const enemy = createEnemy(respawn.type);
+        if (enemy) game.enemies.push(enemy);
+        game.enemyRespawns.splice(i, 1);
+      }
+    }
+  }
+
+  function updateNeeds(dt, terrain) {
+    const player = game.player;
+    let hungerDrain = 3.0;
+    if (game.species.classType === "swimming" && !["water", "abyss", "beach", "marsh", "cave"].includes(terrain)) hungerDrain += 1.3;
+    if (game.species.classType === "land" && (terrain === "water" || terrain === "abyss")) {
+      hungerDrain += 1.8;
+      player.health -= 6 * dt;
+    }
+    if (game.species.classType === "air") hungerDrain += 0.25;
+    if (terrain === "ember") hungerDrain += 0.35;
+    if (terrain === "storm") hungerDrain += 0.55;
+    if (terrain === "jungle") hungerDrain += 0.18;
+    if (terrain === "lava") {
+      hungerDrain += 1.4;
+      player.health -= 9 * dt;
+      if (Math.random() < 0.11) addText("Too hot!", player.x, player.y - 36, "#ffb16b", 16, 0.45);
+    }
+    if (terrain === "abyss") {
+      hungerDrain += 0.7;
+      if (Math.random() < 0.05) addText("Deep pressure...", player.x, player.y - 36, "#9fd8ff", 15, 0.35);
+    }
+    if (terrain === "cave") hungerDrain += 0.18;
+
+    player.hunger -= hungerDrain * dt;
+    if (player.hunger <= 0) {
+      player.hunger = 0;
+      player.health -= 10 * dt;
+      if (Math.random() < 0.14) addText("Hungry!", player.x, player.y - 38, "#ffb16b", 18, 0.6);
+    }
+    if (player.hunger > player.maxHunger * 0.26) {
+      player.health = Math.min(100, player.health + 0.8 * dt);
+    }
+  }
+
+  function updateEffects(dt) {
+    for (let i = game.particles.length - 1; i >= 0; i--) {
+      const particle = game.particles[i];
+      particle.life -= dt;
+      particle.x += particle.vx * dt;
+      particle.y += particle.vy * dt;
+      particle.vx *= Math.pow(0.96, dt * 60);
+      particle.vy *= Math.pow(0.96, dt * 60);
+      if (particle.life <= 0) game.particles.splice(i, 1);
+    }
+    for (let i = game.texts.length - 1; i >= 0; i--) {
+      const text = game.texts[i];
+      text.life -= dt;
+      text.rise += 18 * dt;
+      if (text.life <= 0) game.texts.splice(i, 1);
+    }
+    for (let i = game.ripples.length - 1; i >= 0; i--) {
+      const ripple = game.ripples[i];
+      ripple.life -= dt;
+      ripple.radius += 84 * dt;
+      if (ripple.life <= 0) game.ripples.splice(i, 1);
+    }
+    for (let i = game.flashes.length - 1; i >= 0; i--) {
+      const flash = game.flashes[i];
+      flash.life -= dt;
+      if (flash.life <= 0) game.flashes.splice(i, 1);
+    }
+    if (game.pulseTimer > 0) game.pulseTimer -= dt;
+    game.camera.shake = Math.max(0, game.camera.shake - dt * 22);
+  }
+
+  function updateCamera(dt) {
+    const player = game.player;
+    const targetX = clamp(player.x - canvas.width / 2, 0, Math.max(0, WORLD.width - canvas.width));
+    const targetY = clamp(player.y - canvas.height / 2, 0, Math.max(0, WORLD.height - canvas.height));
+    game.camera.x = lerp(game.camera.x, targetX, Math.min(1, dt * 4));
+    game.camera.y = lerp(game.camera.y, targetY, Math.min(1, dt * 4));
+  }
+
+  function performPulse() {
+    game.pulseCooldown = 4.0;
+    game.pulseTimer = 1.35;
+    addRipple(game.player.x, game.player.y, 18, "rgba(160,235,255,0.42)");
+    addFlash("rgba(175,220,255,0.08)", 0.14);
+
+    let secretHint = false;
+    for (const food of game.foods) {
+      if (!game.species.diet.includes(food.type)) continue;
+      if (dist(game.player.x, game.player.y, food.x, food.y) <= 980) food.senseGlow = 1.4;
+    }
+    for (const enemy of game.enemies) {
+      if (dist(game.player.x, game.player.y, enemy.x, enemy.y) <= 940) enemy.senseGlow = 1.2;
+    }
+    for (const cave of SEA_CAVES) {
+      if (!game.discoveredSecrets.has(cave.name) && dist(game.player.x, game.player.y, cave.x, cave.y) <= 760) secretHint = true;
+    }
+    for (const shrine of game.shrines) {
+      if (!shrine.rewardCollected && dist(game.player.x, game.player.y, shrine.centerX, shrine.centerY) <= 900) {
+        shrine.senseGlow = 1.4;
+        secretHint = true;
+      }
+    }
+
+    const shrineTriggered = triggerShrineAction("sense", game.player.x, game.player.y, 130);
+    if (shrineTriggered) secretHint = true;
+
+    addText(secretHint ? "Ancient secret nearby..." : "Scenting the wilds...", game.player.x, game.player.y - 42, secretHint ? "#9fe8ff" : "#d3f7ff", 16, 1.1);
+  }
+
+  function performAttack() {
+    const player = game.player;
+    const stage = AGE_STAGES[player.stage];
+    const attackRange = player.radius * 2.1 + 14;
+    const damage = game.species.attack * stage.attackBonus;
+    player.attackCooldown = 0.44;
+    player.attackSwing = 0.18;
+
+    addParticles(player.x, player.y, game.species.accent, 10, 90);
+    game.camera.shake = Math.max(game.camera.shake, 6);
+
+    let hitAnything = triggerShrineAction("attack", player.x, player.y, attackRange + 30);
+    for (let i = game.enemies.length - 1; i >= 0; i--) {
+      const enemy = game.enemies[i];
+      if (dist(player.x, player.y, enemy.x, enemy.y) > attackRange + enemy.radius) continue;
+      const awayX = enemy.x - player.x;
+      const awayY = enemy.y - player.y;
+      const length = Math.hypot(awayX, awayY) || 1;
+      enemy.health -= damage;
+      enemy.vx += (awayX / length) * 260;
+      enemy.vy += (awayY / length) * 260;
+      enemy.hitTimer = 0.32;
+      hitAnything = true;
+      addText("-" + Math.round(damage), enemy.x, enemy.y - 24, "#ffb48a", 18, 0.8);
+      addParticles(enemy.x, enemy.y, "rgba(255,140,118,0.72)", 12, 140);
+
+      if (enemy.health <= 0) {
+        const def = ENEMY_TYPES[enemy.type];
+        game.player.kills += 1;
+        if (!enemy.shrineId) scheduleEnemyRespawn(enemy.type);
+        giveXp(def.xp, enemy.x, enemy.y);
+        addText(def.name + " defeated!", enemy.x, enemy.y - 52, "#ffe6ad", 20, 1.2);
+        addParticles(enemy.x, enemy.y, withAlpha(def.color, 0.84), 18, 150);
+        game.camera.shake = Math.max(game.camera.shake, 12);
+        game.foods.push({
+          type: "carcass",
+          x: enemy.x + randomRange(-20, 20),
+          y: enemy.y + randomRange(-20, 20),
+          radius: FOOD.carcass.radius + Math.random() * 2,
+          vx: 0,
+          vy: 0,
+          wobble: Math.random() * Math.PI * 2,
+          senseGlow: 0
+        });
+        game.enemies.splice(i, 1);
+      }
+    }
+    if (!hitAnything) addText("Miss", player.x, player.y - 26, "#cfe4f2", 14, 0.45);
+  }
+
+  function update(dt) {
+    if (!game || game.state !== "play") return;
+
+    game.time += dt;
+    game.gateHintTimer = Math.max(0, game.gateHintTimer - dt);
+    game.pulseCooldown = Math.max(0, game.pulseCooldown - dt);
+    game.regionPopupTimer = Math.max(0, game.regionPopupTimer - dt);
+
+    const player = game.player;
+    player.attackCooldown = Math.max(0, player.attackCooldown - dt);
+    player.attackSwing = Math.max(0, player.attackSwing - dt);
+    player.wrongFoodTimer = Math.max(0, player.wrongFoodTimer - dt);
+    player.hitTimer = Math.max(0, player.hitTimer - dt);
+    player.morphTimer = Math.max(0, player.morphTimer - dt);
+
+    let moveX = 0;
+    let moveY = 0;
+    if (input.left) moveX -= 1;
+    if (input.right) moveX += 1;
+    if (input.up) moveY -= 1;
+    if (input.down) moveY += 1;
+    const moveLength = Math.hypot(moveX, moveY);
+
+    const terrain = getTerrainAt(player.x, player.y);
+    const stage = AGE_STAGES[player.stage];
+    let speed = game.species.speed * stage.speedBonus * getTerrainSpeedMultiplier(game.species.classType, terrain);
+    if (input.boost && game.boostMeter > 0 && moveLength > 0) {
+      speed *= game.species.boostStrength;
+      game.boostMeter = Math.max(0, game.boostMeter - 28 * dt);
+      if (Math.random() < 0.15) addParticles(player.x, player.y, withAlpha(game.species.accent, 0.55), 1, 55);
+    } else {
+      game.boostMeter = Math.min(100, game.boostMeter + 18 * dt);
+    }
+
+    let targetVx = 0;
+    let targetVy = 0;
+    if (moveLength > 0) {
+      targetVx = (moveX / moveLength) * speed;
+      targetVy = (moveY / moveLength) * speed;
+    }
+    player.vx = lerp(player.vx, targetVx, Math.min(1, dt * 7));
+    player.vy = lerp(player.vy, targetVy, Math.min(1, dt * 7));
+    if (moveLength === 0) {
+      player.vx *= Math.pow(0.88, dt * 60);
+      player.vy *= Math.pow(0.88, dt * 60);
+    }
+
+    player.x += player.vx * dt;
+    player.y += player.vy * dt;
+    resolveWorldCollision(player);
+    resolveGateCollision(player);
+
+    if ((terrain === "water" || terrain === "beach") && Math.hypot(player.vx, player.vy) > 55 && Math.random() < 0.12) {
+      addRipple(player.x, player.y + player.radius * 0.2, player.radius * 0.72, "rgba(180,240,255,0.30)");
+    }
+
+    if (input.attackPress && player.attackCooldown <= 0) performAttack();
+    if (input.pulsePress && game.pulseCooldown <= 0) performPulse();
+    input.attackPress = false;
+    input.pulsePress = false;
+
+    updateFoods(dt);
+    updateEnemies(dt);
+    updateEatingAndCollisions();
+    updateTreasures();
+    updateShrines(dt);
+    updateRespawns(dt);
+    updateNeeds(dt, terrain);
+    updateEffects(dt);
+    updateCamera(dt);
+
+    const region = getRegionName(player.x, player.y);
+    tryDiscoverRegion(region);
+    const cave = findCaveAt(player.x, player.y);
+    if (cave) tryDiscoverSecret(cave.name);
+
+    if (player.health <= 0) {
+      player.health = 0;
+      endGame();
+      return;
+    }
+
+    if (player.health < 36 && !player.lowHealthWarn) {
+      player.lowHealthWarn = true;
+      addText("Health critical!", player.x, player.y - 56, "#ffb3a4", 20, 1.0);
+    } else if (player.health >= 50) {
+      player.lowHealthWarn = false;
+    }
+    if (player.hunger < player.maxHunger * 0.22 && !player.lowHungerWarn) {
+      player.lowHungerWarn = true;
+      addText("Find food soon!", player.x, player.y - 54, "#ffd88a", 18, 0.9);
+    } else if (player.hunger >= player.maxHunger * 0.4) {
+      player.lowHungerWarn = false;
+    }
+  }
+
+  function worldToScreen(x, y) {
+    const screenY = y - game.camera.y + game.cameraShakeY;
+    return {
+      x: x - game.camera.x + game.cameraShakeX,
+      y: screenY,
+      scale: getScreenDepthScale(screenY)
+    };
+  }
+
+  function draw() {
+    if (!game || !menu.classList.contains("hidden")) {
+      drawMenuBackdrop();
+      return;
+    }
+
+    game.cameraShakeX = randomRange(-game.camera.shake, game.camera.shake);
+    game.cameraShakeY = randomRange(-game.camera.shake, game.camera.shake);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawSkyBackdrop();
+    beginWorldProjection();
+    drawWorld();
+    drawFoods();
+    drawTreasures();
+    drawEnemies();
+    drawPlayer();
+    drawPulseEffects();
+    drawEffects();
+    ctx.restore();
+    drawAtmosphereOverlay();
+    drawScreenFlashes();
+    drawCinematicGrade();
+    drawHud();
+    if (game.state === "pause") drawPauseOverlay();
+    if (game.state === "gameover") drawGameOver();
+  }
+
+  function drawMenuBackdrop() {
+    const grd = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    grd.addColorStop(0, "#07111a");
+    grd.addColorStop(0.46, "#11273c");
+    grd.addColorStop(1, "#07121b");
+    ctx.fillStyle = grd;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const glow = ctx.createRadialGradient(canvas.width * 0.72, canvas.height * 0.16, 20, canvas.width * 0.72, canvas.height * 0.16, canvas.width * 0.54);
+    glow.addColorStop(0, "rgba(117,190,255,0.18)");
+    glow.addColorStop(1, "rgba(117,190,255,0)");
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "rgba(9,18,26,0.66)";
+    ctx.beginPath();
+    ctx.moveTo(0, canvas.height * 0.76);
+    for (let x = 0; x <= canvas.width; x += 80) {
+      const y = canvas.height * 0.76 + Math.sin(x * 0.008) * 18 + Math.cos(x * 0.018) * 10;
+      ctx.lineTo(x, y);
+    }
+    ctx.lineTo(canvas.width, canvas.height);
+    ctx.lineTo(0, canvas.height);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = "rgba(18,32,44,0.82)";
+    ctx.beginPath();
+    ctx.moveTo(0, canvas.height * 0.82);
+    for (let x = 0; x <= canvas.width; x += 90) {
+      const y = canvas.height * 0.82 + Math.sin(x * 0.006 + 1.2) * 24;
+      ctx.lineTo(x, y);
+    }
+    ctx.lineTo(canvas.width, canvas.height);
+    ctx.lineTo(0, canvas.height);
+    ctx.closePath();
+    ctx.fill();
+
+    for (let i = 0; i < 100; i++) {
+      const x = (i * 157) % canvas.width;
+      const y = (i * 89 + i * i * 7) % canvas.height;
+      ctx.fillStyle = "rgba(255,255,255,0.05)";
+      ctx.beginPath();
+      ctx.arc(x, y, 1.6 + (i % 4), 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function drawCanopyClusters(rect, count, color, shadowColor, radius) {
+    const minX = rect.x - game.camera.x + game.cameraShakeX;
+    const minY = rect.y - game.camera.y + game.cameraShakeY;
+    const maxX = minX + rect.w;
+    const maxY = minY + rect.h;
+    if (maxX < -120 || minX > canvas.width + 120 || maxY < -120 || minY > canvas.height + 120) return;
+    for (let i = 0; i < count; i++) {
+      const px = minX + ((i * 131 + i * i * 17) % rect.w);
+      const py = minY + ((i * 79 + i * i * 11) % rect.h);
+      const r = radius * (0.7 + (i % 5) / 5);
+      ctx.fillStyle = shadowColor;
+      ctx.beginPath();
+      ctx.arc(px + 3, py + 4, r * 1.08, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(px, py, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function drawScatter(rect, count, color, radius) {
+    const minX = rect.x - game.camera.x + game.cameraShakeX;
+    const minY = rect.y - game.camera.y + game.cameraShakeY;
+    const maxX = minX + rect.w;
+    const maxY = minY + rect.h;
+    if (maxX < -80 || minX > canvas.width + 80 || maxY < -80 || minY > canvas.height + 80) return;
+    ctx.fillStyle = color;
+    for (let i = 0; i < count; i++) {
+      const px = minX + ((i * 97) % rect.w);
+      const py = minY + ((i * 67 + i * i * 3) % rect.h);
+      ctx.beginPath();
+      ctx.arc(px, py, radius * (0.55 + (i % 5) / 5), 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function drawWaterHighlights(rect, count, color) {
+    const startX = rect.x - game.camera.x + game.cameraShakeX;
+    const startY = rect.y - game.camera.y + game.cameraShakeY;
+    const endX = startX + rect.w;
+    const endY = startY + rect.h;
+    if (endX < -120 || startX > canvas.width + 120 || endY < -120 || startY > canvas.height + 120) return;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    for (let i = 0; i < count; i++) {
+      const px = startX + ((i * 149 + i * i * 5) % rect.w);
+      const py = startY + ((i * 97 + i * i * 9) % rect.h);
+      const len = 18 + (i % 5) * 10;
+      ctx.beginPath();
+      ctx.moveTo(px, py);
+      ctx.quadraticCurveTo(px + len * 0.45, py - 4, px + len, py);
+      ctx.stroke();
+    }
+  }
+
+  function drawEllipseBody(cx, cy, rx, ry, fillColor, highlightColor) {
+    const p = worldToScreen(cx, cy);
+    drawExtrudedEllipse(cx, cy, rx, ry, 12, fillColor, highlightColor, withAlpha(fillColor, 0.62));
+    ctx.fillStyle = withAlpha(highlightColor, 0.72);
+    ctx.beginPath();
+    ctx.ellipse(p.x - rx * 0.18, p.y - ry * 0.16, rx * 0.62, ry * 0.46, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = withAlpha("#07131b", 0.10);
+    ctx.beginPath();
+    ctx.ellipse(p.x, p.y + 2, rx * 0.84, ry * 0.58, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = withAlpha("#d6f3ff", 0.16);
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.ellipse(p.x, p.y, rx * 0.98, ry * 0.98, 0, Math.PI * 1.08, Math.PI * 1.92);
+    ctx.stroke();
+  }
+
+  function drawIsland(island) {
+    const p = worldToScreen(island.x, island.y);
+    drawExtrudedEllipse(island.x, island.y, island.rx, island.ry, 18, "#c6aa71", "#efddb0", "#83633f");
+
+    const innerRx = island.rx * 0.78;
+    const innerRy = island.ry * 0.78;
+    let innerTop = "#7b9e53";
+    let innerHighlight = "#d9efab";
+    let innerSide = "#506936";
+    if (island.interior === "forest") {
+      innerTop = "#20602f";
+      innerHighlight = "#53a667";
+      innerSide = "#163d22";
+    } else if (island.interior === "marsh") {
+      innerTop = "#677d4e";
+      innerHighlight = "#b6d28b";
+      innerSide = "#475638";
+    } else if (island.interior === "cliffs") {
+      innerTop = "#718093";
+      innerHighlight = "#d9e3ec";
+      innerSide = "#475464";
+    }
+    drawExtrudedEllipse(island.x, island.y - 4, innerRx, innerRy, 8, innerTop, innerHighlight, innerSide);
+
+    ctx.fillStyle = "rgba(255,255,255,0.08)";
+    ctx.beginPath();
+    ctx.ellipse(p.x - island.rx * 0.12, p.y - island.ry * 0.16, innerRx * 0.65, innerRy * 0.45, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(0,0,0,0.12)";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.ellipse(p.x, p.y - 4, innerRx * 0.98, innerRy * 0.98, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    if (island.interior === "forest" || island.interior === "marsh") {
+      for (let i = 0; i < 14; i++) {
+        const ox = ((i * 41) % (innerRx * 1.4)) - innerRx * 0.7;
+        const oy = ((i * 57 + i * i * 9) % (innerRy * 1.2)) - innerRy * 0.6;
+        ctx.fillStyle = island.interior === "forest" ? "rgba(28,86,44,0.52)" : "rgba(86,108,55,0.46)";
+        ctx.beginPath();
+        ctx.arc(p.x + ox, p.y + oy, 8 + (i % 3) * 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    if (game.discoveredRegions.has(island.name)) {
+      drawWorldLabel(island.name, island.x, island.y - island.ry - 24, 20);
+    }
+  }
+
+  function drawCave(cave) {
+    const p = worldToScreen(cave.x, cave.y);
+    ctx.fillStyle = "rgba(9,11,18,0.84)";
+    ctx.beginPath();
+    ctx.ellipse(p.x, p.y, cave.rx, cave.ry, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,0.06)";
+    ctx.beginPath();
+    ctx.ellipse(p.x - cave.rx * 0.16, p.y - cave.ry * 0.16, cave.rx * 0.54, cave.ry * 0.32, 0, 0, Math.PI * 2);
+    ctx.fill();
+    if (game.discoveredSecrets.has(cave.name)) {
+      drawWorldLabel(cave.name, cave.x, cave.y - cave.ry - 18, 18);
+    }
+  }
+
+  function drawShrines() {
+    for (const shrine of game.shrines) {
+      const rp = worldToScreen(shrine.rewardX, shrine.rewardY);
+      if (rp.x < -260 || rp.x > canvas.width + 260 || rp.y < -260 || rp.y > canvas.height + 260) continue;
+
+      if (shrine.type === "trial") {
+        const arenaP = worldToScreen(shrine.centerX, shrine.centerY);
+        ctx.strokeStyle = shrine.solved ? "rgba(215,180,255,0.24)" : shrine.active ? "rgba(255,170,136,0.30)" : "rgba(190,170,255,0.18)";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(arenaP.x, arenaP.y, shrine.arenaRadius, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      ctx.save();
+      ctx.translate(rp.x, rp.y);
+      ctx.scale(rp.scale, rp.scale);
+      drawPickupShadow(24, 7, 0.18);
+      ctx.translate(0, -7);
+      const shrineCore = ctx.createLinearGradient(0, -26, 0, 26);
+      shrineCore.addColorStop(0, shrine.solved ? "rgba(105,55,162,0.95)" : "rgba(34,28,56,0.96)");
+      shrineCore.addColorStop(1, shrine.solved ? "rgba(46,24,88,0.96)" : "rgba(16,14,26,0.96)");
+      ctx.fillStyle = shrineCore;
+      roundRect(-38, -24, 76, 48, 12);
+      ctx.fill();
+      ctx.strokeStyle = shrine.solved ? "rgba(226,205,255,0.56)" : "rgba(222,205,255,0.28)";
+      ctx.lineWidth = 2;
+      roundRect(-38, -24, 76, 48, 12);
+      ctx.stroke();
+      if (!shrine.rewardCollected) {
+        ctx.fillStyle = shrine.solved ? "#d8b0ff" : "rgba(216,176,255,0.22)";
+        ctx.beginPath();
+        ctx.arc(0, -2, shrine.solved ? 10 : 6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      if (shrine.timerRemaining > 0 && !shrine.solved) {
+        const ratio = shrine.timerLimit <= 0 ? 0 : shrine.timerRemaining / shrine.timerLimit;
+        ctx.fillStyle = "rgba(255,255,255,0.12)";
+        roundRect(-26, 16, 52, 5, 2.5);
+        ctx.fill();
+        ctx.fillStyle = ratio > 0.4 ? "#ffd47c" : "#ff8a71";
+        roundRect(-26, 16, 52 * ratio, 5, 2.5);
+        ctx.fill();
+      }
+      if (shrine.type === "trial" && shrine.active && !shrine.solved) {
+        ctx.fillStyle = "#fff";
+        ctx.font = "700 12px Avenir Next, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(String(shrine.remainingEnemies), 0, 6);
+      }
+      ctx.restore();
+
+      if (!shrine.nodes.length) continue;
+      const expected = getExpectedShrineNode(shrine);
+      for (const node of shrine.nodes) {
+        const p = worldToScreen(node.x, node.y);
+        const radius = expected === node && !shrine.solved ? 20 : 16;
+        const baseColor = node.interaction === "sense" ? "#7de2ff" : node.interaction === "attack" ? "#ffbe87" : "#cfa9ff";
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.scale(p.scale, p.scale);
+        drawPickupShadow(radius * 0.75, 4, 0.10);
+        ctx.translate(0, -4);
+        ctx.fillStyle = node.active ? withAlpha(baseColor, 0.96) : withAlpha(baseColor, 0.42 + shrine.senseGlow * 0.24);
+        ctx.strokeStyle = node.active ? "rgba(255,255,255,0.34)" : "rgba(255,255,255,0.16)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        if (node.interaction === "sense") {
+          ctx.moveTo(0, -radius);
+          ctx.lineTo(radius, 0);
+          ctx.lineTo(0, radius);
+          ctx.lineTo(-radius, 0);
+          ctx.closePath();
+        } else if (node.interaction === "attack") {
+          ctx.moveTo(0, -radius);
+          ctx.lineTo(radius * 0.95, -radius * 0.2);
+          ctx.lineTo(radius * 0.6, radius);
+          ctx.lineTo(-radius * 0.6, radius);
+          ctx.lineTo(-radius * 0.95, -radius * 0.2);
+          ctx.closePath();
+        } else {
+          ctx.arc(0, 0, radius, 0, Math.PI * 2);
+        }
+        ctx.fill();
+        ctx.stroke();
+        if (expected === node && !shrine.solved) {
+          ctx.strokeStyle = withAlpha("#ffffff", 0.36 + shrine.senseGlow * 0.18);
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(0, 0, radius + 8 + Math.sin(game.time * 6) * 2, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+        ctx.fillStyle = "#f7f0ff";
+        ctx.font = "700 12px Avenir Next, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(String(node.order), 0, 4);
+        ctx.restore();
+      }
+    }
+  }
+
+  function drawWorldLabel(text, x, y, size = 42) {
+    const p = worldToScreen(x, y);
+    if (p.x < -260 || p.x > canvas.width + 260 || p.y < -120 || p.y > canvas.height + 120) return;
+    const sizeScale = clamp(p.scale, 0.82, 1.16);
+    ctx.save();
+    ctx.globalAlpha = 0.72 * sizeScale;
+    ctx.fillStyle = "rgba(7,14,22,0.44)";
+    ctx.font = `800 ${Math.round(size * sizeScale)}px "Arial Black", sans-serif`;
+    ctx.textAlign = "center";
+    ctx.fillText(text, p.x + 3, p.y + 3);
+    ctx.globalAlpha = 0.18;
+    ctx.fillStyle = "#fff";
+    ctx.fillText(text, p.x, p.y);
+    ctx.restore();
+  }
+
+  function drawGateStructures() {
+    for (const gate of GATES) {
+      const leftX = gate.x - game.camera.x + game.cameraShakeX;
+      const w = 60;
+      const bottomY = gate.openingY + gate.openingHeight;
+      ctx.fillStyle = gate.color;
+      ctx.fillRect(leftX, -game.camera.y + game.cameraShakeY, w, gate.openingY);
+      ctx.fillRect(leftX, bottomY - game.camera.y + game.cameraShakeY, w, WORLD.height - bottomY);
+      if (!isGateUnlocked(gate)) {
+        ctx.fillStyle = "rgba(96,22,18,0.36)";
+        ctx.fillRect(leftX, gate.openingY - game.camera.y + game.cameraShakeY, w, gate.openingHeight);
+        ctx.strokeStyle = "rgba(255,220,120,0.54)";
+        ctx.lineWidth = 2;
+        for (let y = gate.openingY + 14; y < gate.openingY + gate.openingHeight - 12; y += 28) {
+          const sy = y - game.camera.y + game.cameraShakeY;
+          ctx.beginPath();
+          ctx.moveTo(leftX + 10, sy);
+          ctx.lineTo(leftX + w - 10, sy + 12);
+          ctx.stroke();
+        }
+      }
+      const labelY = gate.openingY + gate.openingHeight / 2 - game.camera.y + game.cameraShakeY;
+      ctx.save();
+      ctx.translate(leftX + w / 2, labelY);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillStyle = "rgba(255,255,255,0.18)";
+      ctx.font = "800 16px Avenir Next, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(gate.name, 0, -18);
+      ctx.restore();
+    }
+  }
+
+  function drawWorld() {
+    const cam = game.camera;
+    const startX = -cam.x + game.cameraShakeX;
+    const startY = -cam.y + game.cameraShakeY;
+
+    ctx.fillStyle = "#7b984d";
+    ctx.fillRect(startX, startY, WORLD.width, WORLD.height);
+    ctx.fillStyle = "#89ad59";
+    ctx.fillRect(startX, startY, 1450, WORLD.height);
+
+    drawRaisedRegion(BERRY_GLADE, "#648532", "#41581e", "#9bc35c", 12);
+    drawRaisedRegion(MOONFERN_WOODS, "#1d5a2c", "#14381c", "#3f7d49", 16);
+    drawRaisedRegion(EMBER_BASIN, "#b2864a", "#6b4923", "#efc98d", 18);
+    drawRaisedRegion(SKYWATCH_CLIFFS, "#708198", "#425165", "#c2d1df", 30);
+    drawRaisedRegion(STORM_CROWN, "#556583", "#2d3a4f", "#aabdd2", 34);
+    drawRaisedRegion(SUNROOT_JUNGLE, "#164e28", "#10321a", "#2c7a40", 18);
+    drawRaisedRegion(SUNROOT_HIGHLANDS, "#72849a", "#465568", "#d4dbe5", 38);
+
+    drawScatter(BERRY_GLADE, 180, "rgba(177,215,84,0.22)", 4);
+    drawScatter(EMBER_BASIN, 200, "rgba(255,234,182,0.10)", 6);
+    drawScatter(SKYWATCH_CLIFFS, 180, "rgba(255,255,255,0.06)", 4);
+    drawScatter(SKYWATCH_CLIFFS, 150, "rgba(0,0,0,0.14)", 5);
+    drawScatter(STORM_CROWN, 170, "rgba(220,235,255,0.08)", 5);
+    drawScatter(STORM_CROWN, 150, "rgba(0,0,0,0.16)", 6);
+    drawScatter(SUNROOT_HIGHLANDS, 170, "rgba(255,255,255,0.08)", 5);
+    drawCanopyClusters(MOONFERN_WOODS, 84, "#2a7438", "rgba(8,24,13,0.30)", 12);
+    drawCanopyClusters(SUNROOT_JUNGLE, 102, "#1b7c34", "rgba(6,20,12,0.34)", 14);
+    drawCanopyClusters(BERRY_GLADE, 36, "#6aa23b", "rgba(20,40,18,0.18)", 10);
+
+    drawRaisedRegion({ x: 5000, y: 1820, w: 2200, h: 460 }, "#d4c084", "#8d7344", "#f1dfaf", 12);
+    drawRaisedRegion({ x: 6940, y: 1500, w: 2060, h: 380 }, "#d4c084", "#8d7344", "#f1dfaf", 12);
+    drawRaisedRegion({ x: 8600, y: 1280, w: 1400, h: 340 }, "#d4c084", "#8d7344", "#f1dfaf", 12);
+
+    const sea = ctx.createLinearGradient(0, startY + 1600, 0, startY + WORLD.height);
+    sea.addColorStop(0, "#2cb4ff");
+    sea.addColorStop(0.30, "#248bc8");
+    sea.addColorStop(0.68, "#1b6696");
+    sea.addColorStop(1, "#103d61");
+    ctx.fillStyle = sea;
+    ctx.fillRect(startX + 5200, startY + 2200, WORLD.width - 5200, WORLD.height - 2200);
+    ctx.fillRect(startX + 6800, startY + 1600, WORLD.width - 6800, 1000);
+    ctx.fillRect(startX + 4200, startY + 3980, WORLD.width - 4200, WORLD.height - 3980);
+    ctx.fillStyle = "#0b2946";
+    ctx.fillRect(startX + ABYSS_ZONE.x, startY + ABYSS_ZONE.y, ABYSS_ZONE.w, ABYSS_ZONE.h);
+    drawWaterHighlights({ x: 5200, y: 2200, w: WORLD.width - 5200, h: WORLD.height - 2200 }, 110, "rgba(224,248,255,0.12)");
+    drawWaterHighlights({ x: 6800, y: 1600, w: WORLD.width - 6800, h: 1000 }, 52, "rgba(224,248,255,0.14)");
+    drawWaterHighlights(ABYSS_ZONE, 38, "rgba(175,230,255,0.10)");
+
+    for (const island of ISLANDS) drawIsland(island);
+    for (const cave of SEA_CAVES) drawCave(cave);
+
+    drawEllipseBody(STARTER_POND.x, STARTER_POND.y, STARTER_POND.rx, STARTER_POND.ry, "#2c9ae2", "#c9f4ff");
+    drawEllipseBody(MOON_LAKE.x, MOON_LAKE.y, MOON_LAKE.rx, MOON_LAKE.ry, "#2e92d7", "#d9f6ff");
+    drawEllipseBody(OASIS.x, OASIS.y, OASIS.rx, OASIS.ry, "#2b98dc", "#d6f5ff");
+    drawEllipseBody(STORM_POOL.x, STORM_POOL.y, STORM_POOL.rx, STORM_POOL.ry, "#3a8ec3", "#dff6ff");
+    drawEllipseBody(ROOT_POOL.x, ROOT_POOL.y, ROOT_POOL.rx, ROOT_POOL.ry, "#2b95b9", "#d8fdff");
+
+    for (const river of RIVERS) {
+      ctx.fillStyle = "#28acee";
+      ctx.fillRect(startX + river.x, startY + river.y, river.w, river.h);
+      ctx.fillStyle = "#e4fbff";
+      ctx.fillRect(startX + river.x, startY + river.y + river.h * 0.24, river.w, river.h * 0.20);
+    }
+
+    for (const pool of HOT_POOLS) {
+      drawEllipseBody(pool.x, pool.y, pool.rx, pool.ry, "#b73c1d", "#ff9b47");
+    }
+
+    drawShrines();
+    drawGateStructures();
+
+    ctx.strokeStyle = "rgba(255,255,255,0.10)";
+    ctx.lineWidth = 2;
+    for (let x = 5200; x < WORLD.width; x += 210) {
+      const sx = startX + x;
+      const sy = startY + 2280 + Math.sin(x * 0.015 + game.time * 0.35) * 10;
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      ctx.quadraticCurveTo(sx + 50, sy - 7, sx + 110, sy);
+      ctx.stroke();
+    }
+    for (let x = EMBER_BASIN.x + 40; x < EMBER_BASIN.x + EMBER_BASIN.w; x += 170) {
+      const sx = startX + x;
+      const sy = startY + EMBER_BASIN.y + 260 + Math.sin(x * 0.02) * 10;
+      ctx.strokeStyle = "rgba(255,232,189,0.08)";
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      ctx.quadraticCurveTo(sx + 60, sy + 10, sx + 130, sy);
+      ctx.stroke();
+    }
+
+    drawWorldLabel("Nest Valley", 760, 150);
+    drawWorldLabel("Moonfern Woods", 2320, 150);
+    drawWorldLabel("Ember Basin", 4060, 150);
+    drawWorldLabel("Skywatch Cliffs", 5950, 150);
+    drawWorldLabel("Sapphire Reach", 6280, 1820);
+    drawWorldLabel("Tempest Crown", 7800, 150);
+    drawWorldLabel("Sunroot Frontier", 7870, 1880);
+    drawWorldLabel("Starfall Trench", 8240, 4200);
+    drawWorldLabel("Sunroot Highlands", 9250, 620);
+    drawWorldLabel("Whalebone Gulf", 9220, 3150);
+  }
+
+  function drawAtmosphereOverlay() {
+    const sunX = canvas.width * 0.74;
+    const sunY = canvas.height * 0.14;
+    const haze = ctx.createRadialGradient(sunX, sunY, 20, sunX, sunY, canvas.width * 0.58);
+    haze.addColorStop(0, "rgba(255,224,180,0.18)");
+    haze.addColorStop(0.25, "rgba(120,190,255,0.10)");
+    haze.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = haze;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    for (let i = 0; i < 4; i++) {
+      const alpha = 0.035 - i * 0.006;
+      ctx.fillStyle = `rgba(215,236,255,${alpha})`;
+      ctx.beginPath();
+      ctx.ellipse(canvas.width * (0.58 + i * 0.05), canvas.height * (0.20 + i * 0.08), canvas.width * (0.26 + i * 0.03), 42 + i * 8, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function drawCinematicGrade() {
+    const topGrade = ctx.createLinearGradient(0, 0, 0, canvas.height * 0.36);
+    topGrade.addColorStop(0, "rgba(3,8,14,0.34)");
+    topGrade.addColorStop(1, "rgba(3,8,14,0)");
+    ctx.fillStyle = topGrade;
+    ctx.fillRect(0, 0, canvas.width, canvas.height * 0.36);
+
+    const bottomGrade = ctx.createLinearGradient(0, canvas.height, 0, canvas.height * 0.52);
+    bottomGrade.addColorStop(0, "rgba(6,10,16,0.42)");
+    bottomGrade.addColorStop(1, "rgba(6,10,16,0)");
+    ctx.fillStyle = bottomGrade;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const vignette = ctx.createRadialGradient(canvas.width * 0.5, canvas.height * 0.45, canvas.width * 0.22, canvas.width * 0.5, canvas.height * 0.45, canvas.width * 0.76);
+    vignette.addColorStop(0, "rgba(0,0,0,0)");
+    vignette.addColorStop(1, "rgba(0,0,0,0.40)");
+    ctx.fillStyle = vignette;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+
+  function drawFoods() {
+    for (const food of game.foods) {
+      const p = worldToScreen(food.x, food.y);
+      if (p.x < -60 || p.x > canvas.width + 60 || p.y < -60 || p.y > canvas.height + 60) continue;
+      const def = FOOD[food.type];
+      const bob = Math.sin(food.wobble) * 2;
+      const lift = def.shape === "dragonfly"
+        ? 10 + Math.sin(game.time * 4 + food.x * 0.02) * 4
+        : def.shape === "fish" || def.shape === "reefEel" || def.shape === "squid"
+          ? 4 + Math.sin(game.time * 3 + food.y * 0.01) * 2
+          : def.moving
+            ? 3 + Math.sin(game.time * 2.4 + food.x * 0.01) * 1.5
+            : 0;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.scale(p.scale, p.scale);
+      drawPickupShadow(food.radius, lift, 0.18);
+      ctx.translate(0, -lift + bob);
+      if (food.senseGlow > 0) {
+        ctx.fillStyle = withAlpha("#a5ecff", food.senseGlow * 0.34);
+        ctx.beginPath();
+        ctx.arc(0, 0, food.radius * 2.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      switch (def.shape) {
+        case "berry":
+          ctx.fillStyle = "#3a9d52";
+          ctx.fillRect(-2, -2, 4, 10);
+          ctx.fillStyle = def.color;
+          ctx.beginPath();
+          ctx.arc(-5, 3, food.radius * 0.62, 0, Math.PI * 2);
+          ctx.arc(5, 1, food.radius * 0.68, 0, Math.PI * 2);
+          ctx.arc(0, -3, food.radius * 0.66, 0, Math.PI * 2);
+          ctx.fill();
+          break;
+        case "fern":
+          ctx.strokeStyle = def.color;
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(0, food.radius + 4);
+          ctx.lineTo(0, -food.radius - 4);
+          ctx.stroke();
+          for (let i = -2; i <= 2; i++) {
+            ctx.beginPath();
+            ctx.moveTo(0, i * 4);
+            ctx.lineTo((i % 2 === 0 ? -1 : 1) * (food.radius + 4), i * 4 - 6);
+            ctx.stroke();
+          }
+          break;
+        case "insect":
+          ctx.fillStyle = def.color;
+          ctx.beginPath();
+          ctx.ellipse(0, 0, food.radius, food.radius * 0.7, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = "#3b2b14";
+          ctx.lineWidth = 1.5;
+          for (let i = -1; i <= 1; i += 2) {
+            ctx.beginPath();
+            ctx.moveTo(-4, -1);
+            ctx.lineTo(-10, -6 * i);
+            ctx.moveTo(4, 1);
+            ctx.lineTo(10, 6 * i);
+            ctx.stroke();
+          }
+          break;
+        case "dragonfly":
+          ctx.strokeStyle = "#d6fbff";
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(-food.radius, -2);
+          ctx.lineTo(food.radius, -4);
+          ctx.moveTo(-food.radius, 2);
+          ctx.lineTo(food.radius, 4);
+          ctx.stroke();
+          ctx.fillStyle = def.color;
+          ctx.beginPath();
+          ctx.ellipse(0, 0, food.radius * 0.35, food.radius * 0.9, 0, 0, Math.PI * 2);
+          ctx.fill();
+          break;
+        case "egg":
+          ctx.fillStyle = def.color;
+          ctx.beginPath();
+          ctx.ellipse(0, 0, food.radius * 0.8, food.radius * 1.05, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = "rgba(0,0,0,0.12)";
+          ctx.stroke();
+          break;
+        case "boarling":
+          ctx.fillStyle = def.color;
+          ctx.beginPath();
+          ctx.ellipse(-1, 1, food.radius * 1.05, food.radius * 0.7, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(food.radius * 0.9, 0, food.radius * 0.38, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = "#f0d9bc";
+          ctx.lineWidth = 1.4;
+          ctx.beginPath();
+          ctx.moveTo(food.radius * 1.05, 0);
+          ctx.lineTo(food.radius * 1.35, -2);
+          ctx.moveTo(food.radius * 1.05, 3);
+          ctx.lineTo(food.radius * 1.35, 5);
+          ctx.stroke();
+          break;
+        case "herdling":
+          ctx.fillStyle = def.color;
+          ctx.beginPath();
+          ctx.ellipse(-2, 0, food.radius * 1.18, food.radius * 0.62, 0.05, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(food.radius * 1.05, -food.radius * 0.12, food.radius * 0.42, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = "#4b3923";
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.moveTo(-food.radius, 0);
+          ctx.lineTo(-food.radius * 1.8, -food.radius * 0.2);
+          ctx.stroke();
+          break;
+        case "carcass":
+          ctx.fillStyle = def.color;
+          ctx.beginPath();
+          ctx.ellipse(0, 0, food.radius * 1.15, food.radius * 0.72, -0.2, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = "#f1dcc6";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(-food.radius * 0.4, -food.radius * 0.6);
+          ctx.lineTo(-food.radius * 0.4, food.radius * 0.6);
+          ctx.moveTo(food.radius * 0.3, -food.radius * 0.4);
+          ctx.lineTo(food.radius * 0.3, food.radius * 0.4);
+          ctx.stroke();
+          break;
+        case "fish":
+          drawFishShape(food.radius, def.color);
+          break;
+        case "shellfish":
+          ctx.fillStyle = def.color;
+          ctx.beginPath();
+          ctx.moveTo(-food.radius, 3);
+          ctx.quadraticCurveTo(0, -food.radius, food.radius, 3);
+          ctx.quadraticCurveTo(0, food.radius, -food.radius, 3);
+          ctx.fill();
+          break;
+        case "crab":
+          ctx.fillStyle = def.color;
+          ctx.beginPath();
+          ctx.ellipse(0, 1, food.radius * 0.88, food.radius * 0.62, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.lineWidth = 2;
+          ctx.strokeStyle = withAlpha("#fff0d9", 0.9);
+          ctx.beginPath();
+          ctx.moveTo(-food.radius * 0.2, -food.radius * 0.1);
+          ctx.lineTo(-food.radius * 1.05, -food.radius * 0.9);
+          ctx.moveTo(food.radius * 0.2, -food.radius * 0.1);
+          ctx.lineTo(food.radius * 1.05, -food.radius * 0.9);
+          ctx.stroke();
+          ctx.strokeStyle = withAlpha("#724228", 0.85);
+          for (let i = -1; i <= 1; i += 2) {
+            ctx.beginPath();
+            ctx.moveTo(-food.radius * 0.4, food.radius * 0.15 * i);
+            ctx.lineTo(-food.radius * 1.15, food.radius * 0.45 * i);
+            ctx.moveTo(food.radius * 0.4, food.radius * 0.15 * i);
+            ctx.lineTo(food.radius * 1.15, food.radius * 0.45 * i);
+            ctx.moveTo(-food.radius * 0.3, food.radius * 0.45 * i);
+            ctx.lineTo(-food.radius * 0.9, food.radius * 0.95 * i);
+            ctx.moveTo(food.radius * 0.3, food.radius * 0.45 * i);
+            ctx.lineTo(food.radius * 0.9, food.radius * 0.95 * i);
+            ctx.stroke();
+          }
+          break;
+        case "reefEel":
+          ctx.strokeStyle = def.color;
+          ctx.lineWidth = Math.max(3, food.radius * 0.7);
+          ctx.beginPath();
+          ctx.moveTo(-food.radius * 1.3, food.radius * 0.3);
+          ctx.quadraticCurveTo(-food.radius * 0.3, -food.radius, food.radius * 0.5, 0);
+          ctx.quadraticCurveTo(food.radius * 1.1, food.radius * 0.9, food.radius * 1.4, -food.radius * 0.1);
+          ctx.stroke();
+          break;
+        case "squid":
+          ctx.fillStyle = def.color;
+          ctx.beginPath();
+          ctx.moveTo(0, -food.radius);
+          ctx.quadraticCurveTo(food.radius, 0, 0, food.radius);
+          ctx.quadraticCurveTo(-food.radius, 0, 0, -food.radius);
+          ctx.fill();
+          ctx.strokeStyle = withAlpha(def.color, 0.7);
+          ctx.lineWidth = 2;
+          for (let t = -2; t <= 2; t++) {
+            ctx.beginPath();
+            ctx.moveTo(t * 3, food.radius * 0.4);
+            ctx.lineTo(t * 5, food.radius * 1.5);
+            ctx.stroke();
+          }
+          break;
+        case "caveMushroom":
+          ctx.fillStyle = def.color;
+          ctx.beginPath();
+          ctx.arc(0, -2, food.radius, Math.PI, 0);
+          ctx.fill();
+          ctx.fillRect(-2, -2, 4, food.radius + 6);
+          break;
+        case "amberFruit":
+          ctx.fillStyle = "#6a451d";
+          ctx.fillRect(-2, -2, 4, 10);
+          ctx.fillStyle = def.color;
+          ctx.beginPath();
+          ctx.arc(-4, 0, food.radius * 0.62, 0, Math.PI * 2);
+          ctx.arc(4, 0, food.radius * 0.62, 0, Math.PI * 2);
+          ctx.fill();
+          break;
+        case "starBloom":
+          ctx.fillStyle = def.color;
+          for (let i = 0; i < 5; i++) {
+            const a = (Math.PI * 2 * i) / 5 - Math.PI / 2;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(Math.cos(a) * food.radius * 1.2, Math.sin(a) * food.radius * 1.2);
+            ctx.lineTo(Math.cos(a + 0.4) * food.radius * 0.5, Math.sin(a + 0.4) * food.radius * 0.5);
+            ctx.closePath();
+            ctx.fill();
+          }
+          ctx.fillStyle = "#fff6d2";
+          ctx.beginPath();
+          ctx.arc(0, 0, food.radius * 0.34, 0, Math.PI * 2);
+          ctx.fill();
+          break;
+        case "ammonite":
+          ctx.strokeStyle = def.color;
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(0, 0, food.radius * 0.9, 0, Math.PI * 1.85);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(0, 0, food.radius * 0.45, 0, Math.PI * 1.85);
+          ctx.stroke();
+          break;
+        default:
+          ctx.fillStyle = def.color;
+          ctx.beginPath();
+          ctx.arc(0, 0, food.radius, 0, Math.PI * 2);
+          ctx.fill();
+          break;
+      }
+      ctx.restore();
+    }
+  }
+
+  function drawFishShape(radius, color) {
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, radius * 1.2, radius * 0.72, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(radius * 1.1, 0);
+    ctx.lineTo(radius * 2, -radius * 0.8);
+    ctx.lineTo(radius * 2, radius * 0.8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "#0d3550";
+    ctx.beginPath();
+    ctx.arc(-radius * 0.4, -1, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function drawTreasures() {
+    for (const treasure of game.treasures) {
+      if (treasure.collected) continue;
+      const p = worldToScreen(treasure.x, treasure.y);
+      if (p.x < -40 || p.x > canvas.width + 40 || p.y < -40 || p.y > canvas.height + 40) continue;
+      const hover = 9 + Math.sin(game.time * 3 + treasure.x * 0.01) * 3;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.scale(p.scale, p.scale);
+      drawPickupShadow(18, hover, 0.24);
+      ctx.translate(0, -hover);
+      ctx.fillStyle = "#8a5a1e";
+      roundRect(-14, -10, 28, 20, 4);
+      ctx.fill();
+      ctx.fillStyle = "#d9a441";
+      roundRect(-14, -2, 28, 6, 3);
+      ctx.fill();
+      ctx.strokeStyle = "#ffd47c";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(0, -10);
+      ctx.lineTo(0, 10);
+      ctx.stroke();
+      ctx.fillStyle = "rgba(255,212,124,0.18)";
+      ctx.beginPath();
+      ctx.arc(0, 0, 22, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  function drawEnemies() {
+    for (const enemy of game.enemies) {
+      const p = worldToScreen(enemy.x, enemy.y);
+      if (p.x < -120 || p.x > canvas.width + 120 || p.y < -120 || p.y > canvas.height + 120) continue;
+      const def = ENEMY_TYPES[enemy.type];
+      const angle = Math.hypot(enemy.vx, enemy.vy) > 6 ? Math.atan2(enemy.vy, enemy.vx) : -0.08;
+      const lift = getCreatureLift(def.classType, enemy.x, enemy.y);
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.scale(p.scale, p.scale);
+      drawCreatureShadow(enemy.radius, lift);
+      ctx.restore();
+
+      ctx.save();
+      ctx.translate(p.x, p.y - lift);
+      ctx.scale(p.scale, p.scale);
+      ctx.rotate(angle);
+      if (enemy.senseGlow > 0) {
+        ctx.fillStyle = withAlpha("#ffb48a", enemy.senseGlow * 0.22);
+        ctx.beginPath();
+        ctx.arc(0, 0, enemy.radius * 2.4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      drawCreatureBody(def, enemy.radius, 2, enemy.hitTimer > 0);
+      ctx.restore();
+      drawEnemyHealthBar(enemy, p, lift);
+    }
+  }
+
+  function drawEnemyHealthBar(enemy, screenPos, lift = 0) {
+    const scale = screenPos.scale || 1;
+    const width = enemy.radius * 2.5 * scale;
+    const x = screenPos.x - width / 2;
+    const y = screenPos.y - lift - enemy.radius * 1.8 * scale;
+    ctx.fillStyle = "rgba(0,0,0,0.35)";
+    roundRect(x, y, width, 6 * scale, 3 * scale);
+    ctx.fill();
+    ctx.fillStyle = "#ff8a71";
+    roundRect(x, y, width * (enemy.health / enemy.maxHealth), 6 * scale, 3 * scale);
+    ctx.fill();
+  }
+
+  function drawPlayer() {
+    const player = game.player;
+    const p = worldToScreen(player.x, player.y);
+    const angle = Math.hypot(player.vx, player.vy) > 6 ? Math.atan2(player.vy, player.vx) : -0.08;
+    const power = AGE_STAGES[player.stage].visualPower;
+    const lift = getCreatureLift(game.species.classType, player.x, player.y);
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.scale(p.scale, p.scale);
+    drawCreatureShadow(player.radius, lift);
+    ctx.restore();
+
+    ctx.save();
+    ctx.translate(p.x, p.y - lift);
+    ctx.scale(p.scale, p.scale);
+    ctx.rotate(angle);
+    if (player.hitTimer > 0) {
+      ctx.fillStyle = "rgba(255,120,120,0.18)";
+      ctx.beginPath();
+      ctx.arc(0, 0, player.radius * 2.2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    if (player.morphTimer > 0) {
+      ctx.fillStyle = withAlpha("#ffe08a", player.morphTimer * 0.18);
+      ctx.beginPath();
+      ctx.arc(0, 0, player.radius * (2.1 + player.morphTimer), 0, Math.PI * 2);
+      ctx.fill();
+    }
+    drawCreatureBody(game.species, player.radius, power, player.hitTimer > 0);
+    if (player.attackSwing > 0) {
+      const alpha = player.attackSwing / 0.18;
+      ctx.strokeStyle = withAlpha(game.species.accent, alpha * 0.8);
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(player.radius * 0.35, 0, player.radius * 1.7, -0.8, 0.8);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawCreatureShadow(radius, lift = 0) {
+    const spread = 1 + lift * 0.02;
+    ctx.fillStyle = withAlpha("#000000", clamp(0.28 - lift * 0.006, 0.08, 0.28));
+    ctx.beginPath();
+    ctx.ellipse(0, radius * 0.95 + lift * 0.16, radius * 1.15 * spread, radius * 0.42 * spread, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function drawCreatureBody(def, radius, power = 0, flash = false) {
+    const bodyColor = flash ? "#fff1ea" : def.color;
+    const accent = def.accent;
+    const scaleBoost = 1 + power * 0.08;
+    const bellyColor = withAlpha("#fff7e0", flash ? 0.55 : 0.18);
+    const bodyShade = withAlpha("#07121b", 0.14);
+
+    const bodyGradient = ctx.createLinearGradient(-radius * 1.4, -radius * 1.2, radius * 1.8, radius * 1.4);
+    bodyGradient.addColorStop(0, withAlpha(accent, 0.30));
+    bodyGradient.addColorStop(0.26, bodyColor);
+    bodyGradient.addColorStop(1, withAlpha(bodyColor, 0.84));
+    ctx.fillStyle = bodyGradient;
+
+    if (def.classType === "air") {
+      ctx.beginPath();
+      ctx.ellipse(-2, 0, radius * 0.98 * scaleBoost, radius * 0.6 * scaleBoost, 0.05, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = withAlpha(accent, 0.88);
+      ctx.beginPath();
+      ctx.moveTo(-radius * 0.2, -radius * 0.15);
+      ctx.quadraticCurveTo(-radius * 1.4, -radius * (1.2 + power * 0.12), -radius * 2.05, -radius * 0.2);
+      ctx.quadraticCurveTo(-radius, radius * 0.15, -radius * 0.15, radius * 0.12);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(radius * 0.1, -radius * 0.15);
+      ctx.quadraticCurveTo(radius * 1.5, -radius * (1.25 + power * 0.12), radius * 2.15, -radius * 0.18);
+      ctx.quadraticCurveTo(radius * 0.9, radius * 0.15, radius * 0.14, radius * 0.12);
+      ctx.fill();
+    } else if (def.classType === "swimming") {
+      ctx.beginPath();
+      ctx.ellipse(-1, 0, radius * 1.24 * scaleBoost, radius * 0.72 * scaleBoost, 0.02, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      ctx.beginPath();
+      ctx.ellipse(-2, 0, radius * 1.2 * scaleBoost, radius * 0.74 * scaleBoost, 0.04, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.fillStyle = bellyColor;
+    ctx.beginPath();
+    ctx.ellipse(-radius * 0.05, radius * 0.18, radius * 0.76, radius * 0.26, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = bodyShade;
+    ctx.beginPath();
+    ctx.ellipse(radius * 0.08, radius * 0.14, radius * 0.88, radius * 0.38, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = withAlpha("#0b1620", 0.18);
+    ctx.lineWidth = Math.max(1.5, radius * 0.07);
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(-radius * 0.55, radius * 0.42);
+    ctx.lineTo(-radius * 0.52, radius * 1.0);
+    ctx.moveTo(radius * 0.3, radius * 0.38);
+    ctx.lineTo(radius * 0.26, radius * 1.04);
+    ctx.stroke();
+
+    ctx.fillStyle = bodyColor;
+    ctx.beginPath();
+    const headRadius = radius * (def.classType === "swimming" ? 0.5 : 0.46) * (1 + power * 0.05);
+    const headX = radius * 1.06;
+    const headY = def.head === "longneck" ? -radius * 0.45 : -radius * 0.14;
+    if (def.head === "longneck") {
+      ctx.strokeStyle = bodyColor;
+      ctx.lineWidth = radius * 0.45;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(radius * 0.2, -radius * 0.18);
+      ctx.quadraticCurveTo(radius * 0.9, -radius, radius * 1.25, -radius * 0.44);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(radius * 1.28, -radius * 0.48, radius * 0.34, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      ctx.arc(headX, headY, headRadius, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.strokeStyle = bodyColor;
+    ctx.lineCap = "round";
+    if (def.tail === "fin") {
+      ctx.lineWidth = radius * 0.38;
+      ctx.beginPath();
+      ctx.moveTo(-radius, 0);
+      ctx.quadraticCurveTo(-radius * 1.9, -radius * 0.2, -radius * 2.2, -radius * 0.05);
+      ctx.stroke();
+      ctx.fillStyle = accent;
+      ctx.beginPath();
+      ctx.moveTo(-radius * 2.1, -radius * 0.55);
+      ctx.lineTo(-radius * 2.75, 0);
+      ctx.lineTo(-radius * 2.1, radius * 0.55);
+      ctx.closePath();
+      ctx.fill();
+    } else {
+      ctx.lineWidth = radius * 0.33;
+      ctx.beginPath();
+      ctx.moveTo(-radius * 1.1, 0);
+      ctx.quadraticCurveTo(-radius * 2.0, -radius * 0.15, -radius * (2.5 + power * 0.1), -radius * 0.7);
+      ctx.stroke();
+    }
+
+    if (def.tail === "club") {
+      ctx.fillStyle = accent;
+      ctx.beginPath();
+      ctx.ellipse(-radius * 2.7, -radius * 0.82, radius * 0.42, radius * 0.28, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.fillStyle = accent;
+    if (def.back === "sail") {
+      ctx.beginPath();
+      ctx.moveTo(-radius * 0.7, -radius * 0.15);
+      ctx.lineTo(-radius * 0.2, -radius * (1.3 + power * 0.18));
+      ctx.lineTo(radius * 0.3, -radius * 0.18);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(0, -radius * 0.15);
+      ctx.lineTo(radius * 0.55, -radius * (1.2 + power * 0.18));
+      ctx.lineTo(radius * 0.95, -radius * 0.18);
+      ctx.fill();
+    } else if (def.back === "frill") {
+      ctx.beginPath();
+      ctx.arc(radius * 0.48, -radius * 0.2, radius * 0.62, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (def.back === "armor") {
+      for (let i = -1; i <= 2 + power; i++) {
+        ctx.beginPath();
+        ctx.arc(i * radius * 0.34, -radius * 0.18 - Math.abs(i) * 1.2, radius * 0.22, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else if (def.back === "plates") {
+      for (let i = -1; i <= 3 + Math.min(power, 2); i++) {
+        const x = i * radius * 0.33;
+        ctx.beginPath();
+        ctx.moveTo(x - radius * 0.1, -radius * 0.08);
+        ctx.lineTo(x, -radius * (0.72 + Math.abs(i) * 0.04 + power * 0.03));
+        ctx.lineTo(x + radius * 0.16, -radius * 0.12);
+        ctx.closePath();
+        ctx.fill();
+      }
+    } else if (def.back === "spikes") {
+      ctx.strokeStyle = accent;
+      ctx.lineWidth = Math.max(2, radius * 0.18);
+      ctx.beginPath();
+      for (let i = -2; i <= 2 + power; i++) {
+        ctx.moveTo(i * radius * 0.34, -radius * 0.18);
+        ctx.lineTo(i * radius * 0.34, -radius * (0.65 + (i % 2 ? 0.05 : 0.18)));
+      }
+      ctx.stroke();
+    } else if (def.back === "feathers") {
+      ctx.strokeStyle = accent;
+      ctx.lineWidth = Math.max(2, radius * 0.14);
+      ctx.beginPath();
+      for (let i = -1; i <= 2 + power; i++) {
+        ctx.moveTo(i * radius * 0.32, -radius * 0.08);
+        ctx.lineTo(i * radius * 0.32, -radius * (0.55 + power * 0.06));
+      }
+      ctx.stroke();
+    } else if (def.back === "ridge") {
+      ctx.strokeStyle = accent;
+      ctx.lineWidth = Math.max(2, radius * 0.15);
+      ctx.beginPath();
+      ctx.moveTo(-radius * 0.6, -radius * 0.08);
+      ctx.lineTo(radius * 0.65, -radius * (0.42 + power * 0.06));
+      ctx.stroke();
+    } else if (def.back === "scars") {
+      ctx.strokeStyle = withAlpha("#ffd2aa", 0.55);
+      ctx.lineWidth = Math.max(2, radius * 0.09);
+      ctx.beginPath();
+      ctx.moveTo(-radius * 0.15, -radius * 0.38);
+      ctx.lineTo(radius * 0.22, -radius * 0.05);
+      ctx.moveTo(radius * 0.02, -radius * 0.48);
+      ctx.lineTo(radius * 0.4, -radius * 0.18);
+      ctx.stroke();
+    }
+
+    if (def.head === "horns") {
+      ctx.strokeStyle = accent;
+      ctx.lineWidth = Math.max(2, radius * 0.17);
+      ctx.beginPath();
+      ctx.moveTo(radius * 1.12, -radius * 0.18);
+      ctx.lineTo(radius * (1.72 + power * 0.05), -radius * 0.62);
+      ctx.moveTo(radius * 1.04, radius * 0.04);
+      ctx.lineTo(radius * (1.70 + power * 0.05), radius * 0.46);
+      ctx.stroke();
+    } else if (def.head === "crest") {
+      ctx.fillStyle = accent;
+      ctx.beginPath();
+      ctx.moveTo(radius * 0.85, -radius * 0.22);
+      ctx.lineTo(radius * 1.62, -radius * (0.88 + power * 0.06));
+      ctx.lineTo(radius * 1.24, radius * 0.02);
+      ctx.closePath();
+      ctx.fill();
+    } else if (def.head === "feather") {
+      ctx.strokeStyle = accent;
+      ctx.lineWidth = Math.max(2, radius * 0.14);
+      ctx.beginPath();
+      ctx.moveTo(radius * 1.0, -radius * 0.28);
+      ctx.lineTo(radius * 1.48, -radius * (0.78 + power * 0.05));
+      ctx.stroke();
+    } else if (def.head === "dome") {
+      ctx.fillStyle = accent;
+      ctx.beginPath();
+      ctx.arc(radius * 1.0, -radius * 0.28, radius * 0.22, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (def.head === "beak") {
+      ctx.fillStyle = accent;
+      ctx.beginPath();
+      ctx.moveTo(radius * 1.0, -radius * 0.08);
+      ctx.lineTo(radius * 1.5, 0);
+      ctx.lineTo(radius * 1.0, radius * 0.16);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    if (power > 0) {
+      ctx.strokeStyle = withAlpha(accent, 0.52);
+      ctx.lineWidth = Math.max(2, radius * 0.12);
+      ctx.beginPath();
+      ctx.moveTo(-radius * 0.5, radius * 0.15);
+      ctx.lineTo(radius * 0.55, radius * 0.15);
+      ctx.stroke();
+    }
+    if (power > 1) {
+      ctx.strokeStyle = withAlpha("#ffffff", 0.25);
+      ctx.lineWidth = Math.max(2, radius * 0.10);
+      ctx.beginPath();
+      ctx.moveTo(-radius * 0.2, -radius * 0.34);
+      ctx.lineTo(radius * 0.7, -radius * 0.14);
+      ctx.stroke();
+    }
+    if (power > 2) {
+      ctx.fillStyle = withAlpha(accent, 0.18);
+      ctx.beginPath();
+      ctx.arc(0, 0, radius * 1.6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    if (power > 3) {
+      ctx.strokeStyle = withAlpha("#ffffff", 0.18 + power * 0.02);
+      ctx.lineWidth = Math.max(1.4, radius * 0.08);
+      ctx.beginPath();
+      ctx.moveTo(-radius * 0.5, -radius * 0.35);
+      ctx.quadraticCurveTo(radius * 0.25, -radius * 0.72, radius, -radius * 0.30);
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = "#0b1620";
+    ctx.beginPath();
+    const eyeX = def.head === "longneck" ? radius * 1.35 : radius * 1.14;
+    const eyeY = def.head === "longneck" ? -radius * 0.52 : -radius * 0.20;
+    ctx.arc(eyeX, eyeY, Math.max(2, radius * 0.10), 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = withAlpha("#ffffff", 0.65);
+    ctx.beginPath();
+    ctx.arc(eyeX - radius * 0.035, eyeY - radius * 0.03, Math.max(0.9, radius * 0.03), 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function drawEffects() {
+    for (const ripple of game.ripples) {
+      const p = worldToScreen(ripple.x, ripple.y);
+      const alpha = ripple.life / ripple.maxLife;
+      ctx.strokeStyle = withAlpha(ripple.color, alpha);
+      ctx.lineWidth = Math.max(1.2, 2 * p.scale);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, ripple.radius * p.scale, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    for (const particle of game.particles) {
+      const p = worldToScreen(particle.x, particle.y);
+      const alpha = particle.life / particle.maxLife;
+      ctx.fillStyle = withAlpha(particle.color, alpha * 0.18);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, particle.size * 2.2 * p.scale, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = withAlpha(particle.color, alpha);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, particle.size * p.scale, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    for (const text of game.texts) {
+      const p = worldToScreen(text.x, text.y - text.rise);
+      const alpha = text.life / text.maxLife;
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = "rgba(3,9,15,0.36)";
+      ctx.font = `700 ${Math.max(12, Math.round(text.size * clamp(p.scale, 0.84, 1.18)))}px Avenir Next, sans-serif`;
+      ctx.textAlign = "center";
+      ctx.fillText(text.text, p.x + 2, p.y + 2);
+      ctx.fillStyle = text.color;
+      ctx.fillText(text.text, p.x, p.y);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function drawScreenFlashes() {
+    for (const flash of game.flashes) {
+      const alpha = flash.life / flash.maxLife;
+      ctx.fillStyle = withAlpha(flash.color, alpha);
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+  }
+
+  function drawPulseEffects() {
+    if (game.pulseTimer <= 0 || game.state !== "play") return;
+    const player = game.player;
+    const p = worldToScreen(player.x, player.y);
+    const pulseRadius = Math.min(300, 90 + (1.35 - game.pulseTimer) * 220);
+    ctx.save();
+    ctx.strokeStyle = "rgba(159,232,255,0.26)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, pulseRadius, 0, Math.PI * 2);
+    ctx.stroke();
+
+    let nearestFood = null;
+    let nearestDistance = Infinity;
+    for (const food of game.foods) {
+      if (!game.species.diet.includes(food.type)) continue;
+      const d = dist(player.x, player.y, food.x, food.y);
+      if (d < nearestDistance) {
+        nearestFood = food;
+        nearestDistance = d;
+      }
+      if (d <= 980) {
+        const fp = worldToScreen(food.x, food.y);
+        ctx.strokeStyle = "rgba(255,255,255,0.10)";
+        ctx.setLineDash([5, 7]);
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(fp.x, fp.y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
+    for (const shrine of game.shrines) {
+      if (shrine.rewardCollected) continue;
+      const d = dist(player.x, player.y, shrine.centerX, shrine.centerY);
+      if (d <= 900) {
+        const sp = worldToScreen(shrine.centerX, shrine.centerY);
+        ctx.strokeStyle = "rgba(216,176,255,0.24)";
+        ctx.setLineDash([6, 6]);
+        ctx.beginPath();
+        ctx.arc(sp.x, sp.y, 24 + Math.sin(game.time * 6) * 4, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
+    for (const cave of SEA_CAVES) {
+      const d = dist(player.x, player.y, cave.x, cave.y);
+      if (!game.discoveredSecrets.has(cave.name) && d <= 760) {
+        const cp = worldToScreen(cave.x, cave.y);
+        ctx.strokeStyle = "rgba(255,212,124,0.24)";
+        ctx.setLineDash([6, 6]);
+        ctx.beginPath();
+        ctx.arc(cp.x, cp.y, 26 + Math.sin(game.time * 6) * 4, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
+    if (nearestFood) {
+      const dx = nearestFood.x - player.x;
+      const dy = nearestFood.y - player.y;
+      const angle = Math.atan2(dy, dx);
+      const arrowX = canvas.width / 2 + Math.cos(angle) * Math.min(canvas.width * 0.35, Math.hypot(dx, dy) * 0.12);
+      const arrowY = canvas.height / 2 + Math.sin(angle) * Math.min(canvas.height * 0.28, Math.hypot(dx, dy) * 0.12);
+      ctx.save();
+      ctx.translate(arrowX, arrowY);
+      ctx.rotate(angle);
+      ctx.fillStyle = "rgba(255,255,255,0.85)";
+      ctx.beginPath();
+      ctx.moveTo(18, 0);
+      ctx.lineTo(-8, -10);
+      ctx.lineTo(-8, 10);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+      ctx.fillStyle = "rgba(255,255,255,0.9)";
+      ctx.font = "700 14px Avenir Next, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(FOOD[nearestFood.type].name, arrowX, arrowY - 16);
+    }
+    ctx.restore();
+  }
+
+  function drawShrinePanel(shrine, x, y, width) {
+    const height = 126;
+    ctx.fillStyle = "rgba(8,16,25,0.76)";
+    roundRect(x, y, width, height, 18);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(179,214,240,0.13)";
+    roundRect(x, y, width, height, 18);
+    ctx.stroke();
+
+    ctx.fillStyle = "#eff8ff";
+    ctx.font = "700 18px Avenir Next, sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText(shrine.name, x + 16, y + 28);
+    ctx.fillStyle = "#c7dae6";
+    ctx.font = "500 13px Avenir Next, sans-serif";
+    wrapText(shrine.clue, x + 16, y + 50, width - 32, 16);
+
+    if (shrine.type === "trial") {
+      ctx.fillStyle = "#d8eaf7";
+      ctx.fillText(shrine.solved ? "Trial complete" : shrine.active ? `Enemies remaining: ${shrine.remainingEnemies}` : "Step into the circle to begin", x + 16, y + 100);
+      return;
+    }
+
+    const nodes = shrine.nodes;
+    const expected = getExpectedShrineNode(shrine);
+    nodes.forEach((node, index) => {
+      const cx = x + 24 + index * 44;
+      const cy = y + 98;
+      const baseColor = node.interaction === "sense" ? "#7de2ff" : node.interaction === "attack" ? "#ffbe87" : "#cfa9ff";
+      ctx.fillStyle = node.active ? baseColor : withAlpha(baseColor, 0.38);
+      ctx.strokeStyle = expected === node && !shrine.solved ? "rgba(255,255,255,0.48)" : "rgba(255,255,255,0.14)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      if (node.interaction === "sense") {
+        ctx.moveTo(cx, cy - 12);
+        ctx.lineTo(cx + 12, cy);
+        ctx.lineTo(cx, cy + 12);
+        ctx.lineTo(cx - 12, cy);
+        ctx.closePath();
+      } else if (node.interaction === "attack") {
+        ctx.moveTo(cx, cy - 12);
+        ctx.lineTo(cx + 12, cy - 3);
+        ctx.lineTo(cx + 8, cy + 12);
+        ctx.lineTo(cx - 8, cy + 12);
+        ctx.lineTo(cx - 12, cy - 3);
+        ctx.closePath();
+      } else {
+        ctx.arc(cx, cy, 12, 0, Math.PI * 2);
+      }
+      ctx.fill();
+      ctx.stroke();
+    });
+    if (shrine.timerRemaining > 0) {
+      const ratio = shrine.timerLimit <= 0 ? 0 : shrine.timerRemaining / shrine.timerLimit;
+      ctx.fillStyle = "rgba(255,255,255,0.12)";
+      roundRect(x + width - 148, y + 94, 120, 8, 4);
+      ctx.fill();
+      ctx.fillStyle = ratio > 0.4 ? "#ffd47c" : "#ff8a71";
+      roundRect(x + width - 148, y + 94, 120 * ratio, 8, 4);
+      ctx.fill();
+    }
+  }
+
+  function drawHud() {
+    const player = game.player;
+    const terrain = getTerrainAt(player.x, player.y);
+    const region = getRegionName(player.x, player.y);
+    const nextStage = getNextStage();
+    const focusedShrine = getFocusedShrine();
+
+    const leftW = 448;
+    const leftH = 196;
+    ctx.fillStyle = "rgba(8,16,25,0.74)";
+    roundRect(18, 18, leftW, leftH, 18);
+    ctx.fill();
+    const hudSheen = ctx.createLinearGradient(18, 18, 18, 18 + leftH);
+    hudSheen.addColorStop(0, "rgba(255,255,255,0.06)");
+    hudSheen.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = hudSheen;
+    roundRect(18, 18, leftW, leftH, 18);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(179,214,240,0.13)";
+    roundRect(18, 18, leftW, leftH, 18);
+    ctx.stroke();
+
+    ctx.fillStyle = "#eff8ff";
+    ctx.font = "700 24px Avenir Next, sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText(game.species.name + " • " + player.stageLabel, 34, 48);
+
+    ctx.font = "500 14px Avenir Next, sans-serif";
+    ctx.fillStyle = "#b8d3df";
+    ctx.fillText("Class: " + capitalize(game.species.classType) + "   •   Region: " + region, 34, 70);
+    ctx.fillText("Diet: " + getPreferredFoodText(), 34, 90);
+
+    drawBar(34, 104, 372, 14, player.xp, nextStage ? nextStage.xp : AGE_STAGES[AGE_STAGES.length - 1].xp, "#ffd47c", "XP");
+    drawBar(34, 126, 372, 12, player.hunger, player.maxHunger, "#c3f06d", "Hunger");
+    drawBar(34, 145, 372, 10, player.health, 100, "#ff8a71", "Health");
+    drawBar(34, 162, 372, 8, game.boostMeter, 100, "#79dfff", "Sprint");
+
+    ctx.fillStyle = "#d9f0ff";
+    ctx.font = "500 13px Avenir Next, sans-serif";
+    ctx.fillText("Kills: " + player.kills + "   •   Relics: " + player.relics + "   •   Pirate booty: " + player.booty, 34, 188);
+
+    const mapPanelW = 404;
+    const mapPanelH = 286;
+    const mapX = canvas.width - mapPanelW - 18;
+    const mapY = 18;
+    ctx.fillStyle = "rgba(8,16,25,0.74)";
+    roundRect(mapX, mapY, mapPanelW, mapPanelH, 18);
+    ctx.fill();
+    const mapSheen = ctx.createLinearGradient(mapX, mapY, mapX, mapY + mapPanelH);
+    mapSheen.addColorStop(0, "rgba(255,255,255,0.06)");
+    mapSheen.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = mapSheen;
+    roundRect(mapX, mapY, mapPanelW, mapPanelH, 18);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(179,214,240,0.13)";
+    roundRect(mapX, mapY, mapPanelW, mapPanelH, 18);
+    ctx.stroke();
+
+    ctx.fillStyle = "#eff8ff";
+    ctx.font = "700 20px Avenir Next, sans-serif";
+    ctx.fillText("Adventure Map", mapX + 18, mapY + 30);
+    drawMiniMap(mapX + 18, mapY + 44, mapPanelW - 36, 186);
+    ctx.font = "500 13px Avenir Next, sans-serif";
+    ctx.fillStyle = "#c4dbe8";
+    wrapText(getObjectiveText(), mapX + 18, mapY + 252, mapPanelW - 36, 17);
+
+    ctx.fillStyle = "rgba(8,16,25,0.76)";
+    roundRect(18, canvas.height - 58, 680, 40, 16);
+    ctx.fill();
+    ctx.fillStyle = "#dbeef9";
+    ctx.font = "500 14px Avenir Next, sans-serif";
+    ctx.fillText(game.pulseCooldown > 0 ? `Pulse recharging: ${game.pulseCooldown.toFixed(1)}s • F attack • Esc pause` : "WASD move • Shift sprint • F attack • Space pulse • Esc pause", 34, canvas.height - 33);
+
+    ctx.fillStyle = "rgba(8,16,25,0.74)";
+    roundRect(18, canvas.height - 104, 760, 36, 14);
+    ctx.fill();
+    ctx.fillStyle = "#eff8ff";
+    ctx.font = "600 14px Avenir Next, sans-serif";
+    ctx.fillText(getObjectiveText(), 34, canvas.height - 80);
+
+    if (focusedShrine) {
+      drawShrinePanel(focusedShrine, canvas.width - 386, canvas.height - 160, 368);
+    }
+
+    if (game.regionPopupTimer > 0) {
+      const alpha = Math.min(1, game.regionPopupTimer / 0.5);
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = "rgba(6,17,24,0.78)";
+      roundRect(canvas.width / 2 - 170, 20, 340, 48, 16);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(255,255,255,0.10)";
+      roundRect(canvas.width / 2 - 170, 20, 340, 48, 16);
+      ctx.stroke();
+      ctx.fillStyle = "#fff";
+      ctx.font = "700 20px Avenir Next, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(game.lastRegion, canvas.width / 2, 50);
+      ctx.restore();
+    }
+  }
+
+  function drawMiniMap(x, y, width, height) {
+    ctx.fillStyle = "rgba(255,255,255,0.05)";
+    roundRect(x, y, width, height, 14);
+    ctx.fill();
+    const toMapX = worldX => x + (worldX / WORLD.width) * width;
+    const toMapY = worldY => y + (worldY / WORLD.height) * height;
+    const mapW = w => (w / WORLD.width) * width;
+    const mapH = h => (h / WORLD.height) * height;
+
+    ctx.fillStyle = "#87a558";
+    roundRect(x + 4, y + 4, width - 8, height - 8, 12);
+    ctx.fill();
+    ctx.fillStyle = "#648b33";
+    ctx.fillRect(toMapX(BERRY_GLADE.x), toMapY(BERRY_GLADE.y), mapW(BERRY_GLADE.w), mapH(BERRY_GLADE.h));
+    ctx.fillStyle = "#1a5a2d";
+    ctx.fillRect(toMapX(MOONFERN_WOODS.x), toMapY(MOONFERN_WOODS.y), mapW(MOONFERN_WOODS.w), mapH(MOONFERN_WOODS.h));
+    ctx.fillStyle = "#b3874b";
+    ctx.fillRect(toMapX(EMBER_BASIN.x), toMapY(EMBER_BASIN.y), mapW(EMBER_BASIN.w), mapH(EMBER_BASIN.h));
+    ctx.fillStyle = "#708198";
+    ctx.fillRect(toMapX(SKYWATCH_CLIFFS.x), toMapY(SKYWATCH_CLIFFS.y), mapW(SKYWATCH_CLIFFS.w), mapH(SKYWATCH_CLIFFS.h));
+    ctx.fillStyle = "#556583";
+    ctx.fillRect(toMapX(STORM_CROWN.x), toMapY(STORM_CROWN.y), mapW(STORM_CROWN.w), mapH(STORM_CROWN.h));
+    ctx.fillStyle = "#185129";
+    ctx.fillRect(toMapX(SUNROOT_JUNGLE.x), toMapY(SUNROOT_JUNGLE.y), mapW(SUNROOT_JUNGLE.w), mapH(SUNROOT_JUNGLE.h));
+    ctx.fillStyle = "#74869c";
+    ctx.fillRect(toMapX(SUNROOT_HIGHLANDS.x), toMapY(SUNROOT_HIGHLANDS.y), mapW(SUNROOT_HIGHLANDS.w), mapH(SUNROOT_HIGHLANDS.h));
+
+    ctx.fillStyle = "#2cb4ff";
+    ctx.fillRect(toMapX(5200), toMapY(2200), mapW(WORLD.width - 5200), mapH(WORLD.height - 2200));
+    ctx.fillRect(toMapX(6800), toMapY(1600), mapW(WORLD.width - 6800), mapH(1000));
+    ctx.fillRect(toMapX(4200), toMapY(3980), mapW(WORLD.width - 4200), mapH(WORLD.height - 3980));
+    ctx.fillStyle = "#0b2846";
+    ctx.fillRect(toMapX(ABYSS_ZONE.x), toMapY(ABYSS_ZONE.y), mapW(ABYSS_ZONE.w), mapH(ABYSS_ZONE.h));
+
+    ctx.fillStyle = "#d4c084";
+    ctx.fillRect(toMapX(5000), toMapY(1820), mapW(2200), mapH(460));
+    ctx.fillRect(toMapX(6940), toMapY(1500), mapW(2060), mapH(380));
+    ctx.fillRect(toMapX(8600), toMapY(1280), mapW(1400), mapH(340));
+
+    ctx.fillStyle = "#36bcff";
+    ctx.beginPath();
+    ctx.ellipse(toMapX(STARTER_POND.x), toMapY(STARTER_POND.y), mapW(STARTER_POND.rx), mapH(STARTER_POND.ry), 0, 0, Math.PI * 2);
+    ctx.ellipse(toMapX(MOON_LAKE.x), toMapY(MOON_LAKE.y), mapW(MOON_LAKE.rx), mapH(MOON_LAKE.ry), 0, 0, Math.PI * 2);
+    ctx.ellipse(toMapX(OASIS.x), toMapY(OASIS.y), mapW(OASIS.rx), mapH(OASIS.ry), 0, 0, Math.PI * 2);
+    ctx.ellipse(toMapX(STORM_POOL.x), toMapY(STORM_POOL.y), mapW(STORM_POOL.rx), mapH(STORM_POOL.ry), 0, 0, Math.PI * 2);
+    ctx.ellipse(toMapX(ROOT_POOL.x), toMapY(ROOT_POOL.y), mapW(ROOT_POOL.rx), mapH(ROOT_POOL.ry), 0, 0, Math.PI * 2);
+    ctx.fill();
+    for (const river of RIVERS) {
+      ctx.fillRect(toMapX(river.x), toMapY(river.y), mapW(river.w), mapH(river.h));
+    }
+
+    ctx.fillStyle = "#b73c1d";
+    for (const pool of HOT_POOLS) {
+      ctx.beginPath();
+      ctx.ellipse(toMapX(pool.x), toMapY(pool.y), mapW(pool.rx), mapH(pool.ry), 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    for (const island of ISLANDS) {
+      ctx.fillStyle = "#d9c487";
+      ctx.beginPath();
+      ctx.ellipse(toMapX(island.x), toMapY(island.y), mapW(island.rx), mapH(island.ry), 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    for (const gate of GATES) {
+      ctx.strokeStyle = isGateUnlocked(gate) ? "rgba(184,240,136,0.75)" : "rgba(255,110,110,0.65)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(toMapX(gate.x), y + 4);
+      ctx.lineTo(toMapX(gate.x), toMapY(gate.openingY));
+      ctx.moveTo(toMapX(gate.x), toMapY(gate.openingY + gate.openingHeight));
+      ctx.lineTo(toMapX(gate.x), y + height - 4);
+      ctx.stroke();
+    }
+
+    for (const cave of SEA_CAVES) {
+      if (!game.discoveredSecrets.has(cave.name)) continue;
+      ctx.fillStyle = "#ffd47c";
+      ctx.beginPath();
+      ctx.arc(toMapX(cave.x), toMapY(cave.y), 3.4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    for (const shrine of game.shrines) {
+      ctx.fillStyle = shrine.rewardCollected ? "#9cf0c4" : shrine.solved ? "#e0b6ff" : "#a98dff";
+      ctx.beginPath();
+      ctx.rect(toMapX(shrine.centerX) - 2.5, toMapY(shrine.centerY) - 2.5, 5, 5);
+      ctx.fill();
+    }
+    const nextGate = getNextGate();
+    if (nextGate) {
+      ctx.fillStyle = "#b8f088";
+      ctx.beginPath();
+      ctx.arc(toMapX(nextGate.x), toMapY(nextGate.openingY + nextGate.openingHeight * 0.5), 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath();
+    ctx.arc(toMapX(game.player.x), toMapY(game.player.y), 4.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,0.6)";
+    ctx.stroke();
+
+    const viewX = toMapX(game.camera.x);
+    const viewY = toMapY(game.camera.y);
+    const viewW = mapW(canvas.width);
+    const viewH = mapH(canvas.height);
+    ctx.strokeStyle = "rgba(255,255,255,0.26)";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(viewX, viewY, viewW, viewH);
+  }
+
+  function drawGameOver() {
+    ctx.fillStyle = "rgba(0,0,0,0.56)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "rgba(8,16,25,0.92)";
+    roundRect(canvas.width / 2 - 290, canvas.height / 2 - 160, 580, 310, 24);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,0.10)";
+    roundRect(canvas.width / 2 - 290, canvas.height / 2 - 160, 580, 310, 24);
+    ctx.stroke();
+    ctx.fillStyle = "#fff";
+    ctx.textAlign = "center";
+    ctx.font = "700 38px Avenir Next, sans-serif";
+    ctx.fillText("Your dinosaur fell", canvas.width / 2, canvas.height / 2 - 82);
+    ctx.font = "500 16px Avenir Next, sans-serif";
+    ctx.fillStyle = "#c6dbe6";
+    ctx.fillText("You reached: " + game.player.stageLabel, canvas.width / 2, canvas.height / 2 - 40);
+    ctx.fillText("XP: " + Math.floor(game.player.xp) + "   •   Food eaten: " + game.player.foodEaten, canvas.width / 2, canvas.height / 2 - 10);
+    ctx.fillText("Kills: " + game.player.kills + "   •   Relics: " + game.player.relics + "   •   Pirate booty: " + game.player.booty, canvas.width / 2, canvas.height / 2 + 18);
+    ctx.fillText("Shrines cleared: " + game.shrines.filter(shrine => shrine.rewardCollected).length + " / " + game.shrines.length, canvas.width / 2, canvas.height / 2 + 46);
+    ctx.fillStyle = "#c3f06d";
+    ctx.font = "700 18px Avenir Next, sans-serif";
+    ctx.fillText("Press R to return to species select", canvas.width / 2, canvas.height / 2 + 102);
+  }
+
+  function drawPauseOverlay() {
+    ctx.fillStyle = "rgba(0,0,0,0.42)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "rgba(8,16,25,0.90)";
+    roundRect(canvas.width / 2 - 250, canvas.height / 2 - 116, 500, 220, 24);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,0.10)";
+    roundRect(canvas.width / 2 - 250, canvas.height / 2 - 116, 500, 220, 24);
+    ctx.stroke();
+    ctx.fillStyle = "#fff";
+    ctx.textAlign = "center";
+    ctx.font = "700 34px Avenir Next, sans-serif";
+    ctx.fillText("Game paused", canvas.width / 2, canvas.height / 2 - 36);
+    ctx.fillStyle = "#c6dbe6";
+    ctx.font = "500 16px Avenir Next, sans-serif";
+    ctx.fillText("Press Esc to jump back in.", canvas.width / 2, canvas.height / 2);
+    ctx.fillText("Press R to return to species select.", canvas.width / 2, canvas.height / 2 + 32);
+  }
+
+  function drawBar(x, y, width, height, value, maxValue, color, label) {
+    const ratio = clamp(maxValue <= 0 ? 0 : value / maxValue, 0, 1);
+    ctx.fillStyle = "rgba(255,255,255,0.10)";
+    roundRect(x, y, width, height, height / 2);
+    ctx.fill();
+    ctx.fillStyle = color;
+    roundRect(x, y, width * ratio, height, height / 2);
+    ctx.fill();
+    ctx.fillStyle = "#eff8ff";
+    ctx.font = "700 11px Avenir Next, sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText(label, x + 8, y + height - 3);
+    if (label === "XP") {
+      const next = getNextStage();
+      ctx.textAlign = "right";
+      const text = next ? `${Math.floor(value)} / ${next.xp}` : `${Math.floor(value)} / MAX`;
+      ctx.fillText(text, x + width - 8, y + height - 3);
+    }
+  }
+
+  function wrapText(text, x, y, maxWidth, lineHeight) {
+    const words = text.split(" ");
+    let line = "";
+    let currentY = y;
+    for (let i = 0; i < words.length; i++) {
+      const testLine = line + words[i] + " ";
+      const width = ctx.measureText(testLine).width;
+      if (width > maxWidth && i > 0) {
+        ctx.fillText(line, x, currentY);
+        line = words[i] + " ";
+        currentY += lineHeight;
+      } else {
+        line = testLine;
+      }
+    }
+    ctx.fillText(line, x, currentY);
+  }
+
+  function roundRect(x, y, width, height, radius) {
+    const r = Math.min(radius, width / 2, height / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + width, y, x + width, y + height, r);
+    ctx.arcTo(x + width, y + height, x, y + height, r);
+    ctx.arcTo(x, y + height, x, y, r);
+    ctx.arcTo(x, y, x + width, y, r);
+    ctx.closePath();
+  }
+
+  function togglePause() {
+    if (!game) return;
+    if (game.state === "play") {
+      game.state = "pause";
+      input.up = false;
+      input.down = false;
+      input.left = false;
+      input.right = false;
+      input.boost = false;
+      input.pulsePress = false;
+      input.attackPress = false;
+    } else if (game.state === "pause") {
+      game.state = "play";
+    }
+  }
+
+  window.addEventListener("keydown", event => {
+    const key = event.key.toLowerCase();
+    if (["w", "a", "s", "d", "arrowup", "arrowdown", "arrowleft", "arrowright", "shift", " ", "f", "escape", "r"].includes(key)) {
+      event.preventDefault();
+    }
+    if (key === "w" || key === "arrowup") input.up = true;
+    if (key === "s" || key === "arrowdown") input.down = true;
+    if (key === "a" || key === "arrowleft") input.left = true;
+    if (key === "d" || key === "arrowright") input.right = true;
+    if (key === "shift") input.boost = true;
+    if (key === " " && !event.repeat) input.pulsePress = true;
+    if (key === "f" && !event.repeat) input.attackPress = true;
+    if (key === "escape" && game && menu.classList.contains("hidden")) togglePause();
+    if (key === "r" && game && (game.state === "pause" || game.state === "gameover")) {
+      showMenu();
+    }
+  });
+
+  window.addEventListener("keyup", event => {
+    const key = event.key.toLowerCase();
+    if (key === "w" || key === "arrowup") input.up = false;
+    if (key === "s" || key === "arrowdown") input.down = false;
+    if (key === "a" || key === "arrowleft") input.left = false;
+    if (key === "d" || key === "arrowright") input.right = false;
+    if (key === "shift") input.boost = false;
+  });
+
+  canvas.addEventListener("mousedown", () => {
+    if (game && game.state === "play") input.attackPress = true;
+  });
+
+  let lastTime = 0;
+  function gameLoop(timestamp) {
+    const dt = Math.min(0.033, (timestamp - lastTime) / 1000 || 0.016);
+    lastTime = timestamp;
+    if (game && game.state === "play") {
+      update(dt);
+    }
+    draw();
+    requestAnimationFrame(gameLoop);
+  }
+  gameLoop();
+})();
+</script>
+</body>
+</html>

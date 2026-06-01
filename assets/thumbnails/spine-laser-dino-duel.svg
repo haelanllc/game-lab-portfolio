@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" role="img" aria-labelledby="title desc">
+  <title id="title">Spine Laser Dino Duel</title>
+  <desc id="desc">A large Zelda-style overworld with two theropod dinosaurs firing back-mounted lasers.</desc>
+  <defs>
+    <linearGradient id="field" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#49683d"/>
+      <stop offset="0.55" stop-color="#243d24"/>
+      <stop offset="1" stop-color="#162214"/>
+    </linearGradient>
+    <linearGradient id="beamA" x1="0" x2="1">
+      <stop offset="0" stop-color="#ff5f3d"/>
+      <stop offset="1" stop-color="#fff7df"/>
+    </linearGradient>
+    <linearGradient id="beamB" x1="1" x2="0">
+      <stop offset="0" stop-color="#46d9ff"/>
+      <stop offset="1" stop-color="#c9ff3f"/>
+    </linearGradient>
+    <pattern id="iso" width="96" height="56" patternUnits="userSpaceOnUse">
+      <path d="M48 0L96 28L48 56L0 28Z" fill="none" stroke="#fff7df" stroke-width="2" opacity="0.08"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="675" rx="36" fill="url(#field)"/>
+  <rect width="1200" height="675" rx="36" fill="url(#iso)"/>
+  <path d="M0 158L92 58L183 157L278 34L375 152L469 62L562 155L669 36L772 160L869 65L958 154L1065 45L1200 164V0H0Z" fill="#4b5660"/>
+  <path d="M96 58L126 126L92 112L183 157L278 34L235 140L375 152L469 62L436 136L562 155L669 36L630 140L772 160L869 65L835 135L958 154L1065 45L1030 134L1200 164V0H0V158Z" fill="#64717a" opacity="0.62"/>
+  <g opacity="0.95">
+    <ellipse cx="202" cy="470" rx="54" ry="24" fill="#0b0d0c" opacity="0.32"/>
+    <path d="M151 419C201 393 253 398 304 433C257 431 224 449 188 492C165 478 150 453 151 419Z" fill="#85d84c" stroke="#07080b" stroke-width="8"/>
+    <path d="M191 432L124 485L216 469Z" fill="#85d84c" stroke="#07080b" stroke-width="8"/>
+    <path d="M237 406L257 360L276 414M204 405L215 350L236 410" fill="#171a22" stroke="#07080b" stroke-width="8"/>
+    <circle cx="258" cy="364" r="10" fill="#ff5f3d"/>
+    <circle cx="216" cy="355" r="10" fill="#ff5f3d"/>
+  </g>
+  <g opacity="0.95">
+    <ellipse cx="955" cy="450" rx="58" ry="24" fill="#0b0d0c" opacity="0.32"/>
+    <path d="M1010 395C958 374 904 386 860 430C906 419 944 435 989 471C1008 454 1018 425 1010 395Z" fill="#39c7ff" stroke="#07080b" stroke-width="8"/>
+    <path d="M966 417L1048 454L947 456Z" fill="#39c7ff" stroke="#07080b" stroke-width="8"/>
+    <path d="M920 397L901 343L878 407M954 394L940 338L920 404" fill="#171a22" stroke="#07080b" stroke-width="8"/>
+    <circle cx="900" cy="348" r="10" fill="#c9ff3f"/>
+    <circle cx="940" cy="342" r="10" fill="#c9ff3f"/>
+  </g>
+  <path d="M278 380L848 326" stroke="url(#beamA)" stroke-width="34" stroke-linecap="round"/>
+  <path d="M922 373L369 430" stroke="url(#beamB)" stroke-width="26" stroke-linecap="round"/>
+  <path d="M278 380L848 326" stroke="#fff7df" stroke-width="8" stroke-linecap="round"/>
+  <g>
+    <circle cx="514" cy="470" r="38" fill="#747568" stroke="#242725" stroke-width="7"/>
+    <circle cx="661" cy="375" r="28" fill="#747568" stroke="#242725" stroke-width="6"/>
+    <path d="M760 482v-96" stroke="#2b1f17" stroke-width="18"/>
+    <ellipse cx="760" cy="350" rx="74" ry="55" fill="#1f6b38"/>
+    <path d="M388 526v-88" stroke="#2b1f17" stroke-width="16"/>
+    <ellipse cx="388" cy="410" rx="66" ry="50" fill="#2e8b48"/>
+  </g>
+  <rect x="54" y="54" width="1092" height="86" rx="20" fill="#08090d" stroke="#fff7df" stroke-width="6" opacity="0.92"/>
+  <text x="88" y="115" fill="#fff7df" font-family="Impact, Arial Black, sans-serif" font-size="54">SPINE LASER DINO OVERWORLD</text>
+</svg>

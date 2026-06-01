@@ -1,0 +1,788 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Scrapline Runner</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --coal: #14110e;
+        --steel: #26302f;
+        --line: #4d554e;
+        --paper: #f4efe2;
+        --muted: #c9c0ab;
+        --rust: #b5492e;
+        --spark: #f3b63b;
+        --mint: #76b78a;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 78% 18%, rgba(181, 73, 46, 0.2), transparent 26%),
+          repeating-linear-gradient(90deg, transparent 0 18px, rgba(255, 255, 255, 0.025) 18px 19px),
+          var(--coal);
+        color: var(--paper);
+        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      body {
+        display: grid;
+        place-items: center;
+        padding: 14px;
+      }
+
+      .shell {
+        position: relative;
+        width: min(100%, 1080px);
+        height: min(100%, 720px);
+        min-height: 520px;
+        border: 2px solid #090806;
+        background: #0f0d0b;
+        box-shadow: 0 28px 80px rgba(0, 0, 0, 0.46);
+      }
+
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        background: #171411;
+      }
+
+      .hud {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      .topbar {
+        position: absolute;
+        left: 18px;
+        right: 18px;
+        top: 16px;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .title {
+        margin: 0;
+        font-size: clamp(18px, 3vw, 30px);
+        font-weight: 950;
+        letter-spacing: 0;
+        line-height: 0.95;
+        text-transform: uppercase;
+      }
+
+      .subtitle {
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .meters {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 8px;
+        max-width: 52%;
+      }
+
+      .sound-toggle {
+        min-width: 86px;
+        padding: 8px 10px;
+        border: 1px solid rgba(244, 239, 226, 0.22);
+        background: rgba(15, 13, 11, 0.72);
+        color: var(--paper);
+        font: inherit;
+        font-size: 11px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-align: center;
+        text-transform: uppercase;
+        pointer-events: auto;
+        cursor: pointer;
+      }
+
+      .sound-toggle:focus-visible {
+        outline: 3px solid var(--spark);
+        outline-offset: 2px;
+      }
+
+      .meter {
+        min-width: 86px;
+        padding: 8px 10px;
+        border: 1px solid rgba(244, 239, 226, 0.22);
+        background: rgba(15, 13, 11, 0.72);
+        text-align: right;
+      }
+
+      .meter span {
+        display: block;
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .meter strong {
+        display: block;
+        margin-top: 2px;
+        color: #fff;
+        font-size: 19px;
+        font-variant-numeric: tabular-nums;
+        line-height: 1;
+      }
+
+      .overlay {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: linear-gradient(180deg, rgba(15, 13, 11, 0.4), rgba(15, 13, 11, 0.76));
+        pointer-events: auto;
+      }
+
+      .panel {
+        width: min(520px, 100%);
+        padding: 24px;
+        border: 1px solid rgba(244, 239, 226, 0.24);
+        background:
+          linear-gradient(135deg, rgba(181, 73, 46, 0.18), transparent 38%),
+          rgba(20, 17, 14, 0.92);
+        box-shadow: 0 18px 52px rgba(0, 0, 0, 0.36);
+      }
+
+      .panel h1 {
+        margin: 0 0 10px;
+        font-size: clamp(38px, 8vw, 64px);
+        font-weight: 950;
+        letter-spacing: 0;
+        line-height: 0.86;
+        text-transform: uppercase;
+      }
+
+      .panel p {
+        margin: 0 0 18px;
+        color: var(--muted);
+        font-size: 16px;
+        line-height: 1.45;
+      }
+
+      .controls {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-bottom: 18px;
+      }
+
+      .key {
+        padding: 9px;
+        border: 1px solid rgba(244, 239, 226, 0.18);
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--paper);
+        font-size: 12px;
+        font-weight: 850;
+        text-align: center;
+        text-transform: uppercase;
+      }
+
+      .start {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+        width: 100%;
+        border: 1px solid #1a0c07;
+        background: var(--rust);
+        color: #fff;
+        font: inherit;
+        font-weight: 900;
+        text-transform: uppercase;
+        cursor: pointer;
+      }
+
+      .start:focus-visible {
+        outline: 3px solid var(--spark);
+        outline-offset: 3px;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      @media (max-width: 620px) {
+        body {
+          padding: 0;
+        }
+
+        .shell {
+          width: 100%;
+          height: 100%;
+          min-height: 100%;
+          border: 0;
+        }
+
+        .topbar {
+          left: 12px;
+          right: 12px;
+          top: 12px;
+        }
+
+        .meters {
+          max-width: 58%;
+        }
+
+        .meter {
+          min-width: 68px;
+          padding: 7px 8px;
+        }
+
+        .sound-toggle {
+          min-width: 68px;
+          padding: 7px 8px;
+        }
+
+        .meter strong {
+          font-size: 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell" aria-label="Scrapline Runner game">
+      <canvas id="game" width="1080" height="720"></canvas>
+      <section class="hud" aria-live="polite">
+        <div class="topbar">
+          <div>
+            <h1 class="title">Scrapline Runner</h1>
+            <p class="subtitle">Hold the line. Grab sparks. Do not wreck.</p>
+          </div>
+          <div class="meters">
+            <div class="meter"><span>Score</span><strong id="score">0</strong></div>
+            <div class="meter"><span>Sparks</span><strong id="sparks">0</strong></div>
+            <div class="meter"><span>Best</span><strong id="best">0</strong></div>
+            <button class="sound-toggle" id="sound" type="button" aria-pressed="false">Sound on</button>
+          </div>
+        </div>
+      </section>
+      <div class="overlay" id="overlay">
+        <div class="panel">
+          <h1 id="panel-title">Scrapline Runner</h1>
+          <p id="panel-copy">Ride the broken service road, dodge barricades, and collect sparks before the yard catches you.</p>
+          <div class="controls" aria-label="Controls">
+            <div class="key">Arrow keys</div>
+            <div class="key">WASD</div>
+            <div class="key">Tap lanes</div>
+          </div>
+          <button class="start" id="start">Start run</button>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      const canvas = document.querySelector("#game");
+      const ctx = canvas.getContext("2d");
+      const overlay = document.querySelector("#overlay");
+      const panelTitle = document.querySelector("#panel-title");
+      const panelCopy = document.querySelector("#panel-copy");
+      const startButton = document.querySelector("#start");
+      const scoreEl = document.querySelector("#score");
+      const sparksEl = document.querySelector("#sparks");
+      const bestEl = document.querySelector("#best");
+      const soundButton = document.querySelector("#sound");
+
+      const lanes = [-0.34, -0.12, 0.12, 0.34];
+      const input = new Set();
+      const bestKey = "scrapline-runner-best";
+      const mutedKey = "scrapline-runner-muted";
+      let best = Number(localStorage.getItem(bestKey) || 0);
+      let muted = localStorage.getItem(mutedKey) === "true";
+      let state = "ready";
+      let then = performance.now();
+      let game;
+      let audio;
+
+      bestEl.textContent = best;
+      updateSoundButton();
+
+      function updateSoundButton() {
+        soundButton.textContent = muted ? "Sound off" : "Sound on";
+        soundButton.setAttribute("aria-pressed", String(!muted));
+      }
+
+      function initAudio() {
+        if (audio) return audio;
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return null;
+
+        const context = new AudioContext();
+        const master = context.createGain();
+        const music = context.createGain();
+        const sfx = context.createGain();
+        const filter = context.createBiquadFilter();
+        const delay = context.createDelay(0.35);
+        const feedback = context.createGain();
+
+        master.gain.value = muted ? 0 : 0.72;
+        music.gain.value = 0.42;
+        sfx.gain.value = 0.75;
+        filter.type = "lowpass";
+        filter.frequency.value = 1500;
+        filter.Q.value = 0.7;
+        delay.delayTime.value = 0.18;
+        feedback.gain.value = 0.22;
+
+        music.connect(filter);
+        filter.connect(master);
+        sfx.connect(master);
+        music.connect(delay);
+        delay.connect(feedback);
+        feedback.connect(delay);
+        delay.connect(master);
+        master.connect(context.destination);
+
+        audio = {
+          context,
+          master,
+          music,
+          sfx,
+          step: 0,
+          nextNote: 0,
+          tempo: 126,
+          running: false,
+          notes: [55, 55, 82.41, 65.41, 55, 73.42, 61.74, 49]
+        };
+        return audio;
+      }
+
+      async function resumeAudio() {
+        const system = initAudio();
+        if (!system) return;
+        if (system.context.state === "suspended") await system.context.resume();
+        system.running = true;
+        system.nextNote = system.context.currentTime;
+      }
+
+      function setMuted(value) {
+        muted = value;
+        localStorage.setItem(mutedKey, String(muted));
+        updateSoundButton();
+        if (audio) {
+          audio.master.gain.setTargetAtTime(muted ? 0 : 0.72, audio.context.currentTime, 0.02);
+        }
+      }
+
+      function tone(destination, frequency, start, duration, type, peak) {
+        const osc = audio.context.createOscillator();
+        const gain = audio.context.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(frequency, start);
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(peak, start + 0.012);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+        osc.connect(gain);
+        gain.connect(destination);
+        osc.start(start);
+        osc.stop(start + duration + 0.02);
+      }
+
+      function noiseHit(start, duration, peak, filterFrequency) {
+        if (!audio) return;
+        const bufferSize = Math.max(1, Math.floor(audio.context.sampleRate * duration));
+        const buffer = audio.context.createBuffer(1, bufferSize, audio.context.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i += 1) data[i] = Math.random() * 2 - 1;
+
+        const source = audio.context.createBufferSource();
+        const gain = audio.context.createGain();
+        const filter = audio.context.createBiquadFilter();
+        source.buffer = buffer;
+        filter.type = "bandpass";
+        filter.frequency.value = filterFrequency;
+        filter.Q.value = 5;
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(peak, start + 0.006);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+        source.connect(filter);
+        filter.connect(gain);
+        gain.connect(audio.sfx);
+        source.start(start);
+      }
+
+      function playPickupSound() {
+        if (!audio || muted) return;
+        const now = audio.context.currentTime;
+        tone(audio.sfx, 740, now, 0.09, "square", 0.15);
+        tone(audio.sfx, 1110, now + 0.055, 0.08, "triangle", 0.12);
+      }
+
+      function playCrashSound() {
+        if (!audio || muted) return;
+        const now = audio.context.currentTime;
+        noiseHit(now, 0.42, 0.55, 260);
+        tone(audio.sfx, 72, now, 0.34, "sawtooth", 0.32);
+      }
+
+      function scheduleMusic() {
+        if (!audio || !audio.running || muted) return;
+        const now = audio.context.currentTime;
+        const beat = 60 / audio.tempo;
+
+        while (audio.nextNote < now + 0.12) {
+          const step = audio.step % 16;
+          const note = audio.notes[step % audio.notes.length];
+          const accent = step % 4 === 0 ? 1 : 0.72;
+          tone(audio.music, note, audio.nextNote, beat * 0.72, "sawtooth", 0.09 * accent);
+          if (step % 2 === 0) tone(audio.music, note / 2, audio.nextNote, beat * 0.9, "triangle", 0.07);
+          if (step % 4 === 2) tone(audio.music, note * 1.5, audio.nextNote, beat * 0.28, "square", 0.035);
+          noiseHit(audio.nextNote + beat * 0.52, 0.035, step % 4 === 0 ? 0.07 : 0.045, 5600);
+          audio.step += 1;
+          audio.nextNote += beat / 2;
+        }
+      }
+
+      function reset() {
+        game = {
+          time: 0,
+          speed: 440,
+          score: 0,
+          sparks: 0,
+          lane: 1,
+          targetLane: 1,
+          playerX: 0,
+          obstacles: [],
+          pickups: [],
+          marks: [],
+          spawnObstacle: 0.55,
+          spawnPickup: 0.88,
+          shake: 0,
+          flash: 0
+        };
+        game.playerX = laneX(game.lane);
+        for (let i = 0; i < 34; i += 1) {
+          game.marks.push({ x: Math.random(), y: Math.random(), w: 22 + Math.random() * 70 });
+        }
+        scoreEl.textContent = "0";
+        sparksEl.textContent = "0";
+      }
+
+      function laneX(index) {
+        return canvas.width * (0.5 + lanes[index]);
+      }
+
+      function clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+      }
+
+      async function start() {
+        await resumeAudio();
+        reset();
+        state = "playing";
+        overlay.classList.add("hidden");
+        then = performance.now();
+      }
+
+      function endRun() {
+        state = "over";
+        best = Math.max(best, Math.floor(game.score));
+        localStorage.setItem(bestKey, String(best));
+        bestEl.textContent = best;
+        panelTitle.textContent = "Run wrecked";
+        panelCopy.textContent = `Score ${Math.floor(game.score)} with ${game.sparks} sparks. Hit start and take the road back.`;
+        startButton.textContent = "Run again";
+        overlay.classList.remove("hidden");
+      }
+
+      function spawnObstacle() {
+        const lane = Math.floor(Math.random() * lanes.length);
+        const type = Math.random() > 0.66 ? "barrel" : "block";
+        game.obstacles.push({ lane, y: -90, type, hit: false });
+      }
+
+      function spawnPickup() {
+        const lane = Math.floor(Math.random() * lanes.length);
+        game.pickups.push({ lane, y: -60, spin: Math.random() * Math.PI });
+      }
+
+      function moveLane(delta) {
+        if (state !== "playing") return;
+        game.targetLane = clamp(game.targetLane + delta, 0, lanes.length - 1);
+      }
+
+      function update(dt) {
+        if (state !== "playing") return;
+
+        game.time += dt;
+        game.speed += dt * 18;
+        game.score += dt * (game.speed * 0.055 + game.sparks * 0.35);
+        game.spawnObstacle -= dt;
+        game.spawnPickup -= dt;
+        game.shake = Math.max(0, game.shake - dt * 18);
+        game.flash = Math.max(0, game.flash - dt * 4);
+
+        if (input.has("ArrowLeft") || input.has("KeyA")) {
+          moveLane(-1);
+          input.delete("ArrowLeft");
+          input.delete("KeyA");
+        }
+        if (input.has("ArrowRight") || input.has("KeyD")) {
+          moveLane(1);
+          input.delete("ArrowRight");
+          input.delete("KeyD");
+        }
+
+        const targetX = laneX(game.targetLane);
+        game.playerX += (targetX - game.playerX) * Math.min(1, dt * 12);
+
+        if (game.spawnObstacle <= 0) {
+          spawnObstacle();
+          game.spawnObstacle = Math.max(0.32, 0.88 - game.time * 0.008 - Math.random() * 0.18);
+        }
+        if (game.spawnPickup <= 0) {
+          spawnPickup();
+          game.spawnPickup = 0.72 + Math.random() * 0.7;
+        }
+
+        for (const mark of game.marks) {
+          mark.y += dt * game.speed * 0.0013;
+          if (mark.y > 1.05) {
+            mark.y = -0.04;
+            mark.x = Math.random();
+            mark.w = 22 + Math.random() * 70;
+          }
+        }
+
+        for (const obstacle of game.obstacles) {
+          obstacle.y += dt * game.speed;
+          if (!obstacle.hit && Math.abs(obstacle.y - 575) < 44 && Math.abs(laneX(obstacle.lane) - game.playerX) < 48) {
+            obstacle.hit = true;
+            game.shake = 1;
+            game.flash = 1;
+            playCrashSound();
+            endRun();
+          }
+        }
+
+        for (const pickup of game.pickups) {
+          pickup.y += dt * game.speed * 0.9;
+          pickup.spin += dt * 8;
+          if (!pickup.got && Math.abs(pickup.y - 575) < 46 && Math.abs(laneX(pickup.lane) - game.playerX) < 54) {
+            pickup.got = true;
+            game.sparks += 1;
+            game.score += 90;
+            game.flash = 0.35;
+            playPickupSound();
+          }
+        }
+
+        game.obstacles = game.obstacles.filter((item) => item.y < canvas.height + 120);
+        game.pickups = game.pickups.filter((item) => item.y < canvas.height + 80 && !item.got);
+        scoreEl.textContent = String(Math.floor(game.score));
+        sparksEl.textContent = String(game.sparks);
+      }
+
+      function drawRoad() {
+        const w = canvas.width;
+        const h = canvas.height;
+        ctx.fillStyle = "#15120e";
+        ctx.fillRect(0, 0, w, h);
+
+        const shakeX = (Math.random() - 0.5) * game.shake * 12;
+        ctx.save();
+        ctx.translate(shakeX, 0);
+
+        const roadTop = w * 0.22;
+        const roadBottom = w * 0.78;
+        const topY = 60;
+        const bottomY = h;
+        const gradient = ctx.createLinearGradient(0, topY, 0, bottomY);
+        gradient.addColorStop(0, "#202725");
+        gradient.addColorStop(1, "#2f3029");
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.moveTo(roadTop, topY);
+        ctx.lineTo(w - roadTop, topY);
+        ctx.lineTo(roadBottom, bottomY);
+        ctx.lineTo(w - roadBottom, bottomY);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.strokeStyle = "rgba(244,239,226,0.2)";
+        ctx.lineWidth = 3;
+        for (let i = 0; i < lanes.length; i += 1) {
+          const x = laneX(i);
+          ctx.beginPath();
+          ctx.moveTo(w / 2 + (x - w / 2) * 0.25, topY);
+          ctx.lineTo(x, bottomY);
+          ctx.stroke();
+        }
+
+        ctx.strokeStyle = "rgba(181,73,46,0.5)";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(w * 0.2, topY);
+        ctx.lineTo(w * 0.12, h);
+        ctx.moveTo(w * 0.8, topY);
+        ctx.lineTo(w * 0.88, h);
+        ctx.stroke();
+
+        for (const mark of game.marks) {
+          const y = mark.y * h;
+          const x = w * 0.24 + mark.x * w * 0.52;
+          ctx.fillStyle = "rgba(244,239,226,0.09)";
+          ctx.fillRect(x, y, mark.w, 2);
+        }
+
+        ctx.restore();
+      }
+
+      function drawObstacle(obstacle) {
+        const x = laneX(obstacle.lane);
+        const y = obstacle.y;
+        const scale = 0.55 + y / canvas.height * 0.55;
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(scale, scale);
+        ctx.fillStyle = obstacle.type === "barrel" ? "#8f3c28" : "#28221c";
+        ctx.strokeStyle = "#080706";
+        ctx.lineWidth = 4;
+        if (obstacle.type === "barrel") {
+          ctx.beginPath();
+          ctx.roundRect(-32, -28, 64, 56, 10);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = "#d09438";
+          ctx.fillRect(-32, -5, 64, 9);
+        } else {
+          ctx.beginPath();
+          ctx.roundRect(-44, -24, 88, 48, 4);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = "#b5492e";
+          ctx.fillRect(-34, -18, 18, 36);
+          ctx.fillRect(8, -18, 18, 36);
+        }
+        ctx.restore();
+      }
+
+      function drawPickup(pickup) {
+        const x = laneX(pickup.lane);
+        const y = pickup.y;
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(pickup.spin);
+        ctx.fillStyle = "#f3b63b";
+        ctx.strokeStyle = "#fff2b8";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, -18);
+        ctx.lineTo(11, -4);
+        ctx.lineTo(19, 0);
+        ctx.lineTo(11, 4);
+        ctx.lineTo(0, 18);
+        ctx.lineTo(-11, 4);
+        ctx.lineTo(-19, 0);
+        ctx.lineTo(-11, -4);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function drawPlayer() {
+        const x = game.playerX;
+        const y = 575;
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.fillStyle = "#0b0a08";
+        ctx.fillRect(-38, 24, 76, 12);
+        ctx.fillStyle = "#76b78a";
+        ctx.strokeStyle = "#080706";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(0, -54);
+        ctx.lineTo(42, 10);
+        ctx.lineTo(22, 42);
+        ctx.lineTo(-22, 42);
+        ctx.lineTo(-42, 10);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = "#f3b63b";
+        ctx.fillRect(-12, -32, 24, 18);
+        ctx.fillStyle = "#b5492e";
+        ctx.fillRect(-30, 4, 60, 10);
+        ctx.restore();
+      }
+
+      function drawOverlayFlash() {
+        if (game.flash <= 0) return;
+        ctx.fillStyle = `rgba(243, 182, 59, ${game.flash * 0.14})`;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      function draw() {
+        if (!game) reset();
+        drawRoad();
+        for (const pickup of game.pickups) drawPickup(pickup);
+        for (const obstacle of game.obstacles) drawObstacle(obstacle);
+        drawPlayer();
+        drawOverlayFlash();
+      }
+
+      function loop(now) {
+        const dt = Math.min(0.033, (now - then) / 1000);
+        then = now;
+        scheduleMusic();
+        update(dt);
+        draw();
+        requestAnimationFrame(loop);
+      }
+
+      window.addEventListener("keydown", (event) => {
+        if (["ArrowLeft", "ArrowRight", "KeyA", "KeyD"].includes(event.code)) {
+          event.preventDefault();
+          input.add(event.code);
+        }
+        if ((event.code === "Space" || event.code === "Enter") && state !== "playing") {
+          event.preventDefault();
+          void start();
+        }
+      });
+
+      canvas.addEventListener("pointerdown", (event) => {
+        if (state !== "playing") {
+          void start();
+          return;
+        }
+        const rect = canvas.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        moveLane(x < rect.width / 2 ? -1 : 1);
+      });
+
+      startButton.addEventListener("click", () => void start());
+      soundButton.addEventListener("click", () => {
+        void resumeAudio();
+        setMuted(!muted);
+      });
+      reset();
+      requestAnimationFrame(loop);
+    </script>
+  </body>
+</html>

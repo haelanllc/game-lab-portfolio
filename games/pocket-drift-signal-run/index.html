@@ -1,0 +1,548 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+    <meta name="description" content="Pocket Drift: Signal Run is a mobile-only one-thumb canvas game.">
+    <title>Pocket Drift: Signal Run</title>
+    <style>
+      :root {
+        --paper: #f2f0e8;
+        --ink: #15120e;
+        --muted: #665f55;
+        --gold: #d4b255;
+        --gold-deep: #986d12;
+        --coral: #aa3f28;
+        --teal: #123b3d;
+        --line: rgba(246, 243, 236, 0.18);
+      }
+
+      * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background: var(--ink);
+        color: var(--paper);
+        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        overscroll-behavior: none;
+      }
+
+      body {
+        position: fixed;
+        inset: 0;
+      }
+
+      .game-shell {
+        position: relative;
+        width: 100vw;
+        height: 100svh;
+        min-height: 480px;
+        overflow: hidden;
+        background:
+          linear-gradient(180deg, rgba(18, 59, 61, 0.42), transparent 38%),
+          radial-gradient(circle at 50% 110%, rgba(212, 178, 85, 0.22), transparent 36%),
+          #15120e;
+        touch-action: none;
+      }
+
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        touch-action: none;
+      }
+
+      .hud {
+        position: absolute;
+        top: max(14px, env(safe-area-inset-top));
+        left: 14px;
+        right: 14px;
+        z-index: 2;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+        align-items: start;
+        pointer-events: none;
+      }
+
+      .title-block {
+        min-width: 0;
+      }
+
+      .eyebrow {
+        margin: 0 0 4px;
+        color: rgba(246, 243, 236, 0.62);
+        font-size: 10px;
+        font-weight: 850;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(24px, 8vw, 38px);
+        line-height: 0.95;
+        letter-spacing: 0;
+      }
+
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(62px, auto));
+        gap: 6px;
+      }
+
+      .metric {
+        padding: 8px 9px;
+        border: 1px solid var(--line);
+        background: rgba(21, 18, 14, 0.56);
+        text-align: right;
+        backdrop-filter: blur(12px);
+      }
+
+      .metric span {
+        display: block;
+        color: rgba(246, 243, 236, 0.62);
+        font-size: 9px;
+        font-weight: 850;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .metric strong {
+        display: block;
+        margin-top: 2px;
+        font-variant-numeric: tabular-nums;
+        font-size: 21px;
+        line-height: 1;
+      }
+
+      .message {
+        position: absolute;
+        left: 18px;
+        right: 18px;
+        bottom: max(26px, env(safe-area-inset-bottom));
+        z-index: 3;
+        display: grid;
+        gap: 12px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        background: rgba(21, 18, 14, 0.72);
+        backdrop-filter: blur(18px);
+      }
+
+      .message p {
+        margin: 0;
+        color: rgba(246, 243, 236, 0.76);
+        font-size: 14px;
+        line-height: 1.42;
+      }
+
+      .message strong {
+        color: #fff;
+      }
+
+      .actions {
+        display: flex;
+        gap: 8px;
+      }
+
+      button,
+      a {
+        display: inline-flex;
+        min-height: 42px;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 13px;
+        border: 1px solid rgba(246, 243, 236, 0.28);
+        border-radius: 3px;
+        background: var(--gold);
+        color: var(--ink);
+        font: inherit;
+        font-size: 14px;
+        font-weight: 850;
+        text-decoration: none;
+      }
+
+      a {
+        background: transparent;
+        color: var(--paper);
+      }
+
+      .desktop-lock {
+        position: fixed;
+        inset: 0;
+        z-index: 6;
+        display: none;
+        place-items: center;
+        padding: 28px;
+        background: var(--paper);
+        color: var(--ink);
+        text-align: center;
+      }
+
+      .desktop-lock > div {
+        width: min(420px, 100%);
+        padding: 24px;
+        border: 1px solid #d3cabb;
+        background: #fff;
+      }
+
+      .desktop-lock h2 {
+        margin: 0 0 10px;
+        font-size: 30px;
+        line-height: 1;
+      }
+
+      .desktop-lock p {
+        margin: 0 0 18px;
+        color: var(--muted);
+        line-height: 1.45;
+      }
+
+      @media (min-width: 760px) {
+        .desktop-lock {
+          display: grid;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="game-shell" id="game">
+      <canvas id="canvas" aria-label="Pocket Drift Signal Run playfield"></canvas>
+      <section class="hud" aria-label="Game status">
+        <div class="title-block">
+          <p class="eyebrow">Mobile-only build</p>
+          <h1>Pocket Drift</h1>
+        </div>
+        <div class="metrics">
+          <div class="metric"><span>Score</span><strong id="score">0</strong></div>
+          <div class="metric"><span>Best</span><strong id="best">0</strong></div>
+        </div>
+      </section>
+      <section class="message" id="message">
+        <p><strong>Hold and drag.</strong> Stay inside the gold gates, collect white pulses, and avoid coral blocks. Release to pause.</p>
+        <div class="actions">
+          <button id="start" type="button">Start run</button>
+          <a href="/#games">Games</a>
+        </div>
+      </section>
+      <section class="desktop-lock" aria-label="Mobile only">
+        <div>
+          <h2>Phone game</h2>
+          <p>This build is tuned for one-thumb portrait play. Open it on a phone from the game index.</p>
+          <a href="/#games">Back to games</a>
+        </div>
+      </section>
+    </main>
+    <script>
+      const canvas = document.querySelector("#canvas");
+      const ctx = canvas.getContext("2d");
+      const scoreEl = document.querySelector("#score");
+      const bestEl = document.querySelector("#best");
+      const message = document.querySelector("#message");
+      const startButton = document.querySelector("#start");
+      const bestKey = "pocket-drift-best";
+
+      const state = {
+        running: false,
+        ended: false,
+        touching: false,
+        width: 0,
+        height: 0,
+        dpr: 1,
+        score: 0,
+        best: Number(localStorage.getItem(bestKey) || 0),
+        speed: 2.8,
+        spawn: 0,
+        pulseSpawn: 0,
+        lastTime: 0,
+        player: { x: 0, y: 0, r: 15, targetX: 0 },
+        gates: [],
+        blocks: [],
+        pulses: [],
+        particles: []
+      };
+
+      bestEl.textContent = state.best;
+
+      function resize() {
+        state.dpr = Math.min(window.devicePixelRatio || 1, 2);
+        state.width = Math.floor(window.innerWidth);
+        state.height = Math.floor(window.innerHeight);
+        canvas.width = Math.floor(state.width * state.dpr);
+        canvas.height = Math.floor(state.height * state.dpr);
+        canvas.style.width = `${state.width}px`;
+        canvas.style.height = `${state.height}px`;
+        ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+        state.player.y = state.height * 0.73;
+        if (!state.running) {
+          state.player.x = state.width / 2;
+          state.player.targetX = state.player.x;
+        }
+      }
+
+      function reset() {
+        state.running = true;
+        state.ended = false;
+        state.score = 0;
+        state.speed = Math.max(2.8, state.height / 250);
+        state.spawn = 20;
+        state.pulseSpawn = 50;
+        state.gates = [];
+        state.blocks = [];
+        state.pulses = [];
+        state.particles = [];
+        state.player.x = state.width / 2;
+        state.player.targetX = state.player.x;
+        message.style.display = "none";
+        scoreEl.textContent = "0";
+      }
+
+      function endRun() {
+        state.running = false;
+        state.ended = true;
+        state.best = Math.max(state.best, Math.floor(state.score));
+        localStorage.setItem(bestKey, String(state.best));
+        bestEl.textContent = state.best;
+        startButton.textContent = "Restart";
+        message.querySelector("p").innerHTML = `<strong>Run complete.</strong> Score ${Math.floor(state.score)}. Hold and drag to thread the next signal path.`;
+        message.style.display = "grid";
+      }
+
+      function pauseRun() {
+        if (!state.running) return;
+        state.running = false;
+        startButton.textContent = "Resume";
+        message.querySelector("p").innerHTML = "<strong>Paused.</strong> Hold the screen and drag to continue.";
+        message.style.display = "grid";
+      }
+
+      function addParticles(x, y, color, count = 8) {
+        for (let i = 0; i < count; i += 1) {
+          state.particles.push({
+            x,
+            y,
+            vx: (Math.random() - 0.5) * 3,
+            vy: (Math.random() - 0.5) * 3,
+            life: 28,
+            color
+          });
+        }
+      }
+
+      function spawnGate() {
+        const margin = 28;
+        const gap = Math.max(92, state.width * (0.35 - Math.min(state.score / 2600, 0.13)));
+        const center = margin + gap / 2 + Math.random() * (state.width - margin * 2 - gap);
+        state.gates.push({
+          y: -30,
+          h: 18,
+          left: center - gap / 2,
+          right: center + gap / 2,
+          passed: false
+        });
+      }
+
+      function spawnBlock() {
+        const w = 34 + Math.random() * 32;
+        state.blocks.push({
+          x: 22 + Math.random() * (state.width - 44 - w),
+          y: -50,
+          w,
+          h: 34 + Math.random() * 28
+        });
+      }
+
+      function spawnPulse() {
+        state.pulses.push({
+          x: 30 + Math.random() * (state.width - 60),
+          y: -20,
+          r: 8,
+          taken: false
+        });
+      }
+
+      function hitCircleRect(circle, rect) {
+        const cx = Math.max(rect.x, Math.min(circle.x, rect.x + rect.w));
+        const cy = Math.max(rect.y, Math.min(circle.y, rect.y + rect.h));
+        return Math.hypot(circle.x - cx, circle.y - cy) < circle.r;
+      }
+
+      function update(dt) {
+        if (!state.running) return;
+        const scaled = Math.min(dt / 16.67, 2);
+        state.speed += 0.0009 * scaled;
+        state.score += 0.12 * state.speed * scaled;
+        state.player.x += (state.player.targetX - state.player.x) * 0.22;
+        state.player.x = Math.max(state.player.r + 10, Math.min(state.width - state.player.r - 10, state.player.x));
+
+        state.spawn -= scaled;
+        state.pulseSpawn -= scaled;
+        if (state.spawn <= 0) {
+          spawnGate();
+          if (Math.random() > 0.42) spawnBlock();
+          state.spawn = Math.max(42, 76 - state.score / 120);
+        }
+        if (state.pulseSpawn <= 0) {
+          spawnPulse();
+          state.pulseSpawn = 58 + Math.random() * 48;
+        }
+
+        const fall = state.speed * scaled;
+        for (const gate of state.gates) {
+          gate.y += fall;
+          if (!gate.passed && gate.y > state.player.y) {
+            gate.passed = true;
+            if (state.player.x < gate.left || state.player.x > gate.right) {
+              addParticles(state.player.x, state.player.y, "#aa3f28", 20);
+              endRun();
+            } else {
+              state.score += 18;
+              addParticles(state.player.x, state.player.y, "#d4b255", 8);
+            }
+          }
+        }
+        for (const block of state.blocks) {
+          block.y += fall * 1.08;
+          if (hitCircleRect(state.player, block)) {
+            addParticles(state.player.x, state.player.y, "#aa3f28", 22);
+            endRun();
+          }
+        }
+        for (const pulse of state.pulses) {
+          pulse.y += fall * 0.92;
+          if (!pulse.taken && Math.hypot(state.player.x - pulse.x, state.player.y - pulse.y) < state.player.r + pulse.r) {
+            pulse.taken = true;
+            state.score += 35;
+            addParticles(pulse.x, pulse.y, "#f6f3ec", 12);
+          }
+        }
+        for (const particle of state.particles) {
+          particle.x += particle.vx * scaled;
+          particle.y += particle.vy * scaled;
+          particle.life -= scaled;
+        }
+
+        state.gates = state.gates.filter((gate) => gate.y < state.height + 40);
+        state.blocks = state.blocks.filter((block) => block.y < state.height + 60);
+        state.pulses = state.pulses.filter((pulse) => pulse.y < state.height + 30 && !pulse.taken);
+        state.particles = state.particles.filter((particle) => particle.life > 0);
+        scoreEl.textContent = Math.floor(state.score);
+      }
+
+      function drawBackground() {
+        ctx.clearRect(0, 0, state.width, state.height);
+        ctx.fillStyle = "#15120e";
+        ctx.fillRect(0, 0, state.width, state.height);
+        ctx.strokeStyle = "rgba(246, 243, 236, 0.07)";
+        ctx.lineWidth = 1;
+        const drift = (state.score * 0.4) % 42;
+        for (let y = -42 + drift; y < state.height + 42; y += 42) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(state.width, y + 18);
+          ctx.stroke();
+        }
+        ctx.fillStyle = "rgba(212, 178, 85, 0.08)";
+        ctx.fillRect(18, 0, 2, state.height);
+        ctx.fillRect(state.width - 20, 0, 2, state.height);
+      }
+
+      function draw() {
+        drawBackground();
+        for (const gate of state.gates) {
+          ctx.fillStyle = "#d4b255";
+          ctx.fillRect(0, gate.y, gate.left, gate.h);
+          ctx.fillRect(gate.right, gate.y, state.width - gate.right, gate.h);
+          ctx.fillStyle = "rgba(246, 243, 236, 0.16)";
+          ctx.fillRect(gate.left, gate.y + 7, gate.right - gate.left, 4);
+        }
+        ctx.fillStyle = "#aa3f28";
+        for (const block of state.blocks) {
+          ctx.fillRect(block.x, block.y, block.w, block.h);
+        }
+        for (const pulse of state.pulses) {
+          ctx.beginPath();
+          ctx.fillStyle = "#f6f3ec";
+          ctx.arc(pulse.x, pulse.y, pulse.r, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = "rgba(246, 243, 236, 0.36)";
+          ctx.lineWidth = 6;
+          ctx.stroke();
+        }
+        for (const particle of state.particles) {
+          ctx.globalAlpha = Math.max(0, particle.life / 28);
+          ctx.fillStyle = particle.color;
+          ctx.fillRect(particle.x, particle.y, 4, 4);
+        }
+        ctx.globalAlpha = 1;
+        ctx.beginPath();
+        ctx.fillStyle = "#f6f3ec";
+        ctx.arc(state.player.x, state.player.y, state.player.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.fillStyle = "#123b3d";
+        ctx.arc(state.player.x, state.player.y, state.player.r * 0.46, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      function frame(time) {
+        const dt = time - (state.lastTime || time);
+        state.lastTime = time;
+        update(dt);
+        draw();
+        requestAnimationFrame(frame);
+      }
+
+      function pointerX(event) {
+        const point = event.touches ? event.touches[0] : event;
+        return point.clientX;
+      }
+
+      function begin(event) {
+        event.preventDefault();
+        state.touching = true;
+        state.player.targetX = pointerX(event);
+        if (!state.running) {
+          if (state.ended || startButton.textContent !== "Resume") reset();
+          else {
+            state.running = true;
+            message.style.display = "none";
+          }
+        }
+      }
+
+      function move(event) {
+        if (!state.touching) return;
+        event.preventDefault();
+        state.player.targetX = pointerX(event);
+      }
+
+      function finish(event) {
+        event.preventDefault();
+        state.touching = false;
+        pauseRun();
+      }
+
+      startButton.addEventListener("click", reset);
+      canvas.addEventListener("touchstart", begin, { passive: false });
+      canvas.addEventListener("touchmove", move, { passive: false });
+      canvas.addEventListener("touchend", finish, { passive: false });
+      canvas.addEventListener("pointerdown", begin);
+      canvas.addEventListener("pointermove", move);
+      canvas.addEventListener("pointerup", finish);
+      canvas.addEventListener("pointercancel", finish);
+      window.addEventListener("resize", resize);
+
+      resize();
+      requestAnimationFrame(frame);
+    </script>
+  </body>
+</html>

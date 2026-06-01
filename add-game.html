@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Create a new Game Lab game record.">
+    <title>Game Lab | Add Game</title>
+    <link rel="icon" href='data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"%3E%3Crect width="32" height="32" fill="%23f6f3ec"/%3E%3Cpath d="M7 7h18v18H7z" fill="none" stroke="%23171717" stroke-width="2"/%3E%3Cpath d="M16 7v18M7 16h18" stroke="%23171717" stroke-width="1.5"/%3E%3C/svg%3E'>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body data-page="add">
+    <header class="site-header">
+      <a class="brand" href="/" aria-label="Game Lab home">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span>Game Lab</span>
+      </a>
+      <nav class="nav-links" aria-label="Main navigation">
+        <a href="/#games">Games</a>
+        <a href="/">Home</a>
+      </nav>
+    </header>
+
+    <main class="add-main">
+      <section class="editor-panel" aria-labelledby="add-title">
+        <form class="game-form" id="game-form">
+          <p class="eyebrow">Game record builder</p>
+          <h1 id="add-title">Add a new game</h1>
+
+          <label>
+            Game name
+            <input name="title" autocomplete="off" placeholder="Space Runner" required>
+          </label>
+
+          <label>
+            Folder name
+            <input name="id" autocomplete="off" placeholder="space-runner" required>
+          </label>
+
+          <label>
+            Short description
+            <textarea name="description" rows="3" placeholder="Fly through a tunnel and collect stars." required></textarea>
+          </label>
+
+          <div class="form-row">
+            <label>
+              Status
+              <select name="status">
+                <option>Ready</option>
+                <option>Testing</option>
+                <option>Idea</option>
+              </select>
+            </label>
+            <label>
+              Accent
+              <select name="accent">
+                <option value="sky">Sky</option>
+                <option value="lime">Lime</option>
+                <option value="coral">Coral</option>
+                <option value="gold">Gold</option>
+                <option value="violet">Violet</option>
+              </select>
+            </label>
+          </div>
+
+          <label>
+            Code link
+            <input name="codeUrl" type="url" placeholder="https://github.com/...">
+          </label>
+
+          <label>
+            Tags
+            <input name="tags" autocomplete="off" placeholder="JavaScript, Arcade, Keyboard">
+          </label>
+
+          <label>
+            Design lesson
+            <textarea name="learned" rows="3" placeholder="Collision felt fairer after tuning hit boxes around player intent."></textarea>
+          </label>
+
+          <div class="form-actions">
+            <button class="button button-dark" type="button" id="copy-json">Copy JSON</button>
+            <button class="button button-light" type="button" id="download-json">Download card</button>
+          </div>
+        </form>
+
+        <aside class="preview-panel" aria-labelledby="preview-title">
+          <p class="eyebrow">Preview</p>
+          <h2 id="preview-title">Card output</h2>
+          <div id="card-preview"></div>
+          <pre class="json-output" id="json-output" tabindex="0"></pre>
+        </aside>
+      </section>
+    </main>
+
+    <script src="/app.js" defer></script>
+  </body>
+</html>

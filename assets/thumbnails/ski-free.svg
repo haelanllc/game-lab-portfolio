@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" role="img" aria-labelledby="title desc">
+  <title id="title">SKI FREE</title>
+  <desc id="desc">Game thumbnail for SKI FREE.</desc>
+  <defs>
+    <linearGradient id="bg-ski-free" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#e7f7ff"/>
+      <stop offset="1" stop-color="#ffffff"/>
+    </linearGradient>
+    <pattern id="dots-ski-free" width="42" height="42" patternUnits="userSpaceOnUse">
+      <circle cx="8" cy="8" r="3" fill="#1976b7" opacity="0.24"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="675" rx="36" fill="url(#bg-ski-free)"/>
+  <rect width="1200" height="675" rx="36" fill="url(#dots-ski-free)"/>
+  <circle cx="1010" cy="105" r="74" fill="#1976b7" opacity="0.18"/>
+  <circle cx="150" cy="110" r="50" fill="#1976b7" opacity="0.15"/>
+  
+      <path d="M0 520 C210 460 400 485 600 430 C795 376 960 376 1200 310 L1200 675 L0 675 Z" fill="#ffffff" stroke="#14213d" stroke-width="10"/>
+      <path d="M340 260 L410 358 L500 380 L438 280 Z" fill="#ef4444" stroke="#14213d" stroke-width="10"/>
+      <circle cx="391" cy="226" r="34" fill="#fde68a" stroke="#14213d" stroke-width="8"/>
+      <path d="M424 383 L544 470" stroke="#14213d" stroke-width="14" stroke-linecap="round"/>
+      <path d="M470 392 L690 495" stroke="#1976b7" stroke-width="18" stroke-linecap="round"/>
+      <path d="M308 500 L742 552" stroke="#14213d" stroke-width="12" stroke-linecap="round"/>
+      <path d="M830 250 L870 165 L910 250 Z M858 250 V340" fill="#22c55e" stroke="#14213d" stroke-width="8"/>
+      <path d="M965 318 L1005 232 L1045 318 Z M993 318 V410" fill="#22c55e" stroke="#14213d" stroke-width="8"/>
+    
+  <rect x="48" y="552" width="1104" height="78" rx="24" fill="#fffaf0" stroke="#14213d" stroke-width="8"/>
+  <text x="83" y="606" fill="#14213d" font-family="Arial, Helvetica, sans-serif" font-size="48" font-weight="900" letter-spacing="0">SKI FREE</text>
+</svg>

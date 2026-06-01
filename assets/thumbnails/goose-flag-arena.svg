@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" role="img" aria-labelledby="title desc">
+  <title id="title">Goose Flag Arena</title>
+  <desc id="desc">Game thumbnail for Goose Flag Arena.</desc>
+  <rect width="1200" height="675" rx="36" fill="#f4efe5"/>
+  <path d="M0 0h600v675H0z" fill="#4f8cc9" opacity=".16"/>
+  <path d="M600 0h600v675H600z" fill="#c9674f" opacity=".16"/>
+  <path d="M600 70v535" stroke="#3c4f46" stroke-width="6" opacity=".28"/>
+  <rect x="92" y="82" width="1016" height="511" rx="34" fill="#ded4c2" stroke="#3c4f46" stroke-width="12" opacity=".9"/>
+  <path d="M150 396V248" stroke="#5c3a2a" stroke-width="18" stroke-linecap="round"/>
+  <path d="M150 254l94 42-94 42z" fill="#d94e46" stroke="#3c4f46" stroke-width="8"/>
+  <path d="M1050 396V248" stroke="#5c3a2a" stroke-width="18" stroke-linecap="round"/>
+  <path d="M1050 254l-94 42 94 42z" fill="#d94e46" stroke="#3c4f46" stroke-width="8"/>
+  <g fill="#f8f5eb" stroke="#21302b" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M357 385c-46 16-93 2-103-33 54 8 85-18 98-66 33 16 45 54 29 82-5 8-13 14-24 17z"/>
+    <path d="M349 288c0-53 45-77 70-34 16 29 9 61-20 78"/>
+    <path d="M729 333c-46 16-93 2-103-33 54 8 85-18 98-66 33 16 45 54 29 82-5 8-13 14-24 17z"/>
+    <path d="M721 236c0-53 45-77 70-34 16 29 9 61-20 78"/>
+  </g>
+  <path d="M420 253h65l-65 38zM792 201h65l-65 38z" fill="#e5a947"/>
+  <g fill="#111" stroke="#111" stroke-width="5">
+    <path d="M473 430c48-18 51-55 23-65-12 38-39 32-58 30 8 20 18 31 35 35z"/>
+    <path d="M815 436c48-18 51-55 23-65-12 38-39 32-58 30 8 20 18 31 35 35z"/>
+  </g>
+  <circle cx="600" cy="338" r="42" fill="#d86f8a" stroke="#7d3f55" stroke-width="8"/>
+  <path d="M600 361c-26-38-2-80 39-73-4 44-18 67-39 73zM600 361c25-38 1-80-40-73 5 44 19 67 40 73z" fill="#75a85a" stroke="#21302b" stroke-width="6"/>
+  <text x="600" y="628" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="54" font-weight="800" fill="#21302b">Goose Flag Arena</text>
+</svg>

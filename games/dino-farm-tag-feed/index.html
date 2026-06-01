@@ -1,0 +1,1549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dino Farm Tag & Feed</title>
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: #152018;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body {
+      display: grid;
+      place-items: center;
+    }
+
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(255,255,255,0.04), transparent 25%),
+        linear-gradient(#77c46f, #4c964d);
+      cursor: crosshair;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="game"></canvas>
+
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+
+    const keys = Object.create(null);
+    const mouse = {
+      x: canvas.width * 0.7,
+      y: canvas.height * 0.5,
+      down: false
+    };
+
+    const COLORS = {
+      grassDark: "#2f6f37",
+      grassLight: "#61b764",
+      dirt: "#8f6b43",
+      fence: "#dbc18f",
+      ui: "#182321",
+      uiSoft: "rgba(24,35,33,0.78)",
+      uiBorder: "rgba(255,255,255,0.14)",
+      uiAccent: "#ffe48a",
+      white: "#ffffff",
+      brown: "#6b4326",
+      red: "#ff7d72",
+      green: "#7be57d",
+      yellow: "#fff0a8",
+      blue: "#70c6ff",
+      shadow: "rgba(0,0,0,0.22)"
+    };
+
+    const speciesCatalog = [
+      {
+        key: "trike",
+        name: "Trike",
+        color: "#82d16b",
+        accent: "#5ea34b",
+        speed: 88,
+        radius: 22,
+        earnRate: 0.9,
+        hungerDrain: 0.55,
+        captureBonus: 8
+      },
+      {
+        key: "raptor",
+        name: "Raptor",
+        color: "#f5a244",
+        accent: "#d97a1f",
+        speed: 128,
+        radius: 16,
+        earnRate: 1.3,
+        hungerDrain: 0.78,
+        captureBonus: 10
+      },
+      {
+        key: "bronto",
+        name: "Bronto",
+        color: "#6bbcff",
+        accent: "#4392db",
+        speed: 74,
+        radius: 28,
+        earnRate: 1.7,
+        hungerDrain: 0.96,
+        captureBonus: 14
+      },
+      {
+        key: "stego",
+        name: "Stego",
+        color: "#c596ff",
+        accent: "#8658cf",
+        speed: 82,
+        radius: 24,
+        earnRate: 1.1,
+        hungerDrain: 0.68,
+        captureBonus: 12
+      }
+    ];
+
+    const FEED_BUNDLE_COST = 24;
+    const FEED_BUNDLE_AMOUNT = 6;
+    const STARTING_POINTS = 40;
+    const STARTING_FEED = 4;
+
+    let player;
+    let dinos;
+    let projectiles;
+    let particles;
+    let popups;
+    let points;
+    let bestPoints = 0;
+    let foodStock;
+    let worldTime;
+    let spawnTimer;
+    let fireCooldown;
+    let screenShake;
+    let flashTimer;
+    let introTimer;
+    let collectionBonusClaimed;
+    let lastTime = 0;
+
+    loadBestPoints();
+    resetGame();
+
+    function loadBestPoints() {
+      try {
+        bestPoints = Number(localStorage.getItem("dinoFarmTagFeedBest") || 0);
+      } catch (error) {
+        bestPoints = 0;
+      }
+    }
+
+    function saveBestPoints() {
+      try {
+        localStorage.setItem("dinoFarmTagFeedBest", String(bestPoints));
+      } catch (error) {
+        // Ignore localStorage errors.
+      }
+    }
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function lerp(a, b, t) {
+      return a + (b - a) * t;
+    }
+
+    function distance(x1, y1, x2, y2) {
+      return Math.hypot(x2 - x1, y2 - y1);
+    }
+
+    function pointInRect(x, y, rect) {
+      return (
+        x >= rect.x &&
+        x <= rect.x + rect.w &&
+        y >= rect.y &&
+        y <= rect.y + rect.h
+      );
+    }
+
+    function circleCollision(a, b) {
+      return distance(a.x, a.y, b.x, b.y) < a.radius + b.radius;
+    }
+
+    function circleRectCollision(circleX, circleY, radius, rect) {
+      const nearestX = clamp(circleX, rect.x, rect.x + rect.w);
+      const nearestY = clamp(circleY, rect.y, rect.y + rect.h);
+      const dx = circleX - nearestX;
+      const dy = circleY - nearestY;
+      return dx * dx + dy * dy < radius * radius;
+    }
+
+    function roundedRectPath(x, y, w, h, r) {
+      const radius = Math.min(r, w * 0.5, h * 0.5);
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + w - radius, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+      ctx.lineTo(x + w, y + h - radius);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+      ctx.lineTo(x + radius, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+      ctx.lineTo(x, y + radius);
+      ctx.quadraticCurveTo(x, y, x + radius, y);
+      ctx.closePath();
+    }
+
+    function getZones() {
+      const pad = Math.max(18, canvas.width * 0.015);
+      const storeWidth = Math.max(170, canvas.width * 0.15);
+      const storeHeight = Math.max(130, canvas.height * 0.18);
+      const store = {
+        x: canvas.width - storeWidth - pad * 2,
+        y: pad * 2,
+        w: storeWidth,
+        h: storeHeight
+      };
+
+      const maxPastureWidth = Math.max(300, canvas.width - storeWidth - pad * 6);
+      const pasture = {
+        x: pad * 2,
+        y: Math.max(110, canvas.height * 0.18),
+        w: clamp(canvas.width * 0.56, 300, maxPastureWidth),
+        h: clamp(canvas.height * 0.62, 250, canvas.height - pad * 5)
+      };
+
+      return {
+        pad,
+        pasture,
+        pastureCenter: {
+          x: pasture.x + pasture.w * 0.5,
+          y: pasture.y + pasture.h * 0.5
+        },
+        store,
+        storeCenter: {
+          x: store.x + store.w * 0.5,
+          y: store.y + store.h * 0.5
+        }
+      };
+    }
+
+    function randomEdgeSpawn(radius) {
+      const margin = 70 + radius;
+      const side = Math.floor(Math.random() * 4);
+
+      if (side === 0) {
+        return { x: -margin, y: Math.random() * canvas.height };
+      }
+      if (side === 1) {
+        return { x: canvas.width + margin, y: Math.random() * canvas.height };
+      }
+      if (side === 2) {
+        return { x: Math.random() * canvas.width, y: -margin };
+      }
+      return { x: Math.random() * canvas.width, y: canvas.height + margin };
+    }
+
+    function randomOpenPoint() {
+      const zones = getZones();
+      let x = 0;
+      let y = 0;
+
+      for (let i = 0; i < 20; i++) {
+        x = 50 + Math.random() * (canvas.width - 100);
+        y = 70 + Math.random() * (canvas.height - 110);
+
+        if (!pointInRect(x, y, zones.store)) {
+          return { x, y };
+        }
+      }
+
+      return { x: canvas.width * 0.5, y: canvas.height * 0.5 };
+    }
+
+    function randomPasturePoint(margin = 30) {
+      const { pasture } = getZones();
+      return {
+        x: pasture.x + margin + Math.random() * (pasture.w - margin * 2),
+        y: pasture.y + margin + Math.random() * (pasture.h - margin * 2)
+      };
+    }
+
+    function chooseSpecies() {
+      return speciesCatalog[Math.floor(Math.random() * speciesCatalog.length)];
+    }
+
+    function spawnDino(forceSpeciesKey = null, forcedPosition = null) {
+      const species =
+        speciesCatalog.find((item) => item.key === forceSpeciesKey) || chooseSpecies();
+      const start = forcedPosition || randomEdgeSpawn(species.radius);
+
+      dinos.push({
+        speciesKey: species.key,
+        name: species.name,
+        x: start.x,
+        y: start.y,
+        vx: 0,
+        vy: 0,
+        radius: species.radius,
+        speed: species.speed,
+        color: species.color,
+        accent: species.accent,
+        earnRate: species.earnRate,
+        hungerDrain: species.hungerDrain,
+        captureBonus: species.captureBonus,
+        state: "wild",
+        hunger: 72 + Math.random() * 24,
+        incomeProgress: 0,
+        starveTimer: 0,
+        angle: Math.random() * Math.PI * 2,
+        bounceSeed: Math.random() * Math.PI * 2,
+        roamTimer: 0,
+        targetX: canvas.width * 0.5,
+        targetY: canvas.height * 0.5,
+        tagPulse: 0
+      });
+
+      const dino = dinos[dinos.length - 1];
+      assignDinoTarget(dino, 0, true);
+      addParticles(dino.x, dino.y, dino.color, 8, 2.1, 130, 4);
+    }
+
+    function resetGame() {
+      player = {
+        x: canvas.width * 0.2,
+        y: canvas.height * 0.55,
+        radius: 18,
+        speed: 320,
+        angle: 0,
+        bob: 0,
+        tool: "tag"
+      };
+
+      dinos = [];
+      projectiles = [];
+      particles = [];
+      popups = [];
+      points = STARTING_POINTS;
+      foodStock = STARTING_FEED;
+      worldTime = 0;
+      spawnTimer = 2;
+      fireCooldown = 0;
+      screenShake = 0;
+      flashTimer = 0;
+      introTimer = 9;
+      collectionBonusClaimed = false;
+      lastTime = 0;
+
+      // Start with one of each species wandering nearby so the collection loop begins fast.
+      const starts = [
+        { x: 80, y: canvas.height * 0.28 },
+        { x: canvas.width - 80, y: canvas.height * 0.45 },
+        { x: canvas.width * 0.55, y: 70 },
+        { x: canvas.width * 0.7, y: canvas.height - 70 }
+      ];
+
+      speciesCatalog.forEach((species, index) => {
+        spawnDino(species.key, starts[index] || randomEdgeSpawn(species.radius));
+      });
+    }
+
+    function addParticles(x, y, color, count, spread = 1, speed = 150, size = 4) {
+      for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const velocity = speed * (0.35 + Math.random() * 0.65) * spread;
+        particles.push({
+          x,
+          y,
+          vx: Math.cos(angle) * velocity,
+          vy: Math.sin(angle) * velocity,
+          life: 0.35 + Math.random() * 0.45,
+          maxLife: 0.35 + Math.random() * 0.45,
+          size: size * (0.55 + Math.random() * 1.1),
+          color,
+          gravity: 110 + Math.random() * 80
+        });
+      }
+    }
+
+    function addPopup(text, x, y, color = COLORS.white, size = 21) {
+      popups.push({
+        text,
+        x,
+        y,
+        color,
+        size,
+        life: 1.0,
+        maxLife: 1.0
+      });
+    }
+
+    function currentOwnedSpecies() {
+      const counts = Object.create(null);
+      for (const species of speciesCatalog) {
+        counts[species.key] = 0;
+      }
+      for (const dino of dinos) {
+        if (dino.state === "owned") {
+          counts[dino.speciesKey] += 1;
+        }
+      }
+      return counts;
+    }
+
+    function allSpeciesOwned() {
+      const counts = currentOwnedSpecies();
+      return speciesCatalog.every((species) => counts[species.key] > 0);
+    }
+
+    function assignDinoTarget(dino, dt, force = false) {
+      dino.roamTimer -= dt;
+      const zones = getZones();
+
+      const reached =
+        distance(dino.x, dino.y, dino.targetX, dino.targetY) < Math.max(16, dino.radius * 0.8);
+
+      if (!force && !reached && dino.roamTimer > 0) return;
+
+      if (dino.state === "owned") {
+        const target = randomPasturePoint(30 + dino.radius * 0.4);
+        dino.targetX = target.x;
+        dino.targetY = target.y;
+        dino.roamTimer = 1.8 + Math.random() * 3.6;
+      } else {
+        const target = randomOpenPoint();
+        dino.targetX = target.x;
+        dino.targetY = target.y;
+        dino.roamTimer = 2.4 + Math.random() * 4.0;
+
+        // Wild dinos tend to avoid camping inside the pasture.
+        if (pointInRect(dino.targetX, dino.targetY, zones.pasture)) {
+          const outside = randomEdgeSpawn(dino.radius);
+          dino.targetX = clamp(outside.x, 40, canvas.width - 40);
+          dino.targetY = clamp(outside.y, 40, canvas.height - 40);
+        }
+      }
+    }
+
+    function tryBuyFood() {
+      const { storeCenter } = getZones();
+      const closeEnough = distance(player.x, player.y, storeCenter.x, storeCenter.y) < 145;
+
+      if (!closeEnough) return;
+
+      if (points >= FEED_BUNDLE_COST) {
+        points -= FEED_BUNDLE_COST;
+        foodStock += FEED_BUNDLE_AMOUNT;
+        flashTimer = Math.max(flashTimer, 0.12);
+        addParticles(storeCenter.x, storeCenter.y, COLORS.yellow, 16, 2.4, 180, 4);
+        addPopup(
+          `Bought ${FEED_BUNDLE_AMOUNT} feed`,
+          storeCenter.x,
+          storeCenter.y - storeCenter.y * 0.02,
+          COLORS.yellow,
+          24
+        );
+      } else {
+        addPopup(
+          `Need ${FEED_BUNDLE_COST} pts`,
+          storeCenter.x,
+          storeCenter.y - 8,
+          COLORS.red,
+          24
+        );
+      }
+    }
+
+    function createProjectile(type) {
+      const dx = mouse.x - player.x;
+      const dy = mouse.y - player.y;
+      const angle = Math.atan2(dy, dx);
+
+      player.angle = angle;
+
+      if (type === "feed" && foodStock <= 0) {
+        fireCooldown = 0.28;
+        addPopup("Buy feed first", player.x, player.y - 34, COLORS.red, 20);
+        return;
+      }
+
+      if (type === "feed") {
+        foodStock -= 1;
+      }
+
+      fireCooldown = type === "tag" ? 0.16 : 0.22;
+
+      projectiles.push({
+        type,
+        x: player.x + Math.cos(angle) * (player.radius + 14),
+        y: player.y + Math.sin(angle) * (player.radius + 14),
+        vx: Math.cos(angle) * (type === "tag" ? 760 : 620),
+        vy: Math.sin(angle) * (type === "tag" ? 760 : 620),
+        radius: type === "tag" ? 10 : 12,
+        life: type === "tag" ? 0.8 : 0.75,
+        angle
+      });
+
+      const burstColor = type === "tag" ? COLORS.blue : COLORS.yellow;
+      addParticles(
+        player.x + Math.cos(angle) * (player.radius + 14),
+        player.y + Math.sin(angle) * (player.radius + 14),
+        burstColor,
+        6,
+        1.2,
+        110,
+        3
+      );
+    }
+
+    function tryUseTool() {
+      if (fireCooldown > 0) return;
+      createProjectile(player.tool);
+    }
+
+    function tagDino(dino) {
+      if (dino.state !== "wild") return;
+
+      dino.state = "owned";
+      dino.hunger = Math.max(dino.hunger, 65);
+      dino.starveTimer = 0;
+      dino.incomeProgress = 0;
+      dino.tagPulse = 0.35;
+      assignDinoTarget(dino, 0, true);
+
+      points += dino.captureBonus;
+      bestPoints = Math.max(bestPoints, points);
+      saveBestPoints();
+
+      flashTimer = Math.max(flashTimer, 0.15);
+      screenShake = Math.max(screenShake, 5);
+      addParticles(dino.x, dino.y, COLORS.yellow, 16, 2.1, 190, 4);
+      addParticles(dino.x, dino.y, dino.color, 14, 1.7, 145, 4);
+      addPopup(`${dino.name} tagged!`, dino.x, dino.y - dino.radius - 10, COLORS.yellow, 22);
+      addPopup(`+${dino.captureBonus} pts`, dino.x, dino.y - dino.radius - 34, COLORS.white, 18);
+
+      if (!collectionBonusClaimed && allSpeciesOwned()) {
+        collectionBonusClaimed = true;
+        points += 75;
+        bestPoints = Math.max(bestPoints, points);
+        saveBestPoints();
+        addPopup("Full herd collection! +75", canvas.width * 0.5, 92, COLORS.yellow, 30);
+        screenShake = Math.max(screenShake, 8);
+      }
+    }
+
+    function releaseDino(dino) {
+      dino.state = "wild";
+      dino.hunger = 64;
+      dino.starveTimer = 0;
+      dino.incomeProgress = 0;
+      dino.tagPulse = 0;
+      const outside = randomEdgeSpawn(dino.radius);
+      dino.targetX = clamp(outside.x, 40, canvas.width - 40);
+      dino.targetY = clamp(outside.y, 40, canvas.height - 40);
+      dino.roamTimer = 2.2;
+      addParticles(dino.x, dino.y, COLORS.red, 10, 1.8, 140, 4);
+      addPopup(`${dino.name} wandered off`, dino.x, dino.y - dino.radius - 8, COLORS.red, 20);
+    }
+
+    function feedNearbyOwnedDino(x, y, radius) {
+      let closest = null;
+      let closestDist = Infinity;
+
+      for (const dino of dinos) {
+        if (dino.state !== "owned") continue;
+        const d = distance(x, y, dino.x, dino.y);
+        if (d < radius + dino.radius && d < closestDist) {
+          closest = dino;
+          closestDist = d;
+        }
+      }
+
+      if (!closest) return false;
+
+      closest.hunger = clamp(closest.hunger + 46, 0, 100);
+      closest.starveTimer = 0;
+      closest.tagPulse = Math.max(closest.tagPulse, 0.16);
+
+      addParticles(closest.x, closest.y, COLORS.yellow, 12, 1.8, 150, 4);
+      addPopup("Fed!", closest.x, closest.y - closest.radius - 8, COLORS.green, 22);
+      return true;
+    }
+
+    function updatePlayer(dt) {
+      let moveX =
+        (keys["d"] || keys["arrowright"] ? 1 : 0) -
+        (keys["a"] || keys["arrowleft"] ? 1 : 0);
+
+      let moveY =
+        (keys["s"] || keys["arrowdown"] ? 1 : 0) -
+        (keys["w"] || keys["arrowup"] ? 1 : 0);
+
+      const length = Math.hypot(moveX, moveY) || 1;
+      moveX /= length;
+      moveY /= length;
+
+      player.x += moveX * player.speed * dt;
+      player.y += moveY * player.speed * dt;
+
+      player.x = clamp(player.x, player.radius, canvas.width - player.radius);
+      player.y = clamp(player.y, player.radius, canvas.height - player.radius);
+
+      if (moveX !== 0 || moveY !== 0) {
+        player.bob += dt * 12;
+        introTimer = Math.max(0, introTimer - dt * 4);
+      }
+
+      player.angle = Math.atan2(mouse.y - player.y, mouse.x - player.x);
+    }
+
+    function updateProjectiles(dt) {
+      for (let i = projectiles.length - 1; i >= 0; i--) {
+        const projectile = projectiles[i];
+        projectile.x += projectile.vx * dt;
+        projectile.y += projectile.vy * dt;
+        projectile.life -= dt;
+
+        if (projectile.type === "tag") {
+          let didHit = false;
+          for (const dino of dinos) {
+            if (dino.state !== "wild") continue;
+            if (distance(projectile.x, projectile.y, dino.x, dino.y) < projectile.radius + dino.radius) {
+              tagDino(dino);
+              didHit = true;
+              break;
+            }
+          }
+
+          if (didHit) {
+            projectiles.splice(i, 1);
+            continue;
+          }
+        } else {
+          let fed = false;
+
+          for (const dino of dinos) {
+            if (dino.state !== "owned") continue;
+            if (distance(projectile.x, projectile.y, dino.x, dino.y) < projectile.radius + dino.radius) {
+              feedNearbyOwnedDino(projectile.x, projectile.y, 48);
+              fed = true;
+              break;
+            }
+          }
+
+          const expired =
+            projectile.life <= 0 ||
+            projectile.x < -40 ||
+            projectile.x > canvas.width + 40 ||
+            projectile.y < -40 ||
+            projectile.y > canvas.height + 40;
+
+          if (fed || expired) {
+            if (!fed) {
+              const splashFed = feedNearbyOwnedDino(projectile.x, projectile.y, 76);
+              if (!splashFed) {
+                addParticles(projectile.x, projectile.y, COLORS.yellow, 8, 1.3, 90, 3);
+              }
+            }
+            projectiles.splice(i, 1);
+            continue;
+          }
+        }
+
+        if (
+          projectile.life <= 0 ||
+          projectile.x < -60 ||
+          projectile.x > canvas.width + 60 ||
+          projectile.y < -60 ||
+          projectile.y > canvas.height + 60
+        ) {
+          projectiles.splice(i, 1);
+        }
+      }
+    }
+
+    function applyDinoSeparation() {
+      for (let i = 0; i < dinos.length; i++) {
+        for (let j = i + 1; j < dinos.length; j++) {
+          const a = dinos[i];
+          const b = dinos[j];
+          const dx = b.x - a.x;
+          const dy = b.y - a.y;
+          const dist = Math.hypot(dx, dy) || 0.001;
+          const minDist = a.radius + b.radius + 4;
+
+          if (dist < minDist) {
+            const overlap = (minDist - dist) * 0.5;
+            const nx = dx / dist;
+            const ny = dy / dist;
+
+            a.x -= nx * overlap;
+            a.y -= ny * overlap;
+            b.x += nx * overlap;
+            b.y += ny * overlap;
+          }
+        }
+      }
+    }
+
+    function updateDinos(dt) {
+      const zones = getZones();
+
+      for (const dino of dinos) {
+        dino.tagPulse = Math.max(0, dino.tagPulse - dt * 2.4);
+        assignDinoTarget(dino, dt, false);
+
+        const dx = dino.targetX - dino.x;
+        const dy = dino.targetY - dino.y;
+        const dist = Math.hypot(dx, dy) || 1;
+
+        const speedMultiplier = dino.state === "wild" ? 1 : (dino.hunger < 20 ? 0.78 : 1);
+        dino.vx += (dx / dist) * dino.speed * dt * 2.3 * speedMultiplier;
+        dino.vy += (dy / dist) * dino.speed * dt * 2.3 * speedMultiplier;
+        dino.vx *= Math.pow(0.86, dt * 60);
+        dino.vy *= Math.pow(0.86, dt * 60);
+
+        dino.x += dino.vx * dt;
+        dino.y += dino.vy * dt;
+
+        if (Math.hypot(dino.vx, dino.vy) > 1) {
+          dino.angle = Math.atan2(dino.vy, dino.vx);
+        }
+
+        if (dino.state === "owned") {
+          dino.hunger = Math.max(0, dino.hunger - dino.hungerDrain * dt);
+
+          if (dino.hunger > 20) {
+            dino.incomeProgress += dino.earnRate * dt;
+            while (dino.incomeProgress >= 1) {
+              dino.incomeProgress -= 1;
+              points += 1;
+              bestPoints = Math.max(bestPoints, points);
+              if (Math.random() < 0.18) {
+                addPopup("+1", dino.x, dino.y - dino.radius - 10, COLORS.white, 16);
+              }
+            }
+          }
+
+          if (dino.hunger <= 0) {
+            dino.starveTimer += dt;
+            if (dino.starveTimer > 7) {
+              releaseDino(dino);
+            }
+          } else {
+            dino.starveTimer = 0;
+          }
+
+          // Keep owned dinos in the pasture.
+          dino.x = clamp(dino.x, zones.pasture.x + dino.radius, zones.pasture.x + zones.pasture.w - dino.radius);
+          dino.y = clamp(dino.y, zones.pasture.y + dino.radius, zones.pasture.y + zones.pasture.h - dino.radius);
+        } else {
+          dino.x = clamp(dino.x, dino.radius, canvas.width - dino.radius);
+          dino.y = clamp(dino.y, dino.radius, canvas.height - dino.radius);
+        }
+      }
+
+      applyDinoSeparation();
+    }
+
+    function updateParticles(dt) {
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const particle = particles[i];
+        particle.vy += particle.gravity * dt;
+        particle.x += particle.vx * dt;
+        particle.y += particle.vy * dt;
+        particle.life -= dt;
+
+        if (particle.life <= 0) {
+          particles.splice(i, 1);
+        }
+      }
+    }
+
+    function updatePopups(dt) {
+      for (let i = popups.length - 1; i >= 0; i--) {
+        const popup = popups[i];
+        popup.y -= 42 * dt;
+        popup.life -= dt;
+
+        if (popup.life <= 0) {
+          popups.splice(i, 1);
+        }
+      }
+    }
+
+    function countWildDinos() {
+      let total = 0;
+      for (const dino of dinos) {
+        if (dino.state === "wild") total += 1;
+      }
+      return total;
+    }
+
+    function countOwnedDinos() {
+      let total = 0;
+      for (const dino of dinos) {
+        if (dino.state === "owned") total += 1;
+      }
+      return total;
+    }
+
+    function update(dt) {
+      dt = Math.min(dt, 1 / 30);
+
+      worldTime += dt;
+      if (screenShake > 0) screenShake = Math.max(0, screenShake - 18 * dt);
+      if (flashTimer > 0) flashTimer = Math.max(0, flashTimer - 3.2 * dt);
+      if (fireCooldown > 0) fireCooldown = Math.max(0, fireCooldown - dt);
+      if (introTimer > 0 && (mouse.down || Object.keys(keys).length > 0)) {
+        introTimer = Math.max(0, introTimer - dt * 3.5);
+      }
+
+      updatePlayer(dt);
+      if (mouse.down) tryUseTool();
+      updateProjectiles(dt);
+      updateDinos(dt);
+      updateParticles(dt);
+      updatePopups(dt);
+
+      const desiredWild = Math.min(10, 4 + Math.floor(worldTime / 24));
+      spawnTimer -= dt;
+      if (spawnTimer <= 0 && countWildDinos() < desiredWild && dinos.length < 18) {
+        spawnDino();
+        if (Math.random() < Math.min(0.35, worldTime * 0.01)) {
+          spawnDino();
+        }
+        spawnTimer = 2.6 + Math.random() * 1.8;
+      }
+
+      if (points > bestPoints) {
+        bestPoints = points;
+        saveBestPoints();
+      }
+    }
+
+    function drawGrass() {
+      ctx.fillStyle = COLORS.grassLight;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const stripeGap = 58;
+      ctx.globalAlpha = 0.08;
+      ctx.fillStyle = COLORS.grassDark;
+      for (let x = -50; x < canvas.width + 50; x += stripeGap) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x + 46, 0);
+        ctx.lineTo(x - 10, canvas.height);
+        ctx.lineTo(x - 56, canvas.height);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+
+      ctx.fillStyle = "rgba(255,255,255,0.06)";
+      for (let i = 0; i < 80; i++) {
+        const px = (i * 137) % canvas.width;
+        const py = (i * 71) % canvas.height;
+        ctx.fillRect(px, py, 2, 10);
+      }
+    }
+
+    function drawFence(rect) {
+      ctx.strokeStyle = COLORS.fence;
+      ctx.lineWidth = 7;
+      ctx.lineJoin = "round";
+
+      const railsY = [rect.y + rect.h * 0.33, rect.y + rect.h * 0.66];
+      for (const y of railsY) {
+        ctx.beginPath();
+        ctx.moveTo(rect.x, y);
+        ctx.lineTo(rect.x + rect.w, y);
+        ctx.stroke();
+      }
+
+      for (let x = rect.x; x <= rect.x + rect.w; x += 28) {
+        ctx.beginPath();
+        ctx.moveTo(x, rect.y);
+        ctx.lineTo(x, rect.y + rect.h);
+        ctx.stroke();
+      }
+    }
+
+    function drawPastureAndStore() {
+      const zones = getZones();
+
+      // Pasture
+      ctx.save();
+      ctx.fillStyle = "rgba(255, 238, 180, 0.16)";
+      ctx.fillRect(zones.pasture.x, zones.pasture.y, zones.pasture.w, zones.pasture.h);
+      drawFence(zones.pasture);
+
+      ctx.fillStyle = COLORS.ui;
+      ctx.font = "bold 22px Arial";
+      ctx.fillText("YOUR PASTURE", zones.pasture.x + 10, zones.pasture.y - 12);
+      ctx.restore();
+
+      // Feed store
+      ctx.save();
+      const store = zones.store;
+      ctx.fillStyle = "#b24f3f";
+      ctx.fillRect(store.x, store.y + 22, store.w, store.h - 22);
+
+      ctx.fillStyle = "#7e2e24";
+      ctx.beginPath();
+      ctx.moveTo(store.x - 10, store.y + 28);
+      ctx.lineTo(store.x + store.w * 0.5, store.y - 18);
+      ctx.lineTo(store.x + store.w + 10, store.y + 28);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = COLORS.ui;
+      ctx.font = "bold 22px Arial";
+      ctx.fillText("FEED BARN", store.x, store.y - 12);
+
+      ctx.fillStyle = "#6f3526";
+      ctx.fillRect(store.x + store.w * 0.38, store.y + store.h * 0.44, store.w * 0.24, store.h * 0.56);
+
+      // Feed sacks
+      for (let i = 0; i < 3; i++) {
+        const bagX = store.x + 22 + i * 28;
+        const bagY = store.y + store.h * 0.52;
+        ctx.fillStyle = "#e2c07f";
+        roundedRectPath(bagX, bagY, 18, 22, 5);
+        ctx.fill();
+        ctx.fillStyle = "#a27b40";
+        ctx.fillRect(bagX + 6, bagY + 5, 6, 10);
+      }
+
+      ctx.fillStyle = COLORS.yellow;
+      ctx.font = "bold 18px Arial";
+      ctx.fillText(`${FEED_BUNDLE_AMOUNT} feed = ${FEED_BUNDLE_COST} pts`, store.x + 16, store.y + store.h - 18);
+      ctx.restore();
+
+      const nearStore =
+        distance(player.x, player.y, zones.storeCenter.x, zones.storeCenter.y) < 145;
+
+      if (nearStore) {
+        ctx.save();
+        ctx.textAlign = "center";
+        ctx.fillStyle = COLORS.uiSoft;
+        roundedRectPath(zones.storeCenter.x - 155, zones.store.y + zones.store.h + 12, 310, 46, 12);
+        ctx.fill();
+        ctx.fillStyle = COLORS.white;
+        ctx.font = "bold 20px Arial";
+        ctx.fillText("Press E to buy feed", zones.storeCenter.x, zones.store.y + zones.store.h + 42);
+        ctx.restore();
+      }
+    }
+
+    function drawShadow(x, y, radiusX, radiusY) {
+      ctx.save();
+      ctx.fillStyle = COLORS.shadow;
+      ctx.beginPath();
+      ctx.ellipse(x, y, radiusX, radiusY, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawFarmer() {
+      const bob = Math.sin(player.bob) * 2;
+      const angle = player.angle;
+      drawShadow(player.x, player.y + player.radius + 11, 22, 8);
+
+      ctx.save();
+      ctx.translate(player.x, player.y + bob);
+      ctx.rotate(angle);
+
+      // Body
+      ctx.fillStyle = "#2f55ad";
+      roundedRectPath(-14, -8, 24, 30, 8);
+      ctx.fill();
+
+      // Forward arm
+      ctx.fillStyle = "#f0c18a";
+      roundedRectPath(2, -4, 24, 8, 4);
+      ctx.fill();
+
+      // Tool
+      if (player.tool === "tag") {
+        ctx.fillStyle = "#7dd3ff";
+        ctx.beginPath();
+        ctx.arc(28, 0, 9, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#2b8ebf";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(28, 0, 5, 0, Math.PI * 2);
+        ctx.stroke();
+      } else {
+        ctx.fillStyle = "#e3c37d";
+        roundedRectPath(20, -10, 16, 18, 5);
+        ctx.fill();
+        ctx.fillStyle = "#9c7843";
+        ctx.fillRect(24, -4, 8, 8);
+      }
+
+      // Head
+      ctx.fillStyle = "#f0c18a";
+      ctx.beginPath();
+      ctx.arc(-2, -20, 12, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Hat
+      ctx.fillStyle = "#dab366";
+      ctx.beginPath();
+      ctx.ellipse(-2, -28, 18, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#b78642";
+      roundedRectPath(-10, -40, 18, 14, 5);
+      ctx.fill();
+
+      // Boots
+      ctx.fillStyle = "#4f2e18";
+      ctx.fillRect(-10, 18, 8, 10);
+      ctx.fillRect(2, 18, 8, 10);
+
+      ctx.restore();
+    }
+
+    function drawTrike(dino) {
+      ctx.fillStyle = dino.color;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, dino.radius * 1.15, dino.radius * 0.8, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = dino.accent;
+      ctx.beginPath();
+      ctx.ellipse(dino.radius * 0.8, -dino.radius * 0.15, dino.radius * 0.48, dino.radius * 0.42, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(dino.radius * 0.55, -dino.radius * 0.4);
+      ctx.lineTo(dino.radius * 1.35, -dino.radius * 0.9);
+      ctx.lineTo(dino.radius * 1.0, -dino.radius * 0.1);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.arc(dino.radius * 0.95, -dino.radius * 0.2, 2.6, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = dino.accent;
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(-dino.radius * 0.6, -4);
+      ctx.lineTo(-dino.radius * 1.2, -dino.radius * 0.25);
+      ctx.stroke();
+
+      ctx.fillStyle = dino.accent;
+      ctx.fillRect(-dino.radius * 0.8, dino.radius * 0.15, 7, dino.radius * 0.85);
+      ctx.fillRect(-dino.radius * 0.1, dino.radius * 0.2, 7, dino.radius * 0.85);
+      ctx.fillRect(dino.radius * 0.5, dino.radius * 0.15, 7, dino.radius * 0.85);
+    }
+
+    function drawRaptor(dino) {
+      ctx.fillStyle = dino.color;
+      ctx.beginPath();
+      ctx.ellipse(-dino.radius * 0.1, 0, dino.radius * 0.95, dino.radius * 0.55, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = dino.accent;
+      ctx.beginPath();
+      ctx.moveTo(-dino.radius * 0.9, 0);
+      ctx.lineTo(-dino.radius * 2.0, -dino.radius * 0.2);
+      ctx.lineTo(-dino.radius * 1.1, dino.radius * 0.15);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(dino.radius * 0.95, -dino.radius * 0.2, dino.radius * 0.32, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.arc(dino.radius * 1.05, -dino.radius * 0.25, 2.4, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = dino.accent;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(-dino.radius * 0.2, dino.radius * 0.3);
+      ctx.lineTo(-dino.radius * 0.6, dino.radius * 1.0);
+      ctx.moveTo(dino.radius * 0.2, dino.radius * 0.25);
+      ctx.lineTo(dino.radius * 0.1, dino.radius * 1.0);
+      ctx.stroke();
+
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(dino.radius * 0.2, 0);
+      ctx.lineTo(dino.radius * 0.75, dino.radius * 0.45);
+      ctx.stroke();
+    }
+
+    function drawBronto(dino) {
+      ctx.fillStyle = dino.color;
+      ctx.beginPath();
+      ctx.ellipse(-dino.radius * 0.2, 0, dino.radius * 1.2, dino.radius * 0.82, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = dino.color;
+      ctx.lineWidth = dino.radius * 0.42;
+      ctx.beginPath();
+      ctx.moveTo(dino.radius * 0.35, -dino.radius * 0.1);
+      ctx.quadraticCurveTo(
+        dino.radius * 0.9,
+        -dino.radius * 1.2,
+        dino.radius * 1.35,
+        -dino.radius * 1.45
+      );
+      ctx.stroke();
+
+      ctx.fillStyle = dino.accent;
+      ctx.beginPath();
+      ctx.arc(dino.radius * 1.4, -dino.radius * 1.45, dino.radius * 0.28, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.arc(dino.radius * 1.48, -dino.radius * 1.5, 2.6, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = dino.accent;
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.moveTo(-dino.radius * 1.0, 0);
+      ctx.lineTo(-dino.radius * 1.8, -dino.radius * 0.5);
+      ctx.stroke();
+
+      ctx.fillStyle = dino.accent;
+      ctx.fillRect(-dino.radius * 0.85, dino.radius * 0.15, 8, dino.radius * 0.95);
+      ctx.fillRect(-dino.radius * 0.15, dino.radius * 0.15, 8, dino.radius * 0.95);
+      ctx.fillRect(dino.radius * 0.45, dino.radius * 0.15, 8, dino.radius * 0.95);
+    }
+
+    function drawStego(dino) {
+      ctx.fillStyle = dino.color;
+      ctx.beginPath();
+      ctx.ellipse(-dino.radius * 0.1, 0, dino.radius * 1.15, dino.radius * 0.72, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = dino.accent;
+      for (let i = 0; i < 5; i++) {
+        const x = -dino.radius * 0.75 + i * (dino.radius * 0.42);
+        const height = dino.radius * (0.5 + (i % 2) * 0.12);
+        ctx.beginPath();
+        ctx.moveTo(x, -dino.radius * 0.1);
+        ctx.lineTo(x + dino.radius * 0.18, -height);
+        ctx.lineTo(x + dino.radius * 0.34, -dino.radius * 0.12);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      ctx.beginPath();
+      ctx.moveTo(-dino.radius * 1.0, -dino.radius * 0.1);
+      ctx.lineTo(-dino.radius * 1.9, -dino.radius * 0.8);
+      ctx.lineTo(-dino.radius * 1.3, dino.radius * 0.02);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = dino.accent;
+      ctx.beginPath();
+      ctx.arc(dino.radius * 1.0, -dino.radius * 0.18, dino.radius * 0.28, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.arc(dino.radius * 1.08, -dino.radius * 0.24, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillRect(-dino.radius * 0.7, dino.radius * 0.2, 7, dino.radius * 0.85);
+      ctx.fillRect(-dino.radius * 0.05, dino.radius * 0.2, 7, dino.radius * 0.85);
+      ctx.fillRect(dino.radius * 0.55, dino.radius * 0.18, 7, dino.radius * 0.85);
+    }
+
+    function drawOwnershipBadge(dino) {
+      const pulse = 1 + dino.tagPulse * 0.8;
+      const badgeX = dino.x;
+      const badgeY = dino.y - dino.radius - 18;
+
+      ctx.save();
+      ctx.translate(badgeX, badgeY);
+      ctx.rotate(Math.PI / 4);
+      ctx.fillStyle = "rgba(255, 228, 138, 0.24)";
+      ctx.fillRect(-10 * pulse, -10 * pulse, 20 * pulse, 20 * pulse);
+      ctx.fillStyle = COLORS.yellow;
+      ctx.fillRect(-7, -7, 14, 14);
+      ctx.fillStyle = COLORS.ui;
+      ctx.beginPath();
+      ctx.arc(2, 0, 1.8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawHungerBar(dino) {
+      const barWidth = Math.max(42, dino.radius * 2.4);
+      const barHeight = 7;
+      const x = dino.x - barWidth * 0.5;
+      const y = dino.y - dino.radius - 8;
+
+      ctx.fillStyle = "rgba(0,0,0,0.28)";
+      ctx.fillRect(x, y, barWidth, barHeight);
+
+      const t = clamp(dino.hunger / 100, 0, 1);
+      const r = Math.floor(255 * (1 - t));
+      const g = Math.floor(110 + 110 * t);
+      ctx.fillStyle = `rgb(${r}, ${g}, 100)`;
+      ctx.fillRect(x, y, barWidth * t, barHeight);
+
+      if (dino.hunger < 25 && Math.floor(worldTime * 4) % 2 === 0) {
+        ctx.fillStyle = COLORS.red;
+        ctx.font = "bold 18px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("!", dino.x, y - 4);
+        ctx.textAlign = "left";
+      }
+    }
+
+    function drawDino(dino) {
+      drawShadow(dino.x, dino.y + dino.radius + 10, dino.radius * 1.05, 8);
+
+      ctx.save();
+      ctx.translate(dino.x, dino.y);
+      ctx.rotate(dino.angle);
+
+      const bounce = Math.sin(worldTime * 8 + dino.bounceSeed) * 1.6;
+      ctx.translate(0, bounce);
+
+      if (dino.state === "owned") {
+        ctx.save();
+        ctx.fillStyle = "rgba(255, 244, 176, 0.16)";
+        ctx.beginPath();
+        ctx.arc(0, 0, dino.radius * 1.55, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      if (dino.name === "Trike") drawTrike(dino);
+      if (dino.name === "Raptor") drawRaptor(dino);
+      if (dino.name === "Bronto") drawBronto(dino);
+      if (dino.name === "Stego") drawStego(dino);
+
+      ctx.restore();
+
+      if (dino.state === "owned") {
+        drawOwnershipBadge(dino);
+        drawHungerBar(dino);
+      }
+    }
+
+    function drawProjectiles() {
+      for (const projectile of projectiles) {
+        drawShadow(projectile.x, projectile.y + 10, 8, 4);
+
+        ctx.save();
+        ctx.translate(projectile.x, projectile.y);
+        ctx.rotate(projectile.angle);
+
+        if (projectile.type === "tag") {
+          ctx.strokeStyle = COLORS.blue;
+          ctx.lineWidth = 4;
+          ctx.beginPath();
+          ctx.arc(0, 0, projectile.radius - 2, 0, Math.PI * 2);
+          ctx.stroke();
+
+          ctx.strokeStyle = "#b8ecff";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(0, 0, projectile.radius - 6, 0, Math.PI * 2);
+          ctx.stroke();
+        } else {
+          ctx.fillStyle = COLORS.yellow;
+          roundedRectPath(-9, -6, 18, 12, 4);
+          ctx.fill();
+          ctx.fillStyle = "#9c7843";
+          ctx.fillRect(-3, -2, 6, 4);
+        }
+
+        ctx.restore();
+      }
+    }
+
+    function drawParticles() {
+      for (const particle of particles) {
+        const alpha = clamp(particle.life / particle.maxLife, 0, 1);
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = particle.color;
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function drawPopups() {
+      ctx.textAlign = "center";
+      for (const popup of popups) {
+        const alpha = clamp(popup.life / popup.maxLife, 0, 1);
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = popup.color;
+        ctx.font = `bold ${popup.size}px Arial`;
+        ctx.fillText(popup.text, popup.x, popup.y);
+      }
+      ctx.globalAlpha = 1;
+      ctx.textAlign = "left";
+    }
+
+    function drawHUD() {
+      const speciesCounts = currentOwnedSpecies();
+
+      // Top left score box
+      ctx.save();
+      ctx.fillStyle = COLORS.uiSoft;
+      ctx.strokeStyle = COLORS.uiBorder;
+      ctx.lineWidth = 2;
+
+      roundedRectPath(18, 18, 250, 112, 18);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = COLORS.white;
+      ctx.font = "bold 18px Arial";
+      ctx.fillText("POINTS", 34, 46);
+      ctx.fillText("BEST", 34, 78);
+      ctx.fillText("FOOD", 34, 110);
+
+      ctx.textAlign = "right";
+      ctx.font = "bold 30px Arial";
+      ctx.fillText(points, 244, 48);
+      ctx.font = "bold 22px Arial";
+      ctx.fillText(bestPoints, 244, 80);
+      ctx.fillStyle = foodStock > 0 ? COLORS.yellow : COLORS.red;
+      ctx.fillText(foodStock, 244, 112);
+
+      // Top center tool box
+      const toolLabel = player.tool === "tag" ? "Tagger" : "Feed Bag";
+      roundedRectPath(canvas.width * 0.5 - 210, 18, 420, 60, 16);
+      ctx.fillStyle = COLORS.uiSoft;
+      ctx.fill();
+      ctx.strokeStyle = COLORS.uiBorder;
+      ctx.stroke();
+
+      ctx.fillStyle = COLORS.white;
+      ctx.textAlign = "center";
+      ctx.font = "bold 22px Arial";
+      ctx.fillText(`Tool: ${toolLabel}   •   1 Tag  2 Feed   •   Click to use`, canvas.width * 0.5, 55);
+
+      // Top right species box
+      roundedRectPath(canvas.width - 290, 18, 272, 150, 18);
+      ctx.fillStyle = COLORS.uiSoft;
+      ctx.fill();
+      ctx.strokeStyle = COLORS.uiBorder;
+      ctx.stroke();
+
+      ctx.fillStyle = COLORS.white;
+      ctx.textAlign = "left";
+      ctx.font = "bold 18px Arial";
+      ctx.fillText("HERD", canvas.width - 272, 46);
+      ctx.fillText(`Owned: ${countOwnedDinos()}`, canvas.width - 272, 72);
+
+      let lineY = 100;
+      for (const species of speciesCatalog) {
+        ctx.fillStyle = species.color;
+        ctx.beginPath();
+        ctx.arc(canvas.width - 256, lineY - 6, 7, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = COLORS.white;
+        ctx.font = "16px Arial";
+        ctx.fillText(`${species.name}: ${speciesCounts[species.key]}`, canvas.width - 240, lineY);
+        lineY += 24;
+      }
+
+      ctx.restore();
+
+      // Bottom left instructions
+      ctx.save();
+      ctx.fillStyle = "rgba(24,35,33,0.68)";
+      roundedRectPath(18, canvas.height - 84, 440, 58, 16);
+      ctx.fill();
+
+      ctx.fillStyle = COLORS.white;
+      ctx.font = "bold 18px Arial";
+      ctx.fillText("WASD / Arrows move   •   E buys feed at the barn   •   R resets ranch", 34, canvas.height - 48);
+      ctx.restore();
+    }
+
+    function drawIntroOverlay() {
+      if (introTimer <= 0) return;
+
+      const alpha = clamp(introTimer / 9, 0, 1) * 0.92;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = "rgba(10, 14, 12, 0.56)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.textAlign = "center";
+      ctx.fillStyle = COLORS.white;
+      ctx.font = "bold 60px Arial";
+      ctx.fillText("DINO FARM: TAG & FEED", canvas.width * 0.5, canvas.height * 0.28);
+
+      ctx.font = "24px Arial";
+      ctx.fillText(
+        "No bad guys this time. Tag wild dinos to make them yours, then keep your herd fed.",
+        canvas.width * 0.5,
+        canvas.height * 0.38
+      );
+      ctx.fillText(
+        "Owned dinos earn points over time. Spend those points at the feed barn to buy more food.",
+        canvas.width * 0.5,
+        canvas.height * 0.44
+      );
+
+      ctx.fillStyle = COLORS.uiAccent;
+      ctx.font = "bold 28px Arial";
+      ctx.fillText("1 = Tagger    2 = Feed Bag    Click = Use Tool", canvas.width * 0.5, canvas.height * 0.54);
+
+      ctx.fillStyle = COLORS.white;
+      ctx.font = "22px Arial";
+      ctx.fillText(
+        "Hungry dinos stop earning and can wander off if you ignore them too long.",
+        canvas.width * 0.5,
+        canvas.height * 0.61
+      );
+      ctx.fillText("Move or click to start playing.", canvas.width * 0.5, canvas.height * 0.68);
+
+      ctx.restore();
+      ctx.textAlign = "left";
+    }
+
+    function drawFlash() {
+      if (flashTimer <= 0) return;
+      ctx.save();
+      ctx.globalAlpha = flashTimer * 0.35;
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.restore();
+    }
+
+    function drawCrosshair() {
+      ctx.save();
+      ctx.strokeStyle = player.tool === "tag" ? COLORS.blue : COLORS.yellow;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(mouse.x, mouse.y, 12, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(mouse.x - 18, mouse.y);
+      ctx.lineTo(mouse.x - 6, mouse.y);
+      ctx.moveTo(mouse.x + 6, mouse.y);
+      ctx.lineTo(mouse.x + 18, mouse.y);
+      ctx.moveTo(mouse.x, mouse.y - 18);
+      ctx.lineTo(mouse.x, mouse.y - 6);
+      ctx.moveTo(mouse.x, mouse.y + 6);
+      ctx.lineTo(mouse.x, mouse.y + 18);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function draw() {
+      ctx.save();
+
+      if (screenShake > 0) {
+        const shakeX = (Math.random() * 2 - 1) * screenShake;
+        const shakeY = (Math.random() * 2 - 1) * screenShake;
+        ctx.translate(shakeX, shakeY);
+      }
+
+      drawGrass();
+      drawPastureAndStore();
+      drawProjectiles();
+
+      for (const dino of dinos) {
+        drawDino(dino);
+      }
+
+      drawFarmer();
+      drawParticles();
+      drawHUD();
+      drawPopups();
+      drawCrosshair();
+      drawIntroOverlay();
+      drawFlash();
+
+      ctx.restore();
+    }
+
+    function gameLoop(timestamp) {
+      if (!lastTime) lastTime = timestamp;
+      const dt = (timestamp - lastTime) / 1000;
+      lastTime = timestamp;
+
+      update(dt);
+      draw();
+      requestAnimationFrame(gameLoop);
+    }
+
+    document.addEventListener("keydown", (event) => {
+      const key = event.key.toLowerCase();
+      keys[key] = true;
+
+      if (key === "1") player.tool = "tag";
+      if (key === "2") player.tool = "feed";
+      if (key === "q") player.tool = player.tool === "tag" ? "feed" : "tag";
+
+      if (key === "e") {
+        tryBuyFood();
+      }
+
+      if (key === " ") {
+        event.preventDefault();
+        tryUseTool();
+      }
+
+      if (key === "r") {
+        resetGame();
+      }
+
+      introTimer = Math.max(0, introTimer - 1.6);
+    });
+
+    document.addEventListener("keyup", (event) => {
+      delete keys[event.key.toLowerCase()];
+    });
+
+    canvas.addEventListener("mousemove", (event) => {
+      const rect = canvas.getBoundingClientRect();
+      mouse.x = (event.clientX - rect.left) * (canvas.width / rect.width);
+      mouse.y = (event.clientY - rect.top) * (canvas.height / rect.height);
+    });
+
+    canvas.addEventListener("mousedown", (event) => {
+      const rect = canvas.getBoundingClientRect();
+      mouse.x = (event.clientX - rect.left) * (canvas.width / rect.width);
+      mouse.y = (event.clientY - rect.top) * (canvas.height / rect.height);
+      mouse.down = true;
+      tryUseTool();
+      introTimer = Math.max(0, introTimer - 2);
+    });
+
+    window.addEventListener("mouseup", () => {
+      mouse.down = false;
+    });
+
+    requestAnimationFrame(gameLoop);
+  </script>
+</body>
+</html>

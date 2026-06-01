@@ -1,0 +1,3172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dino Growth Explorer: Ancient Isles Reborn 3D</title>
+<style>
+  :root {
+    --bg: #061019;
+    --panel: rgba(8, 16, 25, 0.84);
+    --panel-strong: rgba(7, 14, 22, 0.92);
+    --panel-border: rgba(190, 220, 240, 0.14);
+    --text: #eef6fb;
+    --muted: #b8cad8;
+    --accent: #d8f088;
+    --gold: #ffd47c;
+    --danger: #ff8a71;
+    --sea: #35b2ff;
+    --forest: #1d6a2d;
+    --shadow: rgba(0, 0, 0, 0.36);
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at top, rgba(98, 158, 220, 0.18), transparent 38%),
+      linear-gradient(180deg, #08121b, #03070b 74%);
+    color: var(--text);
+    font-family: "Avenir Next", "Segoe UI", sans-serif;
+  }
+
+  body {
+    position: relative;
+  }
+
+  #viewport {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+  }
+
+  #viewport canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background:
+      radial-gradient(circle at 18% 12%, rgba(78, 138, 203, 0.14), transparent 28%),
+      linear-gradient(180deg, rgba(3, 8, 12, 0.48), rgba(3, 8, 12, 0.88));
+    backdrop-filter: blur(10px);
+    z-index: 15;
+    transition: opacity 0.22s ease, visibility 0.22s ease;
+  }
+
+  .menu-shell {
+    width: min(1360px, 100%);
+    max-height: 92vh;
+    overflow: auto;
+    padding: 28px;
+    border-radius: 32px;
+    border: 1px solid var(--panel-border);
+    background:
+      linear-gradient(180deg, rgba(18, 31, 44, 0.96), rgba(8, 16, 24, 0.95)),
+      radial-gradient(circle at top right, rgba(124, 175, 220, 0.12), transparent 34%);
+    box-shadow: 0 44px 120px rgba(0, 0, 0, 0.52), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+
+  .eyebrow {
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-size: 12px;
+    font-weight: 800;
+    margin-bottom: 12px;
+  }
+
+  h1 {
+    margin: 0 0 12px;
+    font-family: "Arial Black", "Avenir Next Condensed", "Impact", sans-serif;
+    font-size: clamp(34px, 5vw, 58px);
+    line-height: 0.98;
+    letter-spacing: 0.01em;
+    text-shadow: 0 8px 28px rgba(0, 0, 0, 0.38);
+  }
+
+  .lead {
+    max-width: 1000px;
+    margin: 0 0 18px;
+    color: #d9e9f4;
+    font-size: 17px;
+    line-height: 1.6;
+  }
+
+  .legend-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .legend-card {
+    padding: 14px 16px;
+    border-radius: 18px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    color: #cfe0ea;
+    font-size: 14px;
+    line-height: 1.46;
+  }
+
+  .kbd {
+    display: inline-flex;
+    min-width: 24px;
+    height: 24px;
+    padding: 2px 8px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .class-section {
+    margin-top: 22px;
+  }
+
+  .class-head {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 12px;
+  }
+
+  .class-head h2 {
+    margin: 0;
+    font-size: 28px;
+  }
+
+  .class-head p {
+    margin: 0;
+    color: #a7c0cf;
+    font-size: 14px;
+  }
+
+  .species-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(252px, 1fr));
+    gap: 14px;
+  }
+
+  .species-card {
+    appearance: none;
+    border: none;
+    text-align: left;
+    width: 100%;
+    padding: 16px;
+    border-radius: 24px;
+    color: var(--text);
+    cursor: pointer;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.04)),
+      radial-gradient(circle at top right, rgba(139, 207, 255, 0.08), transparent 38%);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 18px 36px rgba(0, 0, 0, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+  }
+
+  .species-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(216, 240, 136, 0.55);
+    box-shadow: 0 24px 44px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  }
+
+  .species-card .kind {
+    display: inline-flex;
+    padding: 4px 10px;
+    border-radius: 999px;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    font-weight: 800;
+    color: #07121b;
+    background: var(--gold);
+    margin-bottom: 10px;
+  }
+
+  .species-card h3 {
+    margin: 0 0 8px;
+    font-size: 22px;
+  }
+
+  .species-card p {
+    margin: 0;
+    color: #d2e4ef;
+    font-size: 14px;
+    line-height: 1.46;
+  }
+
+  .species-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .meta-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    color: #edf7ff;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .meta-pill.friendly {
+    background: rgba(216, 240, 136, 0.16);
+    border-color: rgba(216, 240, 136, 0.26);
+    color: #effad1;
+  }
+
+  .species-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .stat-chip {
+    padding: 10px 10px 9px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .stat-chip strong {
+    display: block;
+    color: #98b5c7;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 4px;
+  }
+
+  .stat-chip span {
+    color: #fff;
+    font-size: 20px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .footer-note {
+    margin-top: 24px;
+    color: #adc6d6;
+    font-size: 13px;
+    line-height: 1.48;
+  }
+
+  .hud {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    pointer-events: none;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+  }
+
+  .panel {
+    position: absolute;
+    background:
+      linear-gradient(180deg, rgba(9, 18, 27, 0.84), rgba(6, 13, 20, 0.86)),
+      radial-gradient(circle at top right, rgba(102, 164, 220, 0.08), transparent 38%);
+    border: 1px solid var(--panel-border);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(8px);
+  }
+
+  .status-panel {
+    top: 18px;
+    left: 18px;
+    width: 460px;
+    border-radius: 20px;
+    padding: 16px 16px 14px;
+  }
+
+  .status-panel h2 {
+    margin: 0;
+    font-size: 26px;
+  }
+
+  .meta-line,
+  .counts-line,
+  .hint-line {
+    color: #c7dcea;
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  .meta-line {
+    margin: 6px 0 12px;
+  }
+
+  .counts-line {
+    margin: 10px 0 0;
+  }
+
+  .bar-stack {
+    display: grid;
+    gap: 8px;
+  }
+
+  .bar-row {
+    display: grid;
+    grid-template-columns: 74px 1fr 74px;
+    gap: 10px;
+    align-items: center;
+    color: #cfe0eb;
+    font-size: 13px;
+  }
+
+  .bar-row strong {
+    justify-self: end;
+    font-size: 12px;
+    color: #f6fbff;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .bar {
+    height: 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.10);
+    overflow: hidden;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25);
+  }
+
+  .bar span {
+    display: block;
+    width: 0;
+    height: 100%;
+    border-radius: inherit;
+    transition: width 0.16s linear;
+  }
+
+  .health-fill {
+    background: linear-gradient(90deg, #ff876e, #ffb38a);
+  }
+
+  .hunger-fill {
+    background: linear-gradient(90deg, #a8df4d, #d9f183);
+  }
+
+  .sprint-fill {
+    background: linear-gradient(90deg, #5ed8ff, #9beaff);
+  }
+
+  .xp-fill {
+    background: linear-gradient(90deg, #f8b657, #ffe08e);
+  }
+
+  .map-panel {
+    top: 18px;
+    right: 18px;
+    width: 420px;
+    border-radius: 20px;
+    padding: 16px;
+  }
+
+  .panel-title {
+    font-size: 20px;
+    font-weight: 800;
+    margin-bottom: 10px;
+  }
+
+  #minimap {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.04);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18);
+  }
+
+  .objective-text {
+    margin-top: 12px;
+    font-size: 14px;
+    color: #d6e7f3;
+    line-height: 1.48;
+  }
+
+  .shrine-panel {
+    right: 18px;
+    bottom: 84px;
+    width: 360px;
+    border-radius: 18px;
+    padding: 14px 16px 16px;
+  }
+
+  .shrine-panel h3 {
+    margin: 0 0 6px;
+    font-size: 18px;
+  }
+
+  .shrine-panel p {
+    margin: 0;
+    color: #cbdbe7;
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  .node-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .node-pill {
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    background: rgba(255, 255, 255, 0.06);
+    font-size: 12px;
+    color: #f2f8ff;
+    font-weight: 800;
+  }
+
+  .node-pill.active {
+    background: rgba(216, 240, 136, 0.18);
+    border-color: rgba(216, 240, 136, 0.28);
+    color: #effad1;
+  }
+
+  .help-panel {
+    left: 18px;
+    right: 18px;
+    bottom: 18px;
+    border-radius: 18px;
+    padding: 12px 16px;
+    font-size: 14px;
+    color: #e6f0f8;
+  }
+
+  .toast {
+    position: absolute;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-8px);
+    min-width: 220px;
+    max-width: min(70vw, 620px);
+    padding: 12px 18px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    background: rgba(6, 13, 20, 0.88);
+    color: #f5fbff;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.30);
+    opacity: 0;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .state-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(2, 6, 10, 0.38);
+    z-index: 12;
+    transition: opacity 0.18s ease, visibility 0.18s ease;
+  }
+
+  .state-card {
+    width: min(620px, calc(100vw - 32px));
+    padding: 24px 24px 22px;
+    border-radius: 24px;
+    background: linear-gradient(180deg, rgba(10, 18, 27, 0.95), rgba(6, 12, 18, 0.94));
+    border: 1px solid var(--panel-border);
+    box-shadow: 0 28px 80px rgba(0, 0, 0, 0.42);
+    text-align: center;
+  }
+
+  .state-card h2 {
+    margin: 0 0 10px;
+    font-size: 34px;
+  }
+
+  .state-card p {
+    margin: 0;
+    color: #cfdfeb;
+    line-height: 1.55;
+  }
+
+  .state-card .state-foot {
+    margin-top: 12px;
+    color: #f5fbff;
+    font-weight: 700;
+  }
+
+  @media (max-width: 980px) {
+    .status-panel {
+      width: calc(100vw - 36px);
+    }
+
+    .map-panel {
+      top: auto;
+      bottom: 84px;
+      right: 18px;
+      width: min(420px, calc(100vw - 36px));
+    }
+
+    .shrine-panel {
+      left: 18px;
+      right: auto;
+      width: min(360px, calc(100vw - 36px));
+      bottom: 310px;
+    }
+  }
+</style>
+</head>
+<body>
+<div id="viewport"></div>
+
+<div class="overlay" id="menu">
+  <div class="menu-shell">
+    <div class="eyebrow">Polygonal 3D Adventure</div>
+    <h1>Dino Growth Explorer: Ancient Isles Reborn</h1>
+    <p class="lead">
+      The spirit of the old game is still here: grow from hatchling to titan, cross ancient biomes, solve shrine riddles, hunt or graze your way forward, and break through relic-locked gates. The difference is the world is now rendered as a real low-poly 3D island chain.
+    </p>
+
+    <div class="legend-grid">
+      <div class="legend-card"><span class="kbd">WASD</span> Move through the isles in full 3D.</div>
+      <div class="legend-card"><span class="kbd">Shift</span> Burst forward and spend sprint energy.</div>
+      <div class="legend-card"><span class="kbd">F</span> Attack creatures and strike shrine nodes.</div>
+      <div class="legend-card"><span class="kbd">Space</span> Pulse nearby food, shrines, and secrets.</div>
+      <div class="legend-card"><span class="kbd">Esc</span> Pause or resume the run.</div>
+    </div>
+
+    <div id="speciesSections"></div>
+
+    <p class="footer-note">
+      This version uses a low-poly Three.js scene loaded from a CDN. If the 3D engine fails to load, the game will not boot. Choose a species to drop into Ancient Isles Reborn.
+    </p>
+  </div>
+</div>
+
+<div class="hud hidden" id="hud">
+  <div class="panel status-panel">
+    <div class="eyebrow" id="stageLabel">Hatchling</div>
+    <h2 id="speciesLabel">Triceratops</h2>
+    <div class="meta-line" id="metaLine">Class: Land | Region: Nest Valley</div>
+    <div class="bar-stack">
+      <div class="bar-row"><span>Health</span><div class="bar"><span class="health-fill" id="healthFill"></span></div><strong id="healthValue">100 / 100</strong></div>
+      <div class="bar-row"><span>Hunger</span><div class="bar"><span class="hunger-fill" id="hungerFill"></span></div><strong id="hungerValue">100 / 100</strong></div>
+      <div class="bar-row"><span>Sprint</span><div class="bar"><span class="sprint-fill" id="sprintFill"></span></div><strong id="sprintValue">100%</strong></div>
+      <div class="bar-row"><span>XP</span><div class="bar"><span class="xp-fill" id="xpFill"></span></div><strong id="xpValue">0 / 280</strong></div>
+    </div>
+    <div class="counts-line" id="countsLine">Kills: 0 | Relics: 0 | Booty: 0</div>
+  </div>
+
+  <div class="panel map-panel">
+    <div class="panel-title">Adventure Map</div>
+    <canvas id="minimap" width="360" height="210"></canvas>
+    <div class="objective-text" id="objectiveText">Grow strong enough to cross the first gate.</div>
+  </div>
+
+  <div class="panel shrine-panel hidden" id="shrinePanel">
+    <h3 id="shrineTitle">Focused Shrine</h3>
+    <p id="shrineClue">Find a shrine to reveal its clue.</p>
+    <div class="node-strip" id="shrineNodes"></div>
+  </div>
+
+  <div class="panel help-panel" id="hintLine">
+    WASD move | Shift sprint | F attack | Space pulse | Esc pause
+  </div>
+
+  <div class="toast" id="toast">Ancient Isles Reborn</div>
+</div>
+
+<div class="state-overlay hidden" id="stateOverlay">
+  <div class="state-card">
+    <h2 id="stateTitle">Paused</h2>
+    <p id="stateBody">Press Esc to continue your run.</p>
+    <p class="state-foot" id="stateFoot">Press R to return to species select.</p>
+  </div>
+</div>
+
+<script src="https://unpkg.com/three@0.164.1/build/three.min.js"></script>
+<script>
+(() => {
+  "use strict";
+
+  if (!window.THREE) {
+    const stateOverlay = document.getElementById("stateOverlay");
+    document.getElementById("menu").classList.add("hidden");
+    stateOverlay.classList.remove("hidden");
+    document.getElementById("stateTitle").textContent = "3D engine failed to load";
+    document.getElementById("stateBody").textContent = "This build depends on Three.js from a CDN. Open it while connected to the internet and reload the page.";
+    document.getElementById("stateFoot").textContent = "Once the engine loads, the polygonal 3D world will boot normally.";
+    return;
+  }
+
+  const viewport = document.getElementById("viewport");
+  const menu = document.getElementById("menu");
+  const hud = document.getElementById("hud");
+  const speciesSections = document.getElementById("speciesSections");
+  const stageLabel = document.getElementById("stageLabel");
+  const speciesLabel = document.getElementById("speciesLabel");
+  const metaLine = document.getElementById("metaLine");
+  const healthFill = document.getElementById("healthFill");
+  const healthValue = document.getElementById("healthValue");
+  const hungerFill = document.getElementById("hungerFill");
+  const hungerValue = document.getElementById("hungerValue");
+  const sprintFill = document.getElementById("sprintFill");
+  const sprintValue = document.getElementById("sprintValue");
+  const xpFill = document.getElementById("xpFill");
+  const xpValue = document.getElementById("xpValue");
+  const countsLine = document.getElementById("countsLine");
+  const objectiveText = document.getElementById("objectiveText");
+  const hintLine = document.getElementById("hintLine");
+  const shrinePanel = document.getElementById("shrinePanel");
+  const shrineTitle = document.getElementById("shrineTitle");
+  const shrineClue = document.getElementById("shrineClue");
+  const shrineNodes = document.getElementById("shrineNodes");
+  const minimap = document.getElementById("minimap");
+  const minimapCtx = minimap.getContext("2d");
+  const toast = document.getElementById("toast");
+  const stateOverlay = document.getElementById("stateOverlay");
+  const stateTitle = document.getElementById("stateTitle");
+  const stateBody = document.getElementById("stateBody");
+  const stateFoot = document.getElementById("stateFoot");
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  if ("outputColorSpace" in renderer) renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.05;
+  viewport.appendChild(renderer.domElement);
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color("#79b7e6");
+  scene.fog = new THREE.FogExp2("#6f9fbe", 0.00055);
+
+  const camera = new THREE.PerspectiveCamera(54, window.innerWidth / window.innerHeight, 0.1, 5000);
+  const hemi = new THREE.HemisphereLight("#d3f0ff", "#314620", 1.75);
+  scene.add(hemi);
+  const sun = new THREE.DirectionalLight("#ffe8ba", 1.2);
+  sun.position.set(260, 430, 160);
+  scene.add(sun);
+  const fill = new THREE.DirectionalLight("#8dbcf1", 0.35);
+  fill.position.set(-320, 140, -220);
+  scene.add(fill);
+
+  const worldRoot = new THREE.Group();
+  const propsRoot = new THREE.Group();
+  const structureRoot = new THREE.Group();
+  const dynamicRoot = new THREE.Group();
+  const fxRoot = new THREE.Group();
+  scene.add(worldRoot, propsRoot, structureRoot, dynamicRoot, fxRoot);
+
+  const WORLD = { width: 10000, height: 5600, waterLevel: 2.4, lavaLevel: 9.2 };
+  const CAMERA_OFFSET = new THREE.Vector3(-170, 132, 190);
+  const TMP_VEC = new THREE.Vector3();
+  const TAU = Math.PI * 2;
+
+  const AGE_STAGES = [
+    { xp: 0, label: "Hatchling", scale: 0.86, speedBonus: 1.00, attackBonus: 1.00, armorBonus: 0, lift: 20 },
+    { xp: 280, label: "Juvenile", scale: 1.05, speedBonus: 1.05, attackBonus: 1.16, armorBonus: 8, lift: 24 },
+    { xp: 760, label: "Adult", scale: 1.28, speedBonus: 1.12, attackBonus: 1.42, armorBonus: 16, lift: 28 },
+    { xp: 1600, label: "Ancient", scale: 1.56, speedBonus: 1.18, attackBonus: 1.80, armorBonus: 26, lift: 33 },
+    { xp: 3000, label: "Elder", scale: 1.82, speedBonus: 1.24, attackBonus: 2.12, armorBonus: 36, lift: 38 },
+    { xp: 5000, label: "Titan", scale: 2.10, speedBonus: 1.30, attackBonus: 2.52, armorBonus: 48, lift: 44 }
+  ];
+
+  const s = (name, classType, diet, description, color, accent, baseRadius, speed, maxHunger, boostStrength, attack, head, back, tail) => ({
+    name, classType, diet, description, color, accent, baseRadius, speed, maxHunger, boostStrength, attack, head, back, tail
+  });
+  const f = (name, color, radius, xp, hunger, terrains, moving = false, speed = 0, shape = "orb") => ({
+    name, color, radius, xp, hunger, terrains, moving, speed, shape
+  });
+  const e = (name, classType, color, accent, radius, speed, health, damage, xp, sight, terrains, bounds, head, back, tail) => ({
+    name, classType, color, accent, radius, speed, health, damage, xp, sight, terrains, bounds, head, back, tail
+  });
+  const n = (x, y, interaction, order) => ({ x, y, interaction, order });
+
+  const SPECIES = {
+    triceratops: s("Triceratops", "land", ["berry", "fern", "amberFruit", "starBloom"], "Reliable horned herbivore with a forgiving diet and sturdy growth.", "#8ecb5f", "#f4e6ba", 16, 208, 114, 1.40, 26, "horns", "frill", "heavy"),
+    velociraptor: s("Velociraptor", "land", ["egg", "boarling", "herdling", "carcass"], "Quick hunting specialist that snowballs once it starts winning fights.", "#ef8750", "#ffe2c7", 14, 246, 98, 1.58, 24, "jaw", "feathers", "blade"),
+    ankylosaurus: s("Ankylosaurus", "land", ["fern", "berry", "caveMushroom", "starBloom"], "Tanky bruiser that gets stronger the longer the fight lasts.", "#799d65", "#eee0ba", 17, 190, 120, 1.32, 30, "beak", "armor", "club"),
+    tyrannosaurus: s("Tyrannosaurus", "land", ["boarling", "herdling", "carcass", "egg"], "Late-game terror with huge attack and strong gate-breaking presence.", "#c35e46", "#ffe0bb", 17, 214, 110, 1.46, 34, "jaw", "scars", "heavy"),
+    stegosaurus: s("Stegosaurus", "land", ["fern", "berry", "amberFruit"], "Plated wall that shrugs off chaos and punishes overcommits.", "#72a25d", "#f4d39e", 18, 188, 124, 1.30, 31, "beak", "plates", "club"),
+    parasaurolophus: s("Parasaurolophus", "land", ["fern", "berry", "starBloom", "caveMushroom"], "Fast herbivore built for long-range exploration and clever routing.", "#9bcf6c", "#fff2c4", 15, 226, 114, 1.48, 25, "crest", "smooth", "heavy"),
+    pachyrhinosaurus: s("Pachyrhinosaurus", "land", ["berry", "fern", "amberFruit", "starBloom"], "Bulky grazer with excellent survival and confident midgame control.", "#87af68", "#f7e6bb", 17, 206, 120, 1.38, 29, "horns", "frill", "heavy"),
+    styracosaurus: s("Styracosaurus", "land", ["fern", "berry", "starBloom", "caveMushroom"], "Aggressive ceratopsian that rewards bold positioning.", "#7eb468", "#fff0c4", 16, 210, 117, 1.42, 28, "horns", "frill", "heavy"),
+    iguanodon: s("Iguanodon", "land", ["fern", "berry", "starBloom", "amberFruit"], "All-terrain browser with steady speed and stable recovery.", "#8db765", "#f0edbe", 16, 220, 116, 1.46, 26, "beak", "smooth", "heavy"),
+    therizinosaurus: s("Therizinosaurus", "land", ["fern", "berry", "egg", "dragonfly"], "Weird omnivore built for jungle routes and shrine-side scavenging.", "#6a9d69", "#ffe0b7", 17, 214, 118, 1.42, 33, "beak", "feathers", "feather"),
+    allosaurus: s("Allosaurus", "land", ["boarling", "herdling", "carcass", "egg"], "Classic hunter with balanced power, speed, and clean combat flow.", "#c96d4e", "#ffe0ba", 16, 236, 108, 1.54, 33, "jaw", "scars", "heavy"),
+    gallimimus: s("Gallimimus", "land", ["insect", "dragonfly", "berry", "egg"], "Blindingly fast scavenger that turns movement skill into progression.", "#d5b46d", "#fff1cb", 13, 268, 94, 1.70, 18, "snout", "smooth", "light"),
+
+    spinosaurus: s("Spinosaurus", "swimming", ["fish", "reefEel", "herdling", "carcass"], "Amphibious bruiser that owns river mouths and coastal fights.", "#47b3c3", "#d7f7ff", 16, 220, 112, 1.55, 29, "croc", "sail", "fin"),
+    plesiosaur: s("Plesiosaur", "swimming", ["fish", "shellfish", "squid", "ammonite"], "Long-necked survivor with strong cave and reef routing.", "#38b59e", "#d7fff8", 15, 208, 118, 1.60, 22, "longneck", "smooth", "fin"),
+    mosasaurus: s("Mosasaurus", "swimming", ["fish", "reefEel", "squid", "shellfish"], "Predator of the open blue with excellent finishing pressure.", "#2ea8bc", "#dbfaff", 18, 216, 118, 1.56, 32, "jaw", "ridge", "fin"),
+    ichthyosaur: s("Ichthyosaur", "swimming", ["fish", "reefEel", "squid", "ammonite"], "Quick darting swimmer that levels by staying in motion.", "#61c5e3", "#ecfcff", 14, 236, 102, 1.66, 21, "snout", "smooth", "fin"),
+    elasmosaurus: s("Elasmosaurus", "swimming", ["fish", "squid", "shellfish", "ammonite"], "Graceful ocean giant with huge reserves and smooth handling.", "#49a9c2", "#defdff", 17, 212, 124, 1.58, 26, "longneck", "smooth", "fin"),
+    liopleurodon: s("Liopleurodon", "swimming", ["fish", "reefEel", "squid", "ammonite"], "Massive hunter that owns deep water and trench dives.", "#2fa0b6", "#dcfbff", 18, 220, 122, 1.58, 34, "croc", "ridge", "fin"),
+    dunkleosteus: s("Dunkleosteus", "swimming", ["fish", "reefEel", "ammonite", "shellfish"], "Armored sea crusher with crushing survival and bite power.", "#3f8ca4", "#e7fbff", 18, 204, 128, 1.48, 35, "jaw", "armor", "fin"),
+    nothosaurus: s("Nothosaurus", "swimming", ["fish", "shellfish", "reefEel", "crab"], "Coastal ambusher that weaves between shallows and beaches.", "#4eb1ad", "#e1fffb", 15, 232, 110, 1.62, 25, "snout", "smooth", "fin"),
+    kronosaurus: s("Kronosaurus", "swimming", ["fish", "reefEel", "squid", "ammonite"], "Trench tyrant with vicious burst damage and control.", "#2f9ab2", "#defbff", 19, 224, 124, 1.58, 35, "croc", "ridge", "fin"),
+    archelon: s("Archelon", "swimming", ["shellfish", "crab", "ammonite", "starBloom"], "Ancient sea turtle with absurd endurance and safe progression.", "#5f9b87", "#efffe7", 18, 198, 136, 1.44, 24, "beak", "armor", "fin"),
+    ophthalmosaurus: s("Ophthalmosaurus", "swimming", ["fish", "squid", "ammonite", "reefEel"], "Fast deep diver built for weaving through danger.", "#63c0d7", "#eefcff", 15, 242, 104, 1.68, 22, "snout", "smooth", "fin"),
+    placodus: s("Placodus", "swimming", ["shellfish", "crab", "ammonite", "starBloom"], "Reef crusher that grows by cracking hard prey near shore.", "#5e8d84", "#f4efc8", 16, 202, 126, 1.46, 28, "beak", "armor", "fin"),
+
+    pteranodon: s("Pteranodon", "air", ["fish", "reefEel", "egg", "crab"], "Fast fisher that crosses the whole overworld with ease.", "#c19dff", "#f6ecff", 14, 236, 100, 1.54, 21, "crest", "wings", "light"),
+    microraptor: s("Microraptor", "air", ["insect", "dragonfly", "berry", "egg"], "Tiny thrill-seeker that rewards daring routes and quick pickups.", "#8590ff", "#edf0ff", 12, 254, 94, 1.60, 18, "feather", "wings", "blade"),
+    quetzalcoatlus: s("Quetzalcoatlus", "air", ["fish", "herdling", "egg", "boarling"], "Massive sky predator with commanding reach and map control.", "#a681ff", "#efe3ff", 16, 226, 106, 1.50, 28, "crest", "wings", "light"),
+    archaeopteryx: s("Archaeopteryx", "air", ["insect", "dragonfly", "berry", "crab", "starBloom"], "Flexible flyer that thrives on mixed diets and puzzle hunting.", "#7db8ff", "#eff7ff", 12, 248, 96, 1.62, 19, "feather", "wings", "feather"),
+    dimorphodon: s("Dimorphodon", "air", ["fish", "insect", "crab", "egg"], "Compact hunter with strong bite pressure and crisp movement.", "#6d89da", "#eff4ff", 13, 244, 100, 1.62, 23, "jaw", "wings", "blade"),
+    tapejara: s("Tapejara", "air", ["starBloom", "dragonfly", "egg", "berry"], "Bright-crested omnivore built for islands and shrine routes.", "#ef9e69", "#fff2dc", 13, 248, 100, 1.64, 20, "crest", "wings", "light"),
+    tropeognathus: s("Tropeognathus", "air", ["fish", "reefEel", "egg", "crab"], "Power flyer with fast travel energy and clean coast control.", "#9d8bd8", "#f5efff", 15, 238, 104, 1.58, 24, "crest", "wings", "light"),
+    rhamphorhynchus: s("Rhamphorhynchus", "air", ["fish", "insect", "dragonfly", "egg"], "Long-tailed dart flyer that chains tiny wins into steady growth.", "#7ea0e8", "#eef4ff", 12, 256, 95, 1.68, 19, "snout", "wings", "light"),
+    hatzegopteryx: s("Hatzegopteryx", "air", ["boarling", "herdling", "egg", "crab"], "Towering aerial hunter that hits like a falling ruin.", "#8f82d8", "#f6eeff", 17, 228, 108, 1.54, 31, "crest", "wings", "light"),
+    tupandactylus: s("Tupandactylus", "air", ["starBloom", "dragonfly", "berry", "egg"], "Fruit-loving glider built for island routes and precision puzzle work.", "#ec8a64", "#fff1df", 13, 248, 100, 1.64, 20, "crest", "wings", "light"),
+    nyctosaurus: s("Nyctosaurus", "air", ["fish", "reefEel", "dragonfly", "egg"], "Fragile but blisteringly fast sky racer for expert routes.", "#88a4f6", "#eef2ff", 12, 264, 92, 1.72, 18, "crest", "wings", "light"),
+    cearadactylus: s("Cearadactylus", "air", ["fish", "reefEel", "crab", "egg"], "Ocean-side hunter with a broad snout and forgiving glide feel.", "#9db0ec", "#f1f5ff", 14, 240, 102, 1.58, 22, "snout", "wings", "light")
+  };
+
+  const FOOD = {
+    berry: f("Berries", "#ff4f7a", 8, 10, 18, ["berry", "meadow", "forest", "jungle", "island"], false, 0, "berry"),
+    fern: f("Ferns", "#7bdc51", 9, 9, 17, ["meadow", "forest", "berry", "jungle", "island"], false, 0, "fern"),
+    insect: f("Insects", "#ffd45d", 6, 11, 14, ["meadow", "forest", "berry", "jungle"], true, 34, "insect"),
+    dragonfly: f("Dragonflies", "#7cefff", 6, 13, 15, ["forest", "berry", "marsh", "jungle"], true, 38, "dragonfly"),
+    egg: f("Eggs", "#fff2d6", 10, 14, 17, ["meadow", "cliffs", "beach", "storm", "highlands", "island"], false, 0, "egg"),
+    boarling: f("Boarlings", "#9d7050", 10, 22, 24, ["meadow", "forest", "jungle"], true, 28, "boarling"),
+    herdling: f("Herdlings", "#d8bd88", 11, 24, 26, ["meadow", "forest", "ember", "jungle", "island"], true, 27, "herdling"),
+    carcass: f("Carrion", "#9b6543", 12, 18, 23, ["meadow", "forest", "ember", "cliffs", "beach", "storm", "jungle", "highlands", "island"], false, 0, "carcass"),
+    fish: f("Fish", "#74dbff", 9, 15, 20, ["water", "abyss"], true, 36, "fish"),
+    shellfish: f("Shellfish", "#f7dca6", 9, 12, 16, ["beach", "water", "abyss"], false, 0, "shellfish"),
+    crab: f("Crabs", "#f28e63", 8, 14, 18, ["beach", "island", "marsh"], true, 22, "crab"),
+    reefEel: f("Reef Eels", "#7fd8c0", 8, 18, 21, ["beach", "water", "abyss"], true, 32, "reefEel"),
+    squid: f("Squid", "#d9b7ff", 10, 18, 22, ["water", "abyss"], true, 28, "squid"),
+    caveMushroom: f("Cave Mushrooms", "#9ce9ff", 8, 16, 19, ["cave"], false, 0, "caveMushroom"),
+    amberFruit: f("Amber Fruit", "#ff8c5c", 9, 13, 19, ["ember"], false, 0, "amberFruit"),
+    starBloom: f("Star Bloom", "#e2ff89", 9, 17, 20, ["beach", "island", "storm", "highlands"], false, 0, "starBloom"),
+    ammonite: f("Ammonites", "#f0d39a", 9, 19, 20, ["water", "abyss"], true, 18, "ammonite")
+  };
+
+  const FOOD_COUNTS = {
+    berry: 24,
+    fern: 24,
+    insect: 18,
+    dragonfly: 14,
+    egg: 16,
+    boarling: 12,
+    herdling: 10,
+    carcass: 8,
+    fish: 26,
+    shellfish: 12,
+    crab: 12,
+    reefEel: 14,
+    squid: 12,
+    caveMushroom: 8,
+    amberFruit: 10,
+    starBloom: 10,
+    ammonite: 12
+  };
+
+  const ENEMY_TYPES = {
+    ramclaw: e("Ramclaw", "land", "#c8a26e", "#fff1c4", 19, 176, 74, 11, 42, 220, ["meadow", "island"], { xMin: 500, xMax: 1400, yMin: 700, yMax: 1800 }, "dome", "smooth", "heavy"),
+    moonfang: e("Moonfang", "land", "#d7784b", "#ffd7b6", 18, 196, 66, 12, 50, 300, ["forest", "berry"], { xMin: 1500, xMax: 3100, yMin: 240, yMax: 1880 }, "jaw", "feathers", "blade"),
+    sunmaw: e("Sunmaw", "land", "#cb5a43", "#ffd2ac", 24, 206, 102, 17, 72, 340, ["ember"], { xMin: 3240, xMax: 4860, yMin: 260, yMax: 1880 }, "horns", "ridge", "heavy"),
+    galebeak: e("Galebeak", "air", "#9a8bdb", "#f2e9ff", 21, 220, 82, 14, 64, 340, ["cliffs", "storm", "highlands"], { xMin: 5000, xMax: 9400, yMin: 120, yMax: 1700 }, "crest", "wings", "light"),
+    tidefang: e("Tidefang", "swimming", "#33aac0", "#dbfbff", 27, 214, 118, 18, 82, 380, ["water"], { xMin: 5600, xMax: 9400, yMin: 1700, yMax: 4700 }, "jaw", "ridge", "fin"),
+    caveprowler: e("Cave Prowler", "land", "#8a9f63", "#f0edb9", 15, 186, 54, 10, 40, 230, ["cave"], { xMin: 5600, xMax: 9200, yMin: 2300, yMax: 4100 }, "snout", "spikes", "blade"),
+    marshstalker: e("Marshstalker", "land", "#708a5b", "#ffe3b5", 22, 192, 90, 15, 68, 300, ["jungle", "island"], { xMin: 7020, xMax: 8920, yMin: 1880, yMax: 3800 }, "beak", "plates", "heavy"),
+    titanbreaker: e("Titanbreaker", "land", "#bb6248", "#ffdcb6", 26, 218, 138, 22, 106, 360, ["highlands", "storm"], { xMin: 8720, xMax: 9860, yMin: 720, yMax: 2450 }, "horns", "scars", "heavy"),
+    abyssmaw: e("Abyss Maw", "swimming", "#2a89a2", "#d7fbff", 30, 222, 148, 24, 138, 420, ["abyss"], { xMin: 7240, xMax: 9800, yMin: 3820, yMax: 5480 }, "croc", "ridge", "fin"),
+    shrinewarden: e("Shrine Warden", "land", "#8d78c6", "#f0e6ff", 20, 198, 86, 14, 0, 360, ["meadow", "forest", "ember", "cliffs", "storm", "jungle", "highlands"], { xMin: 0, xMax: 0, yMin: 0, yMax: 0 }, "crest", "armor", "blade")
+  };
+
+  const ENEMY_COUNTS = {
+    ramclaw: 3,
+    moonfang: 4,
+    sunmaw: 3,
+    galebeak: 4,
+    tidefang: 5,
+    caveprowler: 3,
+    marshstalker: 4,
+    titanbreaker: 3,
+    abyssmaw: 4
+  };
+
+  const GATES = [
+    { x: 1450, name: "Moonfern Arch", openingY: 1880, openingHeight: 440, requiredStage: 1, requiredRelics: 0, color: "#5f513b" },
+    { x: 3150, name: "Sunscar Gate", openingY: 1420, openingHeight: 520, requiredStage: 2, requiredRelics: 0, color: "#7a4b2f" },
+    { x: 5050, name: "Galewatch Lift", openingY: 1960, openingHeight: 540, requiredStage: 3, requiredRelics: 1, color: "#46667c" },
+    { x: 6950, name: "Tidebreaker Causeway", openingY: 2140, openingHeight: 620, requiredStage: 4, requiredRelics: 3, color: "#38656d" },
+    { x: 8650, name: "Sunroot Seal", openingY: 1880, openingHeight: 720, requiredStage: 5, requiredRelics: 6, color: "#766c44" }
+  ];
+
+  const BERRY_GLADE = { x: 150, y: 340, w: 960, h: 1260 };
+  const MOONFERN_WOODS = { x: 1520, y: 250, w: 1600, h: 1700 };
+  const EMBER_BASIN = { x: 3240, y: 220, w: 1640, h: 1760 };
+  const SKYWATCH_CLIFFS = { x: 5100, y: 120, w: 1760, h: 1120 };
+  const STORM_CROWN = { x: 7080, y: 120, w: 1500, h: 1580 };
+  const SUNROOT_JUNGLE = { x: 7060, y: 1850, w: 1800, h: 1940 };
+  const SUNROOT_HIGHLANDS = { x: 8750, y: 760, w: 1120, h: 1620 };
+  const ABYSS_ZONE = { x: 7240, y: 3820, w: 2550, h: 1580 };
+
+  const STARTER_POND = { x: 980, y: 920, rx: 250, ry: 190 };
+  const MOON_LAKE = { x: 2530, y: 2520, rx: 360, ry: 240 };
+  const OASIS = { x: 4300, y: 1490, rx: 230, ry: 150 };
+  const STORM_POOL = { x: 7700, y: 1220, rx: 280, ry: 200 };
+  const ROOT_POOL = { x: 7900, y: 3160, rx: 340, ry: 250 };
+
+  const RIVERS = [
+    { x: 1300, y: 2260, w: 1220, h: 300 },
+    { x: 2500, y: 2320, w: 1120, h: 240 },
+    { x: 4100, y: 2080, w: 1000, h: 210 },
+    { x: 7100, y: 2200, w: 1450, h: 230 }
+  ];
+
+  const HOT_POOLS = [
+    { x: 3720, y: 1340, rx: 150, ry: 90 },
+    { x: 4270, y: 840, rx: 132, ry: 84 },
+    { x: 4590, y: 1650, rx: 108, ry: 74 }
+  ];
+
+  const ISLANDS = [
+    { name: "Palmcoil Cay", x: 6000, y: 2060, rx: 210, ry: 150, interior: "island" },
+    { name: "Turtleback Isle", x: 5650, y: 2840, rx: 280, ry: 200, interior: "marsh" },
+    { name: "Booty Key", x: 6480, y: 3320, rx: 330, ry: 240, interior: "forest" },
+    { name: "Skullfin Isle", x: 7600, y: 2580, rx: 260, ry: 190, interior: "cliffs" },
+    { name: "Sunroot Cay", x: 9020, y: 2540, rx: 380, ry: 260, interior: "forest" },
+    { name: "Highspire Isle", x: 9400, y: 1630, rx: 300, ry: 210, interior: "cliffs" }
+  ];
+
+  const SEA_CAVES = [
+    { name: "Whisper Sea Cave", x: 5700, y: 2910, rx: 95, ry: 66, chestX: 5700, chestY: 2915, xp: 140, hint: "Salt and old coin" },
+    { name: "Pirate Booty Grotto", x: 6480, y: 3340, rx: 110, ry: 84, chestX: 6480, chestY: 3345, xp: 180, hint: "Treasure in the dark" },
+    { name: "Skull Reef Cavern", x: 7650, y: 2620, rx: 88, ry: 64, chestX: 7655, chestY: 2624, xp: 170, hint: "A cavern opens in the reef" },
+    { name: "Thunder Maw Hollow", x: 8560, y: 3820, rx: 118, ry: 88, chestX: 8570, chestY: 3825, xp: 240, hint: "Thunder shakes the stone" },
+    { name: "Whalebone Vault", x: 9320, y: 4250, rx: 126, ry: 92, chestX: 9330, chestY: 4256, xp: 320, hint: "Bones guard a richer prize" }
+  ];
+
+  const SHRINE_DEFS = [
+    {
+      id: "moonfern-song",
+      type: "sequence",
+      name: "Moonfern Song",
+      clue: "Walk the fern sigils in the order the song rises.",
+      centerX: 2470,
+      centerY: 2880,
+      rewardX: 2470,
+      rewardY: 2880,
+      rewardXp: 220,
+      rewardRelics: 1,
+      timerLimit: 0,
+      nodes: [n(2310, 2890, "step", 1), n(2470, 2720, "step", 2), n(2630, 2890, "step", 3), n(2470, 3050, "step", 4)]
+    },
+    {
+      id: "raptor-trial",
+      type: "trial",
+      name: "Raptor Trial",
+      clue: "Enter the circle and survive the warden pack.",
+      centerX: 3420,
+      centerY: 1360,
+      rewardX: 3420,
+      rewardY: 1360,
+      rewardXp: 280,
+      rewardRelics: 1,
+      arenaRadius: 240,
+      wave: ["shrinewarden", "moonfang", "moonfang"]
+    },
+    {
+      id: "sunscar-crucible",
+      type: "sequence",
+      name: "Sunscar Crucible",
+      clue: "Strike the braziers from weakest flame to strongest before the heat resets.",
+      centerX: 4180,
+      centerY: 1230,
+      rewardX: 4180,
+      rewardY: 1230,
+      rewardXp: 340,
+      rewardRelics: 1,
+      timerLimit: 8.5,
+      nodes: [n(4020, 1330, "attack", 1), n(4180, 1160, "attack", 2), n(4340, 1330, "attack", 3)]
+    },
+    {
+      id: "reef-choir",
+      type: "sequence",
+      name: "Reef Choir",
+      clue: "Pulse the shells twice, strike the center, then tread the anchor.",
+      centerX: 6120,
+      centerY: 2240,
+      rewardX: 6120,
+      rewardY: 2240,
+      rewardXp: 310,
+      rewardRelics: 1,
+      timerLimit: 0,
+      nodes: [n(5960, 2310, "sense", 1), n(6120, 2150, "sense", 2), n(6280, 2310, "attack", 3), n(6120, 2460, "step", 4)]
+    },
+    {
+      id: "gale-constellation",
+      type: "constellation",
+      name: "Gale Constellation",
+      clue: "Wake every windstone before the gale fades. Any order works.",
+      centerX: 7680,
+      centerY: 1280,
+      rewardX: 7680,
+      rewardY: 1280,
+      rewardXp: 360,
+      rewardRelics: 1,
+      timerLimit: 12.0,
+      nodes: [n(7480, 1360, "sense", 1), n(7660, 1120, "step", 2), n(7880, 1360, "attack", 3), n(7680, 1560, "step", 4)]
+    },
+    {
+      id: "tidebreaker-trial",
+      type: "trial",
+      name: "Tidebreaker Trial",
+      clue: "Break the causeway wardens and claim the relic of the surf.",
+      centerX: 7440,
+      centerY: 2710,
+      rewardX: 7440,
+      rewardY: 2710,
+      rewardXp: 420,
+      rewardRelics: 1,
+      arenaRadius: 250,
+      wave: ["tidefang", "tidefang", "shrinewarden"]
+    },
+    {
+      id: "fernbreaker-relay",
+      type: "constellation",
+      name: "Fernbreaker Relay",
+      clue: "Run the relay before the drums go silent.",
+      centerX: 8350,
+      centerY: 2960,
+      rewardX: 8350,
+      rewardY: 2960,
+      rewardXp: 450,
+      rewardRelics: 1,
+      timerLimit: 10.0,
+      nodes: [n(8120, 3040, "step", 1), n(8280, 2840, "step", 2), n(8460, 2720, "step", 3), n(8640, 2860, "step", 4), n(8560, 3080, "step", 5)]
+    },
+    {
+      id: "sunroot-spiral",
+      type: "sequence",
+      name: "Sunroot Spiral",
+      clue: "Step, pulse, strike, pulse, step. The jungle listens in layers.",
+      centerX: 9000,
+      centerY: 2560,
+      rewardX: 9000,
+      rewardY: 2560,
+      rewardXp: 520,
+      rewardRelics: 1,
+      timerLimit: 0,
+      nodes: [n(8820, 2640, "step", 1), n(9000, 2430, "sense", 2), n(9180, 2640, "attack", 3), n(9000, 2880, "sense", 4), n(8840, 3030, "step", 5)]
+    },
+    {
+      id: "skyfang-mirror",
+      type: "constellation",
+      name: "Skyfang Mirror",
+      clue: "Wake the mirror points with pulse and steel before the lens goes dark.",
+      centerX: 9180,
+      centerY: 1370,
+      rewardX: 9180,
+      rewardY: 1370,
+      rewardXp: 540,
+      rewardRelics: 1,
+      timerLimit: 11.0,
+      nodes: [n(9000, 1450, "sense", 1), n(9180, 1230, "attack", 2), n(9360, 1450, "sense", 3), n(9180, 1660, "attack", 4)]
+    },
+    {
+      id: "primordial-vault",
+      type: "trial",
+      name: "Primordial Vault",
+      clue: "Only a true apex can clear the final vault.",
+      centerX: 9340,
+      centerY: 4620,
+      rewardX: 9340,
+      rewardY: 4620,
+      rewardXp: 760,
+      rewardRelics: 2,
+      arenaRadius: 280,
+      wave: ["abyssmaw", "titanbreaker", "shrinewarden", "abyssmaw"]
+    }
+  ];
+
+  const CLASS_LABELS = {
+    land: { title: "Land Dinosaurs", note: "Stable starts, durable progression, and strong gate pressure." },
+    swimming: { title: "Sea Giants", note: "Best cave routes, reef control, and ocean growth." },
+    air: { title: "Sky Hunters", note: "Fastest travel, best scouting, and high skill movement." }
+  };
+
+  const REGION_LABELS = [
+    { name: "Nest Valley", x: 760, y: 1180 },
+    { name: "Moonfern Woods", x: 2320, y: 1180 },
+    { name: "Ember Basin", x: 4060, y: 1180 },
+    { name: "Skywatch Cliffs", x: 5950, y: 860 },
+    { name: "Tempest Crown", x: 7800, y: 920 },
+    { name: "Sunroot Frontier", x: 7900, y: 2580 },
+    { name: "Starfall Trench", x: 8240, y: 4400 },
+    { name: "Sunroot Highlands", x: 9250, y: 1620 },
+    { name: "Whalebone Gulf", x: 9200, y: 3320 }
+  ];
+
+  const input = {
+    up: false,
+    down: false,
+    left: false,
+    right: false,
+    boost: false,
+    attack: false,
+    pulse: false
+  };
+
+  let state = {
+    mode: "menu",
+    time: 0,
+    species: null,
+    speciesKey: null,
+    player: null,
+    foods: [],
+    enemies: [],
+    shrines: [],
+    treasures: [],
+    foodRespawns: [],
+    enemyRespawns: [],
+    gateVisuals: [],
+    objectiveBeacon: null,
+    pulseRing: null,
+    attractor: null,
+    lastRegion: "Nest Valley",
+    discoveredRegions: new Set(),
+    discoveredSecrets: new Set()
+  };
+
+  function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+  }
+
+  function lerp(a, b, t) {
+    return a + (b - a) * t;
+  }
+
+  function rand(min, max) {
+    return min + Math.random() * (max - min);
+  }
+
+  function dist(x1, y1, x2, y2) {
+    return Math.hypot(x2 - x1, y2 - y1);
+  }
+
+  function inRect(x, y, rect) {
+    return x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h;
+  }
+
+  function inEllipse(x, y, cx, cy, rx, ry) {
+    const dx = (x - cx) / rx;
+    const dy = (y - cy) / ry;
+    return dx * dx + dy * dy <= 1;
+  }
+
+  function ellipseNorm(x, y, cx, cy, rx, ry) {
+    const dx = (x - cx) / rx;
+    const dy = (y - cy) / ry;
+    return dx * dx + dy * dy;
+  }
+
+  function hash2(x, y) {
+    const value = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
+    return value - Math.floor(value);
+  }
+
+  function noise2(x, y) {
+    return (
+      Math.sin(x * 0.006) * 2.4 +
+      Math.cos(y * 0.007) * 1.8 +
+      Math.sin((x + y) * 0.0024) * 1.2 +
+      Math.cos((x - y) * 0.0034) * 0.8
+    );
+  }
+
+  function seededRange(index, seed, min, max) {
+    const v = hash2(index * 97.13 + seed * 13.7, seed * 21.4 + index * 11.1);
+    return min + (max - min) * v;
+  }
+
+  function angleLerp(a, b, t) {
+    let diff = ((b - a + Math.PI) % TAU) - Math.PI;
+    if (diff < -Math.PI) diff += TAU;
+    return a + diff * t;
+  }
+
+  function worldToScene(x, y, height = 0) {
+    return TMP_VEC.set(x - WORLD.width * 0.5, height, y - WORLD.height * 0.5);
+  }
+
+  function createStandardMaterial(color, emissive = 0x000000, roughness = 0.96, metalness = 0.04) {
+    return new THREE.MeshStandardMaterial({
+      color,
+      emissive,
+      roughness,
+      metalness,
+      flatShading: true
+    });
+  }
+
+  function setMeshGlow(material, color, intensity) {
+    if (!material || !material.emissive) return;
+    material.emissive.set(color);
+    material.emissiveIntensity = intensity;
+  }
+
+  function createShadow(radius, opacity = 0.18) {
+    const shadow = new THREE.Mesh(
+      new THREE.CircleGeometry(radius, 18),
+      new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity, depthWrite: false })
+    );
+    shadow.rotation.x = -Math.PI * 0.5;
+    return shadow;
+  }
+
+  function disposeNode(node) {
+    while (node.children && node.children.length) {
+      const child = node.children[node.children.length - 1];
+      disposeNode(child);
+      node.remove(child);
+    }
+    if (node.geometry) node.geometry.dispose();
+    if (node.material) {
+      if (Array.isArray(node.material)) node.material.forEach(mat => mat.dispose());
+      else node.material.dispose();
+    }
+  }
+
+  function clearGroup(group) {
+    while (group.children.length) {
+      const child = group.children[group.children.length - 1];
+      disposeNode(child);
+      group.remove(child);
+    }
+  }
+
+  function getSpeciesRating(species) {
+    return {
+      speed: species.speed,
+      power: species.attack,
+      survival: species.maxHunger,
+      beginner: species.classType !== "air" && species.speed <= 230 && species.maxHunger >= 110
+    };
+  }
+
+  function getSpawnPoint(species) {
+    if (species.classType === "swimming") return { x: 980, y: 920 };
+    if (species.classType === "air") return { x: 760, y: 560 };
+    return { x: 430, y: 1120 };
+  }
+
+  function getIslandAt(x, y) {
+    return ISLANDS.find(island => inEllipse(x, y, island.x, island.y, island.rx, island.ry)) || null;
+  }
+
+  function getCaveAt(x, y) {
+    return SEA_CAVES.find(cave => inEllipse(x, y, cave.x, cave.y, cave.rx, cave.ry)) || null;
+  }
+
+  function isRiver(x, y) {
+    return RIVERS.some(river => inRect(x, y, river));
+  }
+
+  function isPool(x, y) {
+    return (
+      inEllipse(x, y, STARTER_POND.x, STARTER_POND.y, STARTER_POND.rx, STARTER_POND.ry) ||
+      inEllipse(x, y, MOON_LAKE.x, MOON_LAKE.y, MOON_LAKE.rx, MOON_LAKE.ry) ||
+      inEllipse(x, y, OASIS.x, OASIS.y, OASIS.rx, OASIS.ry) ||
+      inEllipse(x, y, STORM_POOL.x, STORM_POOL.y, STORM_POOL.rx, STORM_POOL.ry) ||
+      inEllipse(x, y, ROOT_POOL.x, ROOT_POOL.y, ROOT_POOL.rx, ROOT_POOL.ry)
+    );
+  }
+
+  function isHotPool(x, y) {
+    return HOT_POOLS.some(pool => inEllipse(x, y, pool.x, pool.y, pool.rx, pool.ry));
+  }
+
+  function isOcean(x, y) {
+    if (x > 5200 && y > 2200) return true;
+    if (x > 6800 && y > 1600 && y < 2600) return true;
+    if (x > 4200 && y > 3980) return true;
+    return false;
+  }
+
+  function isNearOceanBoundary(x, y) {
+    return (
+      (x > 5080 && x < 5380 && y > 2100) ||
+      (x > 6680 && x < 6920 && y > 1500 && y < 2720) ||
+      (x > 4100 && x < 4380 && y > 3880)
+    );
+  }
+
+  function isNearIslandEdge(x, y) {
+    for (const island of ISLANDS) {
+      const value = ellipseNorm(x, y, island.x, island.y, island.rx, island.ry);
+      if (value > 1 && value < 1.24) return true;
+    }
+    return false;
+  }
+
+  function getTerrainAt(x, y) {
+    const cave = getCaveAt(x, y);
+    if (cave) return "cave";
+    if (isHotPool(x, y)) return "lava";
+
+    const island = getIslandAt(x, y);
+    if (island) {
+      if (island.interior === "forest") return "island";
+      if (island.interior === "marsh") return "marsh";
+      if (island.interior === "cliffs") return "cliffs";
+      return "island";
+    }
+
+    if (inRect(x, y, ABYSS_ZONE) && isOcean(x, y)) return "abyss";
+    if (isPool(x, y) || isRiver(x, y) || isOcean(x, y)) {
+      if (isNearOceanBoundary(x, y) || isNearIslandEdge(x, y)) return "beach";
+      return inRect(x, y, ABYSS_ZONE) ? "abyss" : "water";
+    }
+
+    if (inRect(x, y, BERRY_GLADE)) return "berry";
+    if (inRect(x, y, MOONFERN_WOODS)) return "forest";
+    if (inRect(x, y, EMBER_BASIN)) return "ember";
+    if (inRect(x, y, SKYWATCH_CLIFFS)) return "cliffs";
+    if (inRect(x, y, STORM_CROWN)) return "storm";
+    if (inRect(x, y, SUNROOT_JUNGLE)) return "jungle";
+    if (inRect(x, y, SUNROOT_HIGHLANDS)) return "highlands";
+    return "meadow";
+  }
+
+  function getRegionName(x, y) {
+    const cave = getCaveAt(x, y);
+    if (cave) return cave.name;
+    const island = getIslandAt(x, y);
+    if (island) return island.name;
+    const terrain = getTerrainAt(x, y);
+    if (terrain === "berry") return "Nest Valley";
+    if (terrain === "forest") return "Moonfern Woods";
+    if (terrain === "ember") return "Ember Basin";
+    if (terrain === "cliffs") return x > 8200 ? "Sunroot Highlands" : "Skywatch Cliffs";
+    if (terrain === "storm") return "Tempest Crown";
+    if (terrain === "jungle") return "Sunroot Frontier";
+    if (terrain === "highlands") return "Sunroot Highlands";
+    if (terrain === "abyss") return "Starfall Trench";
+    if (terrain === "water" || terrain === "beach") {
+      if (x > 8700 && y > 2500) return "Whalebone Gulf";
+      if (x > 7000 && y > 1700) return "Sapphire Reach";
+      return "Ancient Sea";
+    }
+    return "Ancient Isles";
+  }
+
+  function getTerrainColor(terrain, x, y, height) {
+    const color = new THREE.Color();
+    const n = noise2(x, y);
+    if (terrain === "berry") color.setRGB(0.49 + n * 0.006, 0.61 + n * 0.008, 0.28);
+    else if (terrain === "forest") color.setRGB(0.11, 0.36 + n * 0.008, 0.18);
+    else if (terrain === "ember") color.setRGB(0.58 + n * 0.008, 0.42 + n * 0.005, 0.24);
+    else if (terrain === "cliffs") color.setRGB(0.46 + height * 0.002, 0.51 + height * 0.001, 0.56 + height * 0.001);
+    else if (terrain === "storm") color.setRGB(0.34, 0.40 + height * 0.001, 0.50 + height * 0.001);
+    else if (terrain === "jungle") color.setRGB(0.10, 0.33 + n * 0.009, 0.17);
+    else if (terrain === "highlands") color.setRGB(0.48 + height * 0.001, 0.53 + height * 0.001, 0.60 + height * 0.001);
+    else if (terrain === "island") color.setRGB(0.19, 0.43 + n * 0.007, 0.21);
+    else if (terrain === "marsh") color.setRGB(0.36, 0.42 + n * 0.006, 0.23);
+    else if (terrain === "water") color.setRGB(0.06, 0.17, 0.26);
+    else if (terrain === "abyss") color.setRGB(0.02, 0.06, 0.12);
+    else if (terrain === "beach") color.setRGB(0.73 + n * 0.006, 0.66 + n * 0.005, 0.48);
+    else if (terrain === "cave") color.setRGB(0.14, 0.18, 0.22);
+    else if (terrain === "lava") color.setRGB(0.33, 0.14, 0.08);
+    else color.setRGB(0.47 + n * 0.006, 0.58 + n * 0.008, 0.30);
+    return color;
+  }
+
+  function getGroundHeight(x, y) {
+    const terrain = getTerrainAt(x, y);
+    const n = noise2(x, y);
+    let height = 6 + n;
+
+    if (terrain === "berry") height = 8 + n * 1.0;
+    else if (terrain === "meadow") height = 7 + n * 0.9;
+    else if (terrain === "forest") height = 12 + n * 1.2;
+    else if (terrain === "ember") height = 14 + n * 1.0 + Math.sin(x * 0.015) * 1.4;
+    else if (terrain === "cliffs") height = 22 + n * 1.3 + Math.sin(y * 0.009) * 2.0;
+    else if (terrain === "storm") height = 28 + n * 1.4 + Math.cos((x + y) * 0.008) * 1.6;
+    else if (terrain === "jungle") height = 13 + n * 1.1;
+    else if (terrain === "highlands") height = 36 + n * 1.3 + Math.sin(x * 0.01) * 1.4;
+    else if (terrain === "island") height = 8 + n * 0.8;
+    else if (terrain === "marsh") height = 6 + n * 0.5;
+    else if (terrain === "cave") height = 1 + n * 0.3;
+    else if (terrain === "beach") height = 3 + n * 0.25;
+    else if (terrain === "lava") height = WORLD.lavaLevel - 0.8;
+    else if (terrain === "water") height = -10 + n * 0.4;
+    else if (terrain === "abyss") height = -28 + n * 0.6;
+
+    if (inEllipse(x, y, STARTER_POND.x, STARTER_POND.y, STARTER_POND.rx, STARTER_POND.ry)) height = -8;
+    if (inEllipse(x, y, MOON_LAKE.x, MOON_LAKE.y, MOON_LAKE.rx, MOON_LAKE.ry)) height = -10;
+    if (inEllipse(x, y, OASIS.x, OASIS.y, OASIS.rx, OASIS.ry)) height = -7;
+    if (inEllipse(x, y, STORM_POOL.x, STORM_POOL.y, STORM_POOL.rx, STORM_POOL.ry)) height = -8;
+    if (inEllipse(x, y, ROOT_POOL.x, ROOT_POOL.y, ROOT_POOL.rx, ROOT_POOL.ry)) height = -9;
+    for (const river of RIVERS) {
+      if (inRect(x, y, river)) height = -7;
+    }
+    for (const cave of SEA_CAVES) {
+      if (inEllipse(x, y, cave.x, cave.y, cave.rx, cave.ry)) {
+        height -= (1 - ellipseNorm(x, y, cave.x, cave.y, cave.rx, cave.ry)) * 10;
+      }
+    }
+    return height;
+  }
+
+  function getSurfaceHeight(x, y) {
+    const terrain = getTerrainAt(x, y);
+    const ground = getGroundHeight(x, y);
+    if (terrain === "water" || terrain === "abyss" || terrain === "beach") return Math.max(ground, WORLD.waterLevel);
+    if (terrain === "lava") return Math.max(ground, WORLD.lavaLevel);
+    return ground;
+  }
+
+  function terrainAllows(list, terrain) {
+    if (list.includes(terrain)) return true;
+    if (terrain === "berry" && (list.includes("meadow") || list.includes("forest") || list.includes("berry"))) return true;
+    if (terrain === "forest" && (list.includes("forest") || list.includes("meadow"))) return true;
+    if (terrain === "jungle" && (list.includes("jungle") || list.includes("forest"))) return true;
+    if (terrain === "island" && (list.includes("island") || list.includes("beach") || list.includes("forest"))) return true;
+    if (terrain === "marsh" && (list.includes("marsh") || list.includes("beach") || list.includes("island"))) return true;
+    if (terrain === "cliffs" && (list.includes("cliffs") || list.includes("highlands") || list.includes("storm"))) return true;
+    if (terrain === "highlands" && (list.includes("highlands") || list.includes("cliffs") || list.includes("storm"))) return true;
+    if (terrain === "water" && (list.includes("water") || list.includes("beach") || list.includes("abyss"))) return true;
+    if (terrain === "abyss" && (list.includes("abyss") || list.includes("water"))) return true;
+    if (terrain === "beach" && (list.includes("beach") || list.includes("water") || list.includes("island"))) return true;
+    return false;
+  }
+
+  function getSpeedMultiplier(classType, terrain) {
+    if (classType === "air") return terrain === "storm" ? 0.94 : 1.10;
+    if (classType === "swimming") {
+      if (terrain === "water") return 1.12;
+      if (terrain === "abyss") return 1.16;
+      if (terrain === "beach") return 0.84;
+      if (terrain === "marsh") return 0.92;
+      if (terrain === "island") return 0.76;
+      if (terrain === "cave") return 0.86;
+      return 0.66;
+    }
+    if (terrain === "water") return 0.42;
+    if (terrain === "abyss") return 0.26;
+    if (terrain === "beach") return 0.82;
+    if (terrain === "forest") return 0.90;
+    if (terrain === "jungle") return 0.88;
+    if (terrain === "cliffs") return 0.74;
+    if (terrain === "storm") return 0.84;
+    if (terrain === "highlands") return 0.78;
+    if (terrain === "lava") return 0.58;
+    return 1.00;
+  }
+
+  function buildGroundMesh() {
+    clearGroup(worldRoot);
+    const segmentsX = 112;
+    const segmentsY = 64;
+    const geometry = new THREE.PlaneGeometry(WORLD.width, WORLD.height, segmentsX, segmentsY);
+    geometry.rotateX(-Math.PI * 0.5);
+    const position = geometry.attributes.position;
+    const colors = [];
+    for (let i = 0; i < position.count; i++) {
+      const x = position.getX(i) + WORLD.width * 0.5;
+      const y = position.getZ(i) + WORLD.height * 0.5;
+      const ground = getGroundHeight(x, y);
+      position.setY(i, ground);
+      const color = getTerrainColor(getTerrainAt(x, y), x, y, ground);
+      colors.push(color.r, color.g, color.b);
+    }
+    geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+    geometry.computeVertexNormals();
+    const material = new THREE.MeshStandardMaterial({
+      vertexColors: true,
+      flatShading: true,
+      roughness: 1,
+      metalness: 0
+    });
+    const mesh = new THREE.Mesh(geometry, material);
+    worldRoot.add(mesh);
+  }
+
+  function addWaterPlate(x, y, width, height, color, opacity = 0.82, level = WORLD.waterLevel) {
+    const mesh = new THREE.Mesh(
+      new THREE.BoxGeometry(width, 1.2, height),
+      new THREE.MeshStandardMaterial({
+        color,
+        transparent: true,
+        opacity,
+        roughness: 0.25,
+        metalness: 0.06,
+        flatShading: true
+      })
+    );
+    mesh.position.copy(worldToScene(x + width * 0.5, y + height * 0.5, level));
+    worldRoot.add(mesh);
+  }
+
+  function addWaterDisc(cx, cy, rx, ry, color, opacity = 0.84, level = WORLD.waterLevel) {
+    const mesh = new THREE.Mesh(
+      new THREE.CylinderGeometry(1, 1, 1.1, 18),
+      new THREE.MeshStandardMaterial({
+        color,
+        transparent: true,
+        opacity,
+        roughness: 0.25,
+        metalness: 0.06,
+        flatShading: true
+      })
+    );
+    mesh.scale.set(rx, 1, ry);
+    mesh.position.copy(worldToScene(cx, cy, level));
+    worldRoot.add(mesh);
+  }
+
+  function buildWaterMeshes() {
+    addWaterPlate(5200, 2200, WORLD.width - 5200, WORLD.height - 2200, "#2caeff", 0.78);
+    addWaterPlate(6800, 1600, WORLD.width - 6800, 1000, "#36b6ff", 0.82);
+    addWaterPlate(4200, 3980, WORLD.width - 4200, WORLD.height - 3980, "#2796db", 0.84);
+    addWaterPlate(ABYSS_ZONE.x, ABYSS_ZONE.y, ABYSS_ZONE.w, ABYSS_ZONE.h, "#163f75", 0.92, WORLD.waterLevel - 1.8);
+
+    addWaterDisc(STARTER_POND.x, STARTER_POND.y, STARTER_POND.rx, STARTER_POND.ry, "#3db8ff");
+    addWaterDisc(MOON_LAKE.x, MOON_LAKE.y, MOON_LAKE.rx, MOON_LAKE.ry, "#3db2ee");
+    addWaterDisc(OASIS.x, OASIS.y, OASIS.rx, OASIS.ry, "#47c5ff");
+    addWaterDisc(STORM_POOL.x, STORM_POOL.y, STORM_POOL.rx, STORM_POOL.ry, "#57a2db");
+    addWaterDisc(ROOT_POOL.x, ROOT_POOL.y, ROOT_POOL.rx, ROOT_POOL.ry, "#2eb7cc");
+
+    for (const river of RIVERS) {
+      addWaterPlate(river.x, river.y, river.w, river.h, "#36b8ff", 0.8);
+    }
+    for (const pool of HOT_POOLS) {
+      addWaterDisc(pool.x, pool.y, pool.rx, pool.ry, "#ff7c34", 0.82, WORLD.lavaLevel);
+    }
+  }
+
+  function createTree(kind = "forest", scale = 1) {
+    const group = new THREE.Group();
+    const trunk = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.2 * scale, 1.6 * scale, 10 * scale, 5),
+      createStandardMaterial("#6a4a30")
+    );
+    trunk.position.y = 5 * scale;
+    group.add(trunk);
+
+    if (kind === "palm") {
+      const crown = new THREE.Mesh(new THREE.DodecahedronGeometry(4.4 * scale, 0), createStandardMaterial("#2b9b51"));
+      crown.position.y = 12 * scale;
+      crown.scale.set(1.4, 0.8, 1.4);
+      group.add(crown);
+      for (let i = 0; i < 5; i++) {
+        const leaf = new THREE.Mesh(new THREE.BoxGeometry(7 * scale, 0.8 * scale, 2.2 * scale), createStandardMaterial("#3db866"));
+        leaf.position.y = 12 * scale;
+        leaf.rotation.z = -0.35 + (i % 2) * 0.18;
+        leaf.rotation.y = (i / 5) * TAU;
+        leaf.position.x = Math.cos((i / 5) * TAU) * 2.8 * scale;
+        leaf.position.z = Math.sin((i / 5) * TAU) * 2.8 * scale;
+        group.add(leaf);
+      }
+    } else {
+      const height = kind === "jungle" ? 18 * scale : 15 * scale;
+      const color = kind === "jungle" ? "#1ea85b" : "#2c7b41";
+      const cone = new THREE.Mesh(new THREE.ConeGeometry(5.5 * scale, height, 6), createStandardMaterial(color));
+      cone.position.y = 12 * scale;
+      group.add(cone);
+      const cap = new THREE.Mesh(new THREE.DodecahedronGeometry(4.2 * scale, 0), createStandardMaterial(kind === "jungle" ? "#31b768" : "#3b9550"));
+      cap.position.y = 17 * scale;
+      cap.scale.set(1.2, 0.8, 1.2);
+      group.add(cap);
+    }
+    return group;
+  }
+
+  function createRock(scale = 1, color = "#798697") {
+    const group = new THREE.Group();
+    const body = new THREE.Mesh(new THREE.DodecahedronGeometry(5 * scale, 0), createStandardMaterial(color));
+    body.scale.set(1.4, 0.9, 1.1);
+    body.position.y = 4.6 * scale;
+    group.add(body);
+    return group;
+  }
+
+  function createCrystal(scale = 1, color = "#ffad5d") {
+    const group = new THREE.Group();
+    const stem = new THREE.Mesh(new THREE.BoxGeometry(1.4 * scale, 7 * scale, 1.4 * scale), createStandardMaterial(color, color, 0.7, 0.15));
+    stem.position.y = 5 * scale;
+    group.add(stem);
+    const tip = new THREE.Mesh(new THREE.OctahedronGeometry(2.8 * scale, 0), createStandardMaterial("#fff0c4", color, 0.4, 0.08));
+    tip.position.y = 9.4 * scale;
+    group.add(tip);
+    return group;
+  }
+
+  function scatterProps(rect, count, seed, terrainTargets, factory) {
+    for (let i = 0; i < count; i++) {
+      const x = rect.x + seededRange(i, seed, 40, rect.w - 40);
+      const y = rect.y + seededRange(i + 31, seed * 1.9, 40, rect.h - 40);
+      const terrain = getTerrainAt(x, y);
+      if (terrainTargets && !terrainTargets.includes(terrain)) continue;
+      const object = factory(seededRange(i + 9, seed * 2.3, 0.75, 1.35), i);
+      object.position.copy(worldToScene(x, y, getSurfaceHeight(x, y)));
+      object.rotation.y = seededRange(i + 17, seed * 3.1, 0, TAU);
+      propsRoot.add(object);
+    }
+  }
+
+  function buildProps() {
+    clearGroup(propsRoot);
+    scatterProps(BERRY_GLADE, 20, 1.2, ["berry", "meadow"], scale => createTree("forest", scale * 0.9));
+    scatterProps(MOONFERN_WOODS, 46, 2.4, ["forest"], scale => createTree("forest", scale));
+    scatterProps(SUNROOT_JUNGLE, 52, 3.9, ["jungle"], scale => createTree("jungle", scale * 1.05));
+    scatterProps(EMBER_BASIN, 18, 4.7, ["ember"], scale => createCrystal(scale * 1.05, "#ff8e55"));
+    scatterProps(SKYWATCH_CLIFFS, 22, 5.3, ["cliffs"], scale => createRock(scale * 1.1, "#7c8899"));
+    scatterProps(STORM_CROWN, 18, 6.2, ["storm"], scale => createCrystal(scale, "#a3c9ff"));
+    scatterProps(SUNROOT_HIGHLANDS, 16, 7.1, ["highlands"], scale => createRock(scale * 1.15, "#95a4b4"));
+    for (const island of ISLANDS) {
+      const count = island.interior === "cliffs" ? 8 : 10;
+      for (let i = 0; i < count; i++) {
+        const angle = (i / count) * TAU + seededRange(i, island.x * 0.01, -0.4, 0.4);
+        const radiusX = island.rx * seededRange(i, island.y * 0.01, 0.18, 0.72);
+        const radiusY = island.ry * seededRange(i + 7, island.x * 0.01, 0.18, 0.72);
+        const x = island.x + Math.cos(angle) * radiusX;
+        const y = island.y + Math.sin(angle) * radiusY;
+        const object = island.interior === "cliffs"
+          ? createRock(seededRange(i, island.y * 0.05, 0.8, 1.4), "#8895a5")
+          : createTree("palm", seededRange(i, island.x * 0.05, 0.75, 1.15));
+        object.position.copy(worldToScene(x, y, getSurfaceHeight(x, y)));
+        object.rotation.y = angle + Math.PI * 0.5;
+        propsRoot.add(object);
+      }
+    }
+  }
+
+  function createGateVisual(gate) {
+    const gateCenterY = gate.openingY + gate.openingHeight * 0.5;
+    const height = getSurfaceHeight(gate.x, gateCenterY);
+    const group = new THREE.Group();
+    group.position.copy(worldToScene(gate.x, gateCenterY, height));
+
+    const stone = createStandardMaterial(gate.color);
+    const trim = createStandardMaterial("#e9d29d");
+    const left = new THREE.Mesh(new THREE.BoxGeometry(18, 78, 18), stone);
+    left.position.set(-22, 39, 0);
+    const right = new THREE.Mesh(new THREE.BoxGeometry(18, 78, 18), stone);
+    right.position.set(22, 39, 0);
+    const top = new THREE.Mesh(new THREE.BoxGeometry(70, 14, 18), stone);
+    top.position.set(0, 78, 0);
+    const trimTop = new THREE.Mesh(new THREE.BoxGeometry(74, 4, 22), trim);
+    trimTop.position.set(0, 85, 0);
+    const crest = new THREE.Mesh(new THREE.OctahedronGeometry(8, 0), createStandardMaterial("#fff4d3", "#fff0c0", 0.6, 0.10));
+    crest.position.set(0, 98, 0);
+    const blocker = new THREE.Mesh(
+      new THREE.BoxGeometry(40, 56, 8),
+      new THREE.MeshStandardMaterial({
+        color: "#7fd5ff",
+        emissive: "#5fd2ff",
+        emissiveIntensity: 0.8,
+        transparent: true,
+        opacity: 0.56,
+        flatShading: true,
+        roughness: 0.3,
+        metalness: 0.1
+      })
+    );
+    blocker.position.set(0, 38, 0);
+
+    group.add(left, right, top, trimTop, crest, blocker);
+    structureRoot.add(group);
+    gate.visual = { group, blocker, crest };
+  }
+
+  function createCaveVisual(cave) {
+    const group = new THREE.Group();
+    group.position.copy(worldToScene(cave.x, cave.y, getSurfaceHeight(cave.x, cave.y) + 1));
+    const rockMat = createStandardMaterial("#36424d");
+    const left = new THREE.Mesh(new THREE.BoxGeometry(cave.rx * 0.72, cave.ry * 1.08, cave.ry * 0.8), rockMat);
+    left.position.set(-cave.rx * 0.35, cave.ry * 0.5, 0);
+    const right = new THREE.Mesh(new THREE.BoxGeometry(cave.rx * 0.72, cave.ry * 1.08, cave.ry * 0.8), rockMat);
+    right.position.set(cave.rx * 0.35, cave.ry * 0.5, 0);
+    const top = new THREE.Mesh(new THREE.BoxGeometry(cave.rx * 1.8, cave.ry * 0.42, cave.ry * 0.8), rockMat);
+    top.position.set(0, cave.ry * 0.98, 0);
+    const hole = new THREE.Mesh(new THREE.PlaneGeometry(cave.rx * 1.15, cave.ry * 1.1), new THREE.MeshBasicMaterial({ color: "#05080c" }));
+    hole.position.set(0, cave.ry * 0.52, cave.ry * 0.42);
+    group.add(left, right, top, hole);
+    structureRoot.add(group);
+  }
+
+  function buildStructures() {
+    clearGroup(structureRoot);
+    state.gateVisuals = [];
+    for (const gate of GATES) {
+      createGateVisual(gate);
+      state.gateVisuals.push(gate.visual);
+    }
+    for (const cave of SEA_CAVES) createCaveVisual(cave);
+  }
+
+  function createCreatureVisual(def, hostile = false) {
+    const root = new THREE.Group();
+    const shadow = createShadow(def.baseRadius * 1.1, hostile ? 0.20 : 0.18);
+    shadow.position.y = 0.4;
+    root.add(shadow);
+
+    const model = new THREE.Group();
+    root.add(model);
+
+    const bodyMat = createStandardMaterial(def.color);
+    const accentMat = createStandardMaterial(def.accent, 0x000000, 0.88, 0.06);
+    const detailMat = createStandardMaterial(hostile ? "#2a1110" : "#f3ead0");
+
+    const body = new THREE.Mesh(new THREE.DodecahedronGeometry(def.baseRadius * 0.48, 0), bodyMat);
+    body.scale.set(def.classType === "swimming" ? 2.3 : def.classType === "air" ? 1.8 : 2.0, def.classType === "air" ? 0.86 : 1.0, 1.1);
+    body.rotation.z = -0.05;
+    body.position.y = def.baseRadius * 0.66;
+    model.add(body);
+
+    const belly = new THREE.Mesh(new THREE.BoxGeometry(def.baseRadius * 0.9, def.baseRadius * 0.36, def.baseRadius * 0.56), detailMat);
+    belly.position.set(def.baseRadius * 0.18, def.baseRadius * 0.34, 0);
+    model.add(belly);
+
+    const headPivot = new THREE.Group();
+    headPivot.position.set(def.baseRadius * 0.95, def.baseRadius * (def.head === "longneck" ? 0.9 : 0.62), 0);
+    model.add(headPivot);
+
+    if (def.head === "longneck") {
+      const neck = new THREE.Mesh(new THREE.CylinderGeometry(def.baseRadius * 0.14, def.baseRadius * 0.18, def.baseRadius * 1.25, 5), bodyMat);
+      neck.rotation.z = Math.PI * 0.5;
+      neck.rotation.x = 0.24;
+      neck.position.set(-def.baseRadius * 0.2, def.baseRadius * 0.26, 0);
+      headPivot.add(neck);
+      const longHead = new THREE.Mesh(new THREE.DodecahedronGeometry(def.baseRadius * 0.28, 0), bodyMat);
+      longHead.scale.set(1.25, 0.8, 0.85);
+      longHead.position.set(def.baseRadius * 0.42, def.baseRadius * 0.34, 0);
+      headPivot.add(longHead);
+    } else {
+      const head = new THREE.Mesh(new THREE.DodecahedronGeometry(def.baseRadius * 0.26, 0), bodyMat);
+      head.scale.set(1.2, 0.95, 0.9);
+      head.position.set(0, 0, 0);
+      headPivot.add(head);
+    }
+
+    if (def.classType !== "swimming") {
+      for (let i = 0; i < 4; i++) {
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(def.baseRadius * 0.08, def.baseRadius * 0.10, def.baseRadius * 0.68, 5), bodyMat);
+        leg.position.set(i < 2 ? -def.baseRadius * 0.32 : def.baseRadius * 0.42, def.baseRadius * 0.22, i % 2 === 0 ? -def.baseRadius * 0.26 : def.baseRadius * 0.26);
+        model.add(leg);
+      }
+    } else {
+      for (let i = 0; i < 2; i++) {
+        const fin = new THREE.Mesh(new THREE.BoxGeometry(def.baseRadius * 0.56, def.baseRadius * 0.12, def.baseRadius * 0.22), accentMat);
+        fin.position.set(def.baseRadius * 0.12, def.baseRadius * 0.42, i === 0 ? -def.baseRadius * 0.62 : def.baseRadius * 0.62);
+        fin.rotation.z = i === 0 ? 0.28 : -0.28;
+        model.add(fin);
+      }
+    }
+
+    if (def.classType === "air") {
+      const leftWing = new THREE.Mesh(new THREE.BoxGeometry(def.baseRadius * 1.8, def.baseRadius * 0.12, def.baseRadius * 0.7), accentMat);
+      leftWing.position.set(def.baseRadius * 0.08, def.baseRadius * 0.84, -def.baseRadius * 0.94);
+      leftWing.rotation.x = -0.16;
+      leftWing.rotation.z = 0.10;
+      model.add(leftWing);
+      const rightWing = new THREE.Mesh(new THREE.BoxGeometry(def.baseRadius * 1.8, def.baseRadius * 0.12, def.baseRadius * 0.7), accentMat);
+      rightWing.position.set(def.baseRadius * 0.08, def.baseRadius * 0.84, def.baseRadius * 0.94);
+      rightWing.rotation.x = 0.16;
+      rightWing.rotation.z = -0.10;
+      model.add(rightWing);
+    }
+
+    const tail = new THREE.Mesh(new THREE.ConeGeometry(def.baseRadius * 0.20, def.baseRadius * (def.classType === "swimming" ? 1.6 : 1.8), 5), bodyMat);
+    tail.rotation.z = -Math.PI * 0.5;
+    tail.position.set(-def.baseRadius * 1.28, def.baseRadius * 0.54, 0);
+    model.add(tail);
+
+    if (def.tail === "club") {
+      const club = new THREE.Mesh(new THREE.DodecahedronGeometry(def.baseRadius * 0.20, 0), accentMat);
+      club.position.set(-def.baseRadius * 2.05, def.baseRadius * 0.54, 0);
+      club.scale.set(1.2, 0.8, 0.8);
+      model.add(club);
+    } else if (def.tail === "fin") {
+      const fin = new THREE.Mesh(new THREE.BoxGeometry(def.baseRadius * 0.18, def.baseRadius * 0.74, def.baseRadius * 0.6), accentMat);
+      fin.position.set(-def.baseRadius * 2.0, def.baseRadius * 0.54, 0);
+      fin.rotation.x = Math.PI * 0.5;
+      model.add(fin);
+    }
+
+    if (def.back === "frill") {
+      const frill = new THREE.Mesh(new THREE.DodecahedronGeometry(def.baseRadius * 0.28, 0), accentMat);
+      frill.position.set(def.baseRadius * 0.64, def.baseRadius * 0.92, 0);
+      frill.scale.set(1.3, 0.6, 1.1);
+      model.add(frill);
+    } else if (def.back === "plates") {
+      for (let i = 0; i < 4; i++) {
+        const plate = new THREE.Mesh(new THREE.ConeGeometry(def.baseRadius * 0.16, def.baseRadius * 0.62, 4), accentMat);
+        plate.position.set(-def.baseRadius * 0.58 + i * def.baseRadius * 0.4, def.baseRadius * 1.34, 0);
+        plate.rotation.z = i % 2 === 0 ? -0.22 : 0.22;
+        model.add(plate);
+      }
+    } else if (def.back === "armor") {
+      for (let i = 0; i < 4; i++) {
+        const plate = new THREE.Mesh(new THREE.DodecahedronGeometry(def.baseRadius * 0.16, 0), accentMat);
+        plate.position.set(-def.baseRadius * 0.45 + i * def.baseRadius * 0.34, def.baseRadius * 1.05, 0);
+        plate.scale.set(1.2, 0.7, 0.9);
+        model.add(plate);
+      }
+    } else if (def.back === "sail") {
+      const sail = new THREE.Mesh(new THREE.BoxGeometry(def.baseRadius * 1.12, def.baseRadius * 1.05, def.baseRadius * 0.18), accentMat);
+      sail.position.set(-def.baseRadius * 0.1, def.baseRadius * 1.34, 0);
+      sail.rotation.z = 0.08;
+      model.add(sail);
+    } else if (def.back === "ridge") {
+      const ridge = new THREE.Mesh(new THREE.BoxGeometry(def.baseRadius * 1.22, def.baseRadius * 0.28, def.baseRadius * 0.14), accentMat);
+      ridge.position.set(-def.baseRadius * 0.05, def.baseRadius * 1.12, 0);
+      model.add(ridge);
+    } else if (def.back === "feathers") {
+      for (let i = 0; i < 4; i++) {
+        const feather = new THREE.Mesh(new THREE.ConeGeometry(def.baseRadius * 0.10, def.baseRadius * 0.46, 4), accentMat);
+        feather.position.set(-def.baseRadius * 0.46 + i * def.baseRadius * 0.36, def.baseRadius * 1.10, 0);
+        feather.rotation.z = i % 2 === 0 ? -0.18 : 0.18;
+        model.add(feather);
+      }
+    } else if (def.back === "spikes") {
+      for (let i = 0; i < 4; i++) {
+        const spike = new THREE.Mesh(new THREE.ConeGeometry(def.baseRadius * 0.10, def.baseRadius * 0.42, 4), accentMat);
+        spike.position.set(-def.baseRadius * 0.46 + i * def.baseRadius * 0.32, def.baseRadius * 1.02, 0);
+        model.add(spike);
+      }
+    }
+
+    if (def.head === "horns") {
+      const horn1 = new THREE.Mesh(new THREE.ConeGeometry(def.baseRadius * 0.08, def.baseRadius * 0.5, 4), accentMat);
+      horn1.position.set(def.baseRadius * 1.16, def.baseRadius * 0.92, -def.baseRadius * 0.12);
+      horn1.rotation.z = -0.95;
+      model.add(horn1);
+      const horn2 = new THREE.Mesh(new THREE.ConeGeometry(def.baseRadius * 0.08, def.baseRadius * 0.5, 4), accentMat);
+      horn2.position.set(def.baseRadius * 1.16, def.baseRadius * 0.92, def.baseRadius * 0.12);
+      horn2.rotation.z = -0.95;
+      model.add(horn2);
+    } else if (def.head === "crest") {
+      const crest = new THREE.Mesh(new THREE.ConeGeometry(def.baseRadius * 0.18, def.baseRadius * 0.72, 5), accentMat);
+      crest.position.set(def.baseRadius * 1.04, def.baseRadius * 1.12, 0);
+      crest.rotation.z = 0.55;
+      model.add(crest);
+    } else if (def.head === "beak") {
+      const beak = new THREE.Mesh(new THREE.ConeGeometry(def.baseRadius * 0.10, def.baseRadius * 0.42, 4), accentMat);
+      beak.position.set(def.baseRadius * 1.24, def.baseRadius * 0.62, 0);
+      beak.rotation.z = 0.9;
+      model.add(beak);
+    } else if (def.head === "feather") {
+      const feather = new THREE.Mesh(new THREE.ConeGeometry(def.baseRadius * 0.08, def.baseRadius * 0.58, 4), accentMat);
+      feather.position.set(def.baseRadius * 0.96, def.baseRadius * 1.10, 0);
+      feather.rotation.z = 0.25;
+      model.add(feather);
+    } else if (def.head === "dome") {
+      const dome = new THREE.Mesh(new THREE.DodecahedronGeometry(def.baseRadius * 0.18, 0), accentMat);
+      dome.position.set(def.baseRadius * 1.0, def.baseRadius * 0.92, 0);
+      dome.scale.set(1.2, 0.6, 1);
+      model.add(dome);
+    }
+
+    const eye = new THREE.Mesh(new THREE.BoxGeometry(def.baseRadius * 0.06, def.baseRadius * 0.06, def.baseRadius * 0.06), createStandardMaterial("#0a1017"));
+    eye.position.set(def.baseRadius * 1.12, def.baseRadius * 0.74, def.baseRadius * 0.13);
+    model.add(eye);
+
+    return { root, model, shadow, body, bodyMat, accentMat, detailMat };
+  }
+
+  function createFoodVisual(def) {
+    const root = new THREE.Group();
+    const shadow = createShadow(def.radius * 0.9, 0.16);
+    shadow.position.y = 0.26;
+    root.add(shadow);
+
+    const model = new THREE.Group();
+    root.add(model);
+
+    const primary = createStandardMaterial(def.color, 0x000000, 0.88, 0.04);
+    const detail = createStandardMaterial("#fff2d0");
+    const dark = createStandardMaterial("#3a2418");
+    const stem = createStandardMaterial("#507b2b");
+
+    if (def.shape === "berry") {
+      for (let i = 0; i < 3; i++) {
+        const berry = new THREE.Mesh(new THREE.DodecahedronGeometry(def.radius * 0.48, 0), primary);
+        berry.position.set((i - 1) * def.radius * 0.35, def.radius * 0.55 + (i === 1 ? def.radius * 0.16 : 0), 0);
+        model.add(berry);
+      }
+      const twig = new THREE.Mesh(new THREE.BoxGeometry(def.radius * 0.12, def.radius * 0.7, def.radius * 0.12), stem);
+      twig.position.y = def.radius * 1.12;
+      model.add(twig);
+    } else if (def.shape === "fern") {
+      const stalk = new THREE.Mesh(new THREE.BoxGeometry(def.radius * 0.12, def.radius * 1.5, def.radius * 0.12), stem);
+      stalk.position.y = def.radius * 0.8;
+      model.add(stalk);
+      for (let i = 0; i < 5; i++) {
+        const leaf = new THREE.Mesh(new THREE.BoxGeometry(def.radius * 0.75, def.radius * 0.12, def.radius * 0.2), primary);
+        leaf.position.set(i % 2 === 0 ? def.radius * 0.35 : -def.radius * 0.35, def.radius * (0.3 + i * 0.22), 0);
+        leaf.rotation.z = i % 2 === 0 ? 0.45 : -0.45;
+        model.add(leaf);
+      }
+    } else if (def.shape === "insect" || def.shape === "dragonfly") {
+      const body = new THREE.Mesh(new THREE.BoxGeometry(def.radius * 0.2, def.radius * 0.8, def.radius * 0.2), primary);
+      body.rotation.z = Math.PI * 0.5;
+      model.add(body);
+      for (let i = 0; i < 2; i++) {
+        const wing = new THREE.Mesh(new THREE.BoxGeometry(def.radius * 0.8, def.radius * 0.08, def.radius * 0.28), detail);
+        wing.position.set(0, def.radius * 0.2, i === 0 ? -def.radius * 0.2 : def.radius * 0.2);
+        wing.rotation.x = i === 0 ? 0.3 : -0.3;
+        model.add(wing);
+      }
+    } else if (def.shape === "egg") {
+      const egg = new THREE.Mesh(new THREE.DodecahedronGeometry(def.radius * 0.56, 0), detail);
+      egg.scale.set(0.84, 1.18, 0.84);
+      egg.position.y = def.radius * 0.66;
+      model.add(egg);
+    } else if (def.shape === "boarling" || def.shape === "herdling") {
+      const body = new THREE.Mesh(new THREE.DodecahedronGeometry(def.radius * 0.48, 0), primary);
+      body.scale.set(1.3, 0.8, 0.75);
+      body.position.y = def.radius * 0.58;
+      model.add(body);
+      const head = new THREE.Mesh(new THREE.DodecahedronGeometry(def.radius * 0.22, 0), dark);
+      head.position.set(def.radius * 0.58, def.radius * 0.56, 0);
+      model.add(head);
+    } else if (def.shape === "carcass") {
+      const carcass = new THREE.Mesh(new THREE.BoxGeometry(def.radius * 1.2, def.radius * 0.7, def.radius * 0.7), primary);
+      carcass.position.y = def.radius * 0.45;
+      model.add(carcass);
+      const bone = new THREE.Mesh(new THREE.BoxGeometry(def.radius * 0.1, def.radius * 0.9, def.radius * 0.1), detail);
+      bone.position.y = def.radius * 0.72;
+      model.add(bone);
+    } else if (def.shape === "fish" || def.shape === "reefEel" || def.shape === "squid") {
+      const body = new THREE.Mesh(new THREE.ConeGeometry(def.radius * 0.42, def.radius * 1.4, 5), primary);
+      body.rotation.z = -Math.PI * 0.5;
+      body.position.y = def.radius * 0.48;
+      model.add(body);
+      const tail = new THREE.Mesh(new THREE.BoxGeometry(def.radius * 0.08, def.radius * 0.48, def.radius * 0.52), detail);
+      tail.position.set(-def.radius * 0.76, def.radius * 0.48, 0);
+      model.add(tail);
+    } else if (def.shape === "shellfish" || def.shape === "ammonite") {
+      const shell = new THREE.Mesh(new THREE.DodecahedronGeometry(def.radius * 0.5, 0), primary);
+      shell.scale.set(1, 0.6, 1);
+      shell.position.y = def.radius * 0.44;
+      model.add(shell);
+    } else if (def.shape === "crab") {
+      const shell = new THREE.Mesh(new THREE.BoxGeometry(def.radius * 0.9, def.radius * 0.28, def.radius * 0.65), primary);
+      shell.position.y = def.radius * 0.5;
+      model.add(shell);
+      for (let i = 0; i < 2; i++) {
+        const claw = new THREE.Mesh(new THREE.BoxGeometry(def.radius * 0.6, def.radius * 0.08, def.radius * 0.08), detail);
+        claw.position.set(def.radius * 0.56, def.radius * 0.68, i === 0 ? -def.radius * 0.26 : def.radius * 0.26);
+        claw.rotation.z = i === 0 ? 0.42 : -0.42;
+        model.add(claw);
+      }
+    } else if (def.shape === "caveMushroom") {
+      const stalk = new THREE.Mesh(new THREE.BoxGeometry(def.radius * 0.18, def.radius * 0.9, def.radius * 0.18), detail);
+      stalk.position.y = def.radius * 0.45;
+      model.add(stalk);
+      const cap = new THREE.Mesh(new THREE.DodecahedronGeometry(def.radius * 0.5, 0), primary);
+      cap.scale.set(1.2, 0.55, 1.2);
+      cap.position.y = def.radius * 0.96;
+      model.add(cap);
+    } else if (def.shape === "amberFruit") {
+      const fruit = new THREE.Mesh(new THREE.DodecahedronGeometry(def.radius * 0.48, 0), primary);
+      fruit.position.y = def.radius * 0.58;
+      model.add(fruit);
+      const twig = new THREE.Mesh(new THREE.BoxGeometry(def.radius * 0.12, def.radius * 0.46, def.radius * 0.12), dark);
+      twig.position.y = def.radius * 1.04;
+      model.add(twig);
+    } else if (def.shape === "starBloom") {
+      const core = new THREE.Mesh(new THREE.OctahedronGeometry(def.radius * 0.38, 0), primary);
+      core.position.y = def.radius * 0.56;
+      model.add(core);
+      for (let i = 0; i < 5; i++) {
+        const petal = new THREE.Mesh(new THREE.BoxGeometry(def.radius * 0.85, def.radius * 0.08, def.radius * 0.18), detail);
+        petal.position.set(Math.cos((i / 5) * TAU) * def.radius * 0.3, def.radius * 0.56, Math.sin((i / 5) * TAU) * def.radius * 0.3);
+        petal.rotation.y = (i / 5) * TAU;
+        model.add(petal);
+      }
+    } else {
+      const orb = new THREE.Mesh(new THREE.DodecahedronGeometry(def.radius * 0.48, 0), primary);
+      orb.position.y = def.radius * 0.52;
+      model.add(orb);
+    }
+
+    return { root, model, materials: [primary, detail, dark, stem] };
+  }
+
+  function createTreasureVisual() {
+    const root = new THREE.Group();
+    const shadow = createShadow(10, 0.2);
+    shadow.position.y = 0.26;
+    root.add(shadow);
+    const model = new THREE.Group();
+    root.add(model);
+    const chestMat = createStandardMaterial("#89541d");
+    const bandMat = createStandardMaterial("#d8a441", "#f0b85f", 0.6, 0.10);
+    const crystalMat = createStandardMaterial("#ffe1a3", "#ffd37c", 0.45, 0.08);
+    const base = new THREE.Mesh(new THREE.BoxGeometry(18, 12, 12), chestMat);
+    base.position.y = 6;
+    model.add(base);
+    const band = new THREE.Mesh(new THREE.BoxGeometry(18, 3, 13), bandMat);
+    band.position.set(0, 9, 0);
+    model.add(band);
+    const crystal = new THREE.Mesh(new THREE.OctahedronGeometry(4.6, 0), crystalMat);
+    crystal.position.set(0, 18, 0);
+    model.add(crystal);
+    return { root, model, crystalMat };
+  }
+
+  function createShrineState(def) {
+    const shrine = {
+      ...def,
+      solved: false,
+      active: false,
+      rewardCollected: false,
+      progress: 0,
+      timerRemaining: 0,
+      remainingEnemies: def.wave ? def.wave.length : 0,
+      nodes: def.nodes ? def.nodes.map(node => ({ ...node, active: false })) : []
+    };
+
+    const group = new THREE.Group();
+    group.position.copy(worldToScene(def.rewardX, def.rewardY, getSurfaceHeight(def.rewardX, def.rewardY) + 1.2));
+    const stoneMat = createStandardMaterial("#413a5f");
+    const glowMat = createStandardMaterial("#d7b4ff", "#a06bff", 0.7, 0.08);
+
+    const plinth = new THREE.Mesh(new THREE.BoxGeometry(22, 10, 22), stoneMat);
+    plinth.position.y = 5;
+    group.add(plinth);
+    const core = new THREE.Mesh(new THREE.OctahedronGeometry(6.4, 0), glowMat);
+    core.position.y = 16;
+    group.add(core);
+    const beacon = new THREE.Mesh(
+      new THREE.CylinderGeometry(2.8, 5.2, 90, 6, 1, true),
+      new THREE.MeshStandardMaterial({
+        color: "#b58bff",
+        emissive: "#9560ff",
+        emissiveIntensity: 0.7,
+        transparent: true,
+        opacity: 0.16,
+        flatShading: true,
+        roughness: 0.2,
+        metalness: 0.1
+      })
+    );
+    beacon.position.y = 58;
+    group.add(beacon);
+    dynamicRoot.add(group);
+
+    shrine.visual = { group, core, beacon, glowMat, nodeVisuals: [], ring: null };
+
+    if (shrine.type === "trial") {
+      const ring = new THREE.Mesh(
+        new THREE.RingGeometry(shrine.arenaRadius - 5, shrine.arenaRadius + 5, 48),
+        new THREE.MeshBasicMaterial({ color: "#cda9ff", transparent: true, opacity: 0.22, side: THREE.DoubleSide })
+      );
+      ring.rotation.x = -Math.PI * 0.5;
+      ring.position.copy(worldToScene(def.centerX, def.centerY, getSurfaceHeight(def.centerX, def.centerY) + 0.4));
+      dynamicRoot.add(ring);
+      shrine.visual.ring = ring;
+    }
+
+    if (shrine.nodes.length) {
+      shrine.nodes.forEach(node => {
+        const nodeGroup = new THREE.Group();
+        const base = new THREE.Mesh(new THREE.BoxGeometry(8, 4, 8), stoneMat);
+        base.position.y = 2;
+        nodeGroup.add(base);
+        const color = node.interaction === "sense" ? "#7de2ff" : node.interaction === "attack" ? "#ffbe87" : "#d5b1ff";
+        const crystal = new THREE.Mesh(new THREE.OctahedronGeometry(4.2, 0), createStandardMaterial(color, color, 0.66, 0.08));
+        crystal.position.y = 8;
+        nodeGroup.add(crystal);
+        nodeGroup.position.copy(worldToScene(node.x, node.y, getSurfaceHeight(node.x, node.y) + 0.8));
+        dynamicRoot.add(nodeGroup);
+        shrine.visual.nodeVisuals.push({ group: nodeGroup, crystal, color });
+      });
+    }
+    return shrine;
+  }
+
+  function buildTreasureState(cave) {
+    const visual = createTreasureVisual();
+    dynamicRoot.add(visual.root);
+    return {
+      name: cave.name,
+      x: cave.chestX,
+      y: cave.chestY,
+      xp: cave.xp,
+      collected: false,
+      visual
+    };
+  }
+
+  function refreshGateVisuals() {
+    if (!state.player) return;
+    GATES.forEach(gate => {
+      const unlocked = state.player.stage >= gate.requiredStage && state.player.relics >= gate.requiredRelics;
+      if (!gate.visual) return;
+      gate.visual.blocker.visible = !unlocked;
+      gate.visual.blocker.material.opacity = unlocked ? 0 : 0.56 + Math.sin(state.time * 2.8 + gate.x * 0.001) * 0.06;
+      gate.visual.crest.rotation.y += 0.01;
+      gate.visual.crest.position.y = 98 + Math.sin(state.time * 2 + gate.x * 0.002) * 1.8;
+    });
+  }
+
+  function createObjectiveBeacon() {
+    const group = new THREE.Group();
+    const beam = new THREE.Mesh(
+      new THREE.CylinderGeometry(3.2, 7.6, 120, 6, 1, true),
+      new THREE.MeshStandardMaterial({
+        color: "#ffd47c",
+        emissive: "#ffcf7d",
+        emissiveIntensity: 0.86,
+        transparent: true,
+        opacity: 0.18,
+        flatShading: true,
+        roughness: 0.25,
+        metalness: 0.08
+      })
+    );
+    beam.position.y = 60;
+    group.add(beam);
+    const gem = new THREE.Mesh(new THREE.OctahedronGeometry(8, 0), createStandardMaterial("#fff0bf", "#ffd47c", 0.55, 0.08));
+    gem.position.y = 122;
+    group.add(gem);
+    dynamicRoot.add(group);
+    state.objectiveBeacon = { group, beam, gem };
+  }
+
+  function createPulseRing() {
+    const ring = new THREE.Mesh(
+      new THREE.RingGeometry(1, 1.08, 52),
+      new THREE.MeshBasicMaterial({ color: "#9cecff", transparent: true, opacity: 0, side: THREE.DoubleSide })
+    );
+    ring.rotation.x = -Math.PI * 0.5;
+    fxRoot.add(ring);
+    state.pulseRing = ring;
+  }
+
+  function buildStaticWorld() {
+    buildGroundMesh();
+    buildWaterMeshes();
+    buildProps();
+    buildStructures();
+  }
+
+  function createEntityVisualBundle(def, hostile = false) {
+    return createCreatureVisual(def, hostile);
+  }
+
+  function updateCreatureVisual(entity, def, timeScale = 1) {
+    const stage = AGE_STAGES[entity.stage || 0];
+    const terrain = getTerrainAt(entity.x, entity.y);
+    const surface = getSurfaceHeight(entity.x, entity.y);
+    const lift = def.classType === "air"
+      ? stage.lift + Math.sin(state.time * 4 + entity.x * 0.01 + entity.y * 0.01) * 4
+      : def.classType === "swimming" && (terrain === "water" || terrain === "abyss" || terrain === "beach")
+        ? 6 + Math.sin(state.time * 3 + entity.x * 0.007) * 1.8
+        : 0;
+    const bob = Math.sin(state.time * 7 * timeScale + entity.walkPhase) * (entity.speedFactor || 0) * 1.2;
+    const position = entity.visual.root.position;
+    position.set(entity.x - WORLD.width * 0.5, surface, entity.y - WORLD.height * 0.5);
+    entity.visual.root.rotation.y = entity.heading;
+    entity.visual.root.scale.setScalar(stage.scale);
+    entity.visual.model.position.y = 2 + lift + bob;
+    entity.visual.shadow.position.y = 0.42;
+    entity.visual.shadow.scale.set(1 + lift * 0.025, 1 + lift * 0.025, 1);
+    entity.visual.shadow.material.opacity = clamp(0.22 - lift * 0.004, 0.06, 0.22);
+    entity.visual.body.rotation.x = Math.sin(state.time * 8 * timeScale + entity.walkPhase) * (entity.speedFactor || 0) * 0.08;
+    entity.visual.body.rotation.z = -0.05 + Math.sin(state.time * 6 * timeScale + entity.walkPhase) * (entity.speedFactor || 0) * 0.04;
+    setMeshGlow(entity.visual.bodyMat, def.color, entity.hitTimer > 0 ? 0.55 : 0.05);
+    setMeshGlow(entity.visual.accentMat, def.accent, entity.hitTimer > 0 ? 0.45 : 0.08);
+  }
+
+  function createFoodEntity(type, forcedX = null, forcedY = null) {
+    const def = FOOD[type];
+    for (let attempt = 0; attempt < 180; attempt++) {
+      const x = forcedX != null ? forcedX : rand(90, WORLD.width - 90);
+      const y = forcedY != null ? forcedY : rand(90, WORLD.height - 90);
+      const terrain = getTerrainAt(x, y);
+      if (!terrainAllows(def.terrains, terrain)) {
+        if (forcedX != null || forcedY != null) return null;
+        continue;
+      }
+      const visual = createFoodVisual(def);
+      dynamicRoot.add(visual.root);
+      return {
+        type,
+        x,
+        y,
+        vx: def.moving ? rand(-def.speed, def.speed) : 0,
+        vy: def.moving ? rand(-def.speed, def.speed) : 0,
+        heading: rand(0, TAU),
+        bob: rand(0, TAU),
+        glow: 0,
+        visual
+      };
+    }
+    return null;
+  }
+
+  function createEnemy(type, overrides = {}) {
+    const def = ENEMY_TYPES[type];
+    const bounds = overrides.bounds || def.bounds;
+    for (let attempt = 0; attempt < 120; attempt++) {
+      const x = overrides.x != null ? overrides.x : rand(bounds.xMin, bounds.xMax);
+      const y = overrides.y != null ? overrides.y : rand(bounds.yMin, bounds.yMax);
+      const terrain = getTerrainAt(x, y);
+      if (!terrainAllows(def.terrains, terrain)) {
+        if (overrides.x != null && overrides.y != null) return null;
+        continue;
+      }
+      const visual = createEntityVisualBundle(def, true);
+      dynamicRoot.add(visual.root);
+      return {
+        type,
+        x,
+        y,
+        vx: 0,
+        vy: 0,
+        heading: rand(0, TAU),
+        walkPhase: rand(0, TAU),
+        speedFactor: 0,
+        health: def.health,
+        maxHealth: def.health,
+        attackCooldown: rand(0.2, 1.0),
+        hitTimer: 0,
+        wanderAngle: rand(0, TAU),
+        wanderTimer: rand(1.0, 2.4),
+        homeX: x,
+        homeY: y,
+        shrineId: overrides.shrineId || null,
+        arenaRadius: overrides.arenaRadius || 0,
+        bounds: { ...bounds },
+        visual
+      };
+    }
+    return null;
+  }
+
+  function createPlayer(speciesKey) {
+    const species = SPECIES[speciesKey];
+    const spawn = getSpawnPoint(species);
+    const visual = createEntityVisualBundle(species, false);
+    dynamicRoot.add(visual.root);
+    return {
+      x: spawn.x,
+      y: spawn.y,
+      vx: 0,
+      vy: 0,
+      heading: 0,
+      walkPhase: rand(0, TAU),
+      speedFactor: 0,
+      stage: 0,
+      xp: 0,
+      health: 100,
+      maxHealth: 100,
+      hunger: species.maxHunger,
+      maxHunger: species.maxHunger,
+      boost: 100,
+      pulseCooldown: 0,
+      pulseTime: 0,
+      attackCooldown: 0,
+      attackSwing: 0,
+      hitTimer: 0,
+      morphTimer: 1.0,
+      kills: 0,
+      relics: 0,
+      booty: 0,
+      foodEaten: 0,
+      lowHealthWarn: false,
+      lowHungerWarn: false,
+      visual
+    };
+  }
+
+  function spawnInitialFoods() {
+    state.foods = [];
+    Object.entries(FOOD_COUNTS).forEach(([type, count]) => {
+      for (let i = 0; i < count; i++) {
+        const food = createFoodEntity(type);
+        if (food) state.foods.push(food);
+      }
+    });
+
+    spawnFoodNear("berry", 160, 780, 480, 1500, 10);
+    spawnFoodNear("fern", 140, 1120, 420, 1650, 8);
+    spawnFoodNear("insect", 200, 960, 520, 1540, 6);
+    spawnFoodNear("dragonfly", 240, 980, 500, 1540, 4);
+    spawnFoodNear("egg", 260, 1320, 420, 1700, 5);
+    spawnFoodNear("boarling", 360, 1240, 780, 1760, 4);
+    spawnFoodNear("herdling", 440, 1300, 760, 1760, 4);
+    spawnFoodNear("fish", 760, 1180, 640, 1120, 8);
+    spawnFoodNear("shellfish", 760, 1180, 640, 1120, 4);
+  }
+
+  function spawnFoodNear(type, xMin, xMax, yMin, yMax, count) {
+    let spawned = 0;
+    let attempts = 0;
+    while (spawned < count && attempts < count * 80) {
+      attempts++;
+      const x = rand(xMin, xMax);
+      const y = rand(yMin, yMax);
+      const food = createFoodEntity(type, x, y);
+      if (!food) continue;
+      state.foods.push(food);
+      spawned++;
+    }
+  }
+
+  function spawnInitialEnemies() {
+    state.enemies = [];
+    Object.entries(ENEMY_COUNTS).forEach(([type, count]) => {
+      for (let i = 0; i < count; i++) {
+        const enemy = createEnemy(type);
+        if (enemy) state.enemies.push(enemy);
+      }
+    });
+  }
+
+  function buildRunStructures() {
+    createPulseRing();
+    createObjectiveBeacon();
+    state.shrines = SHRINE_DEFS.map(createShrineState);
+    state.treasures = SEA_CAVES.map(buildTreasureState);
+  }
+
+  function clearRunScene() {
+    clearGroup(dynamicRoot);
+    clearGroup(fxRoot);
+    state.foods = [];
+    state.enemies = [];
+    state.shrines = [];
+    state.treasures = [];
+    state.foodRespawns = [];
+    state.enemyRespawns = [];
+    state.objectiveBeacon = null;
+    state.pulseRing = null;
+  }
+
+  function updateAttractor() {
+    if (state.mode !== "menu") return;
+    if (!state.attractor) {
+      state.attractor = createEntityVisualBundle(SPECIES.triceratops, false);
+      dynamicRoot.add(state.attractor.root);
+      state.attractorEntity = {
+        x: 920,
+        y: 980,
+        stage: 2,
+        heading: 0.6,
+        walkPhase: 0,
+        speedFactor: 0.25,
+        hitTimer: 0,
+        visual: state.attractor
+      };
+    }
+    state.attractorEntity.heading += 0.004;
+    updateCreatureVisual(state.attractorEntity, SPECIES.triceratops, 0.7);
+    const target = new THREE.Vector3(-90, 90, 150);
+    camera.position.lerp(target, 0.08);
+    camera.lookAt(0, 28, 0);
+  }
+
+  function populateSpeciesMenu() {
+    speciesSections.innerHTML = "";
+    ["land", "swimming", "air"].forEach(classType => {
+      const section = document.createElement("section");
+      section.className = "class-section";
+      const head = document.createElement("div");
+      head.className = "class-head";
+      head.innerHTML = "<div><h2>" + CLASS_LABELS[classType].title + "</h2><p>" + CLASS_LABELS[classType].note + "</p></div>";
+      section.appendChild(head);
+
+      const grid = document.createElement("div");
+      grid.className = "species-grid";
+
+      Object.entries(SPECIES)
+        .filter(([, species]) => species.classType === classType)
+        .forEach(([key, species]) => {
+          const rating = getSpeciesRating(species);
+          const card = document.createElement("button");
+          card.className = "species-card";
+          card.innerHTML = `
+            <div class="kind">${species.classType}</div>
+            <h3>${species.name}</h3>
+            <p>${species.description}</p>
+            <p style="margin-top:8px;color:#fff;"><strong>Eats:</strong> ${species.diet.map(type => FOOD[type].name).join(", ")}</p>
+            <div class="species-meta">
+              <span class="meta-pill ${rating.beginner ? "friendly" : ""}">${rating.beginner ? "Beginner Friendly" : "High Skill Ceiling"}</span>
+              <span class="meta-pill">Boost ${Math.round(species.boostStrength * 100)}%</span>
+            </div>
+            <div class="species-stats">
+              <div class="stat-chip"><strong>Speed</strong><span>${rating.speed}</span></div>
+              <div class="stat-chip"><strong>Power</strong><span>${rating.power}</span></div>
+              <div class="stat-chip"><strong>Survival</strong><span>${rating.survival}</span></div>
+            </div>
+          `;
+          card.addEventListener("click", () => startGame(key));
+          grid.appendChild(card);
+        });
+      section.appendChild(grid);
+      speciesSections.appendChild(section);
+    });
+  }
+
+  function showToast(text) {
+    toast.textContent = text;
+    toast.classList.add("show");
+    clearTimeout(showToast.timer);
+    showToast.timer = setTimeout(() => toast.classList.remove("show"), 2200);
+  }
+
+  function setOverlay(title, body, foot) {
+    stateTitle.textContent = title;
+    stateBody.textContent = body;
+    stateFoot.textContent = foot;
+  }
+
+  function showMenu() {
+    state.mode = "menu";
+    menu.classList.remove("hidden");
+    hud.classList.add("hidden");
+    stateOverlay.classList.add("hidden");
+    if (state.player) {
+      clearRunScene();
+      state.player = null;
+      state.species = null;
+      state.speciesKey = null;
+      state.discoveredRegions = new Set();
+      state.discoveredSecrets = new Set();
+    }
+  }
+
+  function startGame(speciesKey) {
+    clearRunScene();
+    if (state.attractor) {
+      dynamicRoot.remove(state.attractor.root);
+      state.attractor = null;
+      state.attractorEntity = null;
+    }
+
+    state.mode = "play";
+    state.speciesKey = speciesKey;
+    state.species = SPECIES[speciesKey];
+    state.player = createPlayer(speciesKey);
+    state.time = 0;
+    state.lastRegion = "Nest Valley";
+    state.discoveredRegions = new Set(["Nest Valley"]);
+    state.discoveredSecrets = new Set();
+
+    buildRunStructures();
+    spawnInitialFoods();
+    spawnInitialEnemies();
+    menu.classList.add("hidden");
+    hud.classList.remove("hidden");
+    stateOverlay.classList.add("hidden");
+    showToast(state.species.name + " begins the 3D journey.");
+  }
+
+  function getNextStage() {
+    if (!state.player) return null;
+    return AGE_STAGES[state.player.stage + 1] || null;
+  }
+
+  function getNextGate() {
+    if (!state.player) return null;
+    return GATES.find(gate => !(state.player.stage >= gate.requiredStage && state.player.relics >= gate.requiredRelics)) || null;
+  }
+
+  function getFocusedShrine() {
+    if (!state.player) return null;
+    let nearest = null;
+    let best = Infinity;
+    for (const shrine of state.shrines) {
+      if (shrine.rewardCollected) continue;
+      const d = dist(state.player.x, state.player.y, shrine.centerX, shrine.centerY);
+      if (d < best) {
+        best = d;
+        nearest = shrine;
+      }
+    }
+    return best < 420 ? nearest : null;
+  }
+
+  function getObjectiveText() {
+    if (!state.player) return "Choose a dinosaur and begin the adventure.";
+    const nextGate = getNextGate();
+    if (nextGate) {
+      return nextGate.name + " demands " + AGE_STAGES[nextGate.requiredStage].label + " and " + nextGate.requiredRelics + " relics.";
+    }
+    const unsolved = state.shrines.find(shrine => !shrine.rewardCollected);
+    if (unsolved) return "Seek " + unsolved.name + " in the eastern wilds.";
+    const unclaimedTreasure = state.treasures.find(treasure => !treasure.collected);
+    if (unclaimedTreasure) return "Dive for treasure in " + unclaimedTreasure.name + ".";
+    return "No gates remain. Become a titan and rule the isles.";
+  }
+
+  function updateObjectiveBeacon() {
+    if (!state.objectiveBeacon || !state.player) return;
+    let target = null;
+    const nextGate = getNextGate();
+    if (nextGate) target = { x: nextGate.x, y: nextGate.openingY + nextGate.openingHeight * 0.5 };
+    else {
+      const shrine = state.shrines.find(entry => !entry.rewardCollected);
+      if (shrine) target = { x: shrine.rewardX, y: shrine.rewardY };
+      else {
+        const treasure = state.treasures.find(entry => !entry.collected);
+        if (treasure) target = { x: treasure.x, y: treasure.y };
+      }
+    }
+    if (!target) {
+      state.objectiveBeacon.group.visible = false;
+      return;
+    }
+    state.objectiveBeacon.group.visible = true;
+    state.objectiveBeacon.group.position.copy(worldToScene(target.x, target.y, getSurfaceHeight(target.x, target.y) + 8));
+    state.objectiveBeacon.group.rotation.y += 0.01;
+    state.objectiveBeacon.gem.position.y = 118 + Math.sin(state.time * 4) * 3;
+  }
+
+  function tryDiscoverRegion(name) {
+    if (!state.discoveredRegions.has(name)) {
+      state.discoveredRegions.add(name);
+      showToast(name);
+    }
+    state.lastRegion = name;
+  }
+
+  function tryDiscoverSecret(name) {
+    if (!state.discoveredSecrets.has(name)) {
+      state.discoveredSecrets.add(name);
+      showToast(name);
+    }
+  }
+
+  function updateStage() {
+    const player = state.player;
+    let stageIndex = 0;
+    for (let i = AGE_STAGES.length - 1; i >= 0; i--) {
+      if (player.xp >= AGE_STAGES[i].xp) {
+        stageIndex = i;
+        break;
+      }
+    }
+    if (stageIndex !== player.stage) {
+      const healthRatio = player.health / Math.max(1, player.maxHealth);
+      player.stage = stageIndex;
+      player.maxHealth = 100 + AGE_STAGES[stageIndex].armorBonus;
+      player.health = Math.max(1, player.maxHealth * clamp(healthRatio + 0.15, 0.35, 1));
+      player.maxHunger = state.species.maxHunger + AGE_STAGES[stageIndex].armorBonus * 0.65;
+      player.hunger = Math.max(player.hunger, player.maxHunger * 0.7);
+      player.morphTimer = 1.1;
+      showToast(state.species.name + " reached " + AGE_STAGES[stageIndex].label + ".");
+    }
+  }
+
+  function giveXp(amount) {
+    state.player.xp += amount;
+    updateStage();
+  }
+
+  function damagePlayer(amount, reason) {
+    state.player.health = Math.max(0, state.player.health - amount);
+    state.player.hitTimer = 0.35;
+    if (reason) showToast(reason);
+  }
+
+  function removeFood(food) {
+    dynamicRoot.remove(food.visual.root);
+  }
+
+  function removeEnemy(enemy) {
+    dynamicRoot.remove(enemy.visual.root);
+  }
+
+  function removeTreasure(treasure) {
+    dynamicRoot.remove(treasure.visual.root);
+  }
+
+  function scheduleFoodRespawn(type) {
+    state.foodRespawns.push({ type, timer: rand(6.0, 14.0) });
+  }
+
+  function scheduleEnemyRespawn(type) {
+    state.enemyRespawns.push({ type, timer: rand(12.0, 20.0) });
+  }
+
+  function updateRespawns(dt) {
+    for (let i = state.foodRespawns.length - 1; i >= 0; i--) {
+      state.foodRespawns[i].timer -= dt;
+      if (state.foodRespawns[i].timer <= 0) {
+        const food = createFoodEntity(state.foodRespawns[i].type);
+        if (food) state.foods.push(food);
+        state.foodRespawns.splice(i, 1);
+      }
+    }
+    for (let i = state.enemyRespawns.length - 1; i >= 0; i--) {
+      state.enemyRespawns[i].timer -= dt;
+      if (state.enemyRespawns[i].timer <= 0) {
+        const enemy = createEnemy(state.enemyRespawns[i].type);
+        if (enemy) state.enemies.push(enemy);
+        state.enemyRespawns.splice(i, 1);
+      }
+    }
+  }
+
+  function updatePulseRing(dt) {
+    if (!state.player || !state.pulseRing) return;
+    if (state.player.pulseTime <= 0) {
+      state.pulseRing.material.opacity = 0;
+      return;
+    }
+    const radius = 24 + (1 - state.player.pulseTime / 1.0) * 180;
+    state.pulseRing.material.opacity = clamp(state.player.pulseTime * 0.26, 0, 0.26);
+    state.pulseRing.scale.set(radius, radius, 1);
+    state.pulseRing.position.copy(worldToScene(state.player.x, state.player.y, getSurfaceHeight(state.player.x, state.player.y) + 0.4));
+    state.player.pulseTime = Math.max(0, state.player.pulseTime - dt);
+  }
+
+  function performAttack() {
+    const player = state.player;
+    if (!player || player.attackCooldown > 0) return;
+    player.attackCooldown = 0.48;
+    player.attackSwing = 0.20;
+    const damage = state.species.attack * AGE_STAGES[player.stage].attackBonus;
+    const range = 46 + player.stage * 8 + (state.species.classType === "air" ? 10 : 0);
+    let hitSomething = false;
+
+    triggerShrineAction("attack", player.x, player.y, 72);
+
+    for (let i = state.enemies.length - 1; i >= 0; i--) {
+      const enemy = state.enemies[i];
+      const d = dist(player.x, player.y, enemy.x, enemy.y);
+      if (d > range) continue;
+      hitSomething = true;
+      enemy.health -= damage;
+      enemy.hitTimer = 0.28;
+      const pushAngle = Math.atan2(enemy.y - player.y, enemy.x - player.x);
+      enemy.vx += Math.cos(pushAngle) * 70;
+      enemy.vy += Math.sin(pushAngle) * 70;
+      if (enemy.health <= 0) {
+        state.player.kills += 1;
+        giveXp(ENEMY_TYPES[enemy.type].xp);
+        if (enemy.shrineId) {
+          const shrine = state.shrines.find(entry => entry.id === enemy.shrineId);
+          if (shrine) {
+            shrine.remainingEnemies = Math.max(0, shrine.remainingEnemies - 1);
+            if (shrine.remainingEnemies <= 0) solveShrine(shrine);
+          }
+        } else {
+          scheduleEnemyRespawn(enemy.type);
+        }
+        removeEnemy(enemy);
+        state.enemies.splice(i, 1);
+      }
+    }
+    if (!hitSomething) showToast("Your strike hits empty air.");
+  }
+
+  function performPulse() {
+    const player = state.player;
+    if (!player || player.pulseCooldown > 0) return;
+    player.pulseCooldown = 4.2;
+    player.pulseTime = 1.0;
+    triggerShrineAction("sense", player.x, player.y, 90);
+    for (const food of state.foods) {
+      if (!state.species.diet.includes(food.type)) continue;
+      if (dist(player.x, player.y, food.x, food.y) < 920) food.glow = 1.2;
+    }
+    const nearestShrine = getFocusedShrine();
+    if (nearestShrine && dist(player.x, player.y, nearestShrine.centerX, nearestShrine.centerY) < 980) {
+      showToast(nearestShrine.name + " stirs under the pulse.");
+    }
+  }
+
+  function getExpectedShrineNode(shrine) {
+    return shrine.nodes.find(node => node.order === shrine.progress + 1) || null;
+  }
+
+  function resetShrine(shrine, message = "") {
+    shrine.progress = 0;
+    shrine.timerRemaining = 0;
+    shrine.active = false;
+    shrine.nodes.forEach(node => { node.active = false; });
+    if (message) showToast(message);
+  }
+
+  function solveShrine(shrine) {
+    if (shrine.solved) return;
+    shrine.solved = true;
+    shrine.rewardCollected = true;
+    shrine.active = false;
+    shrine.timerRemaining = 0;
+    state.player.relics += shrine.rewardRelics;
+    giveXp(shrine.rewardXp);
+    showToast(shrine.name + " solved. Relics +" + shrine.rewardRelics);
+  }
+
+  function activateShrineNode(shrine, node, action) {
+    if (node.active || node.interaction !== action || shrine.solved) return;
+    if (shrine.type === "constellation") {
+      if (!shrine.active) {
+        shrine.active = true;
+        shrine.timerRemaining = shrine.timerLimit || 0;
+      }
+      node.active = true;
+      if (shrine.nodes.every(entry => entry.active)) solveShrine(shrine);
+      return;
+    }
+    const expected = getExpectedShrineNode(shrine);
+    if (expected !== node) {
+      resetShrine(shrine, shrine.name + " resets.");
+      return;
+    }
+    if (!shrine.active) {
+      shrine.active = true;
+      shrine.timerRemaining = shrine.timerLimit || 0;
+    }
+    node.active = true;
+    shrine.progress += 1;
+    if (shrine.progress >= shrine.nodes.length) solveShrine(shrine);
+  }
+
+  function triggerShrineAction(action, originX, originY, range) {
+    for (const shrine of state.shrines) {
+      if (shrine.solved || !shrine.nodes.length) continue;
+      for (const node of shrine.nodes) {
+        if (node.interaction !== action || node.active) continue;
+        if (dist(originX, originY, node.x, node.y) <= range) {
+          activateShrineNode(shrine, node, action);
+        }
+      }
+    }
+  }
+
+  function startTrialShrine(shrine) {
+    if (shrine.active || shrine.solved) return;
+    shrine.active = true;
+    shrine.remainingEnemies = shrine.wave.length;
+    shrine.wave.forEach((type, index) => {
+      const angle = (index / shrine.wave.length) * TAU;
+      const radius = shrine.arenaRadius * 0.55;
+      const enemy = createEnemy(type, {
+        x: shrine.centerX + Math.cos(angle) * radius,
+        y: shrine.centerY + Math.sin(angle) * radius,
+        shrineId: shrine.id,
+        arenaRadius: shrine.arenaRadius,
+        bounds: {
+          xMin: shrine.centerX - shrine.arenaRadius,
+          xMax: shrine.centerX + shrine.arenaRadius,
+          yMin: shrine.centerY - shrine.arenaRadius,
+          yMax: shrine.centerY + shrine.arenaRadius
+        }
+      });
+      if (enemy) state.enemies.push(enemy);
+    });
+    showToast(shrine.name + " awakens.");
+  }
+
+  function updateShrines(dt) {
+    for (const shrine of state.shrines) {
+      if (shrine.timerRemaining > 0 && !shrine.solved) {
+        shrine.timerRemaining = Math.max(0, shrine.timerRemaining - dt);
+        if (shrine.timerRemaining <= 0) resetShrine(shrine, shrine.name + " times out.");
+      }
+
+      if (shrine.type === "trial" && !shrine.solved) {
+        if (!shrine.active && dist(state.player.x, state.player.y, shrine.centerX, shrine.centerY) <= shrine.arenaRadius * 0.66) {
+          startTrialShrine(shrine);
+        }
+      }
+
+      if (!shrine.solved && shrine.nodes.length) {
+        for (const node of shrine.nodes) {
+          if (node.interaction === "step" && dist(state.player.x, state.player.y, node.x, node.y) <= 34) {
+            activateShrineNode(shrine, node, "step");
+          }
+        }
+      }
+
+      shrine.visual.core.rotation.y += 0.02;
+      shrine.visual.core.position.y = 16 + Math.sin(state.time * 2.8 + shrine.centerX * 0.001) * 1.8;
+      setMeshGlow(shrine.visual.glowMat, shrine.solved ? "#d1a1ff" : "#b98aff", shrine.solved ? 0.55 : 0.22);
+      shrine.visual.beacon.material.opacity = shrine.rewardCollected ? 0.08 : 0.18 + Math.sin(state.time * 3 + shrine.centerX * 0.002) * 0.04;
+      if (shrine.visual.ring) {
+        shrine.visual.ring.material.opacity = shrine.solved ? 0.08 : shrine.active ? 0.30 : 0.18;
+      }
+      shrine.visual.nodeVisuals.forEach((visual, index) => {
+        const node = shrine.nodes[index];
+        if (!node) return;
+        visual.group.position.y = getSurfaceHeight(node.x, node.y) + 0.8 + Math.sin(state.time * 3 + index) * 0.6;
+        setMeshGlow(visual.crystal.material, visual.color, node.active ? 0.85 : 0.18);
+        visual.group.scale.setScalar(node.active ? 1.12 : 1);
+      });
+    }
+  }
+
+  function updateTreasures() {
+    for (const treasure of state.treasures) {
+      if (treasure.collected) continue;
+      treasure.visual.root.position.copy(worldToScene(treasure.x, treasure.y, getSurfaceHeight(treasure.x, treasure.y) + 1));
+      treasure.visual.model.position.y = 4 + Math.sin(state.time * 3 + treasure.x * 0.002) * 2.4;
+      setMeshGlow(treasure.visual.crystalMat, "#ffd47c", 0.6);
+      if (dist(state.player.x, state.player.y, treasure.x, treasure.y) <= 48) {
+        treasure.collected = true;
+        state.player.booty += 1;
+        giveXp(treasure.xp);
+        removeTreasure(treasure);
+        showToast(treasure.name + " claimed.");
+      }
+    }
+  }
+
+  function updateFoods(dt) {
+    for (let i = state.foods.length - 1; i >= 0; i--) {
+      const food = state.foods[i];
+      const def = FOOD[food.type];
+      const terrain = getTerrainAt(food.x, food.y);
+      if (def.moving) {
+        if (Math.random() < 0.015) {
+          food.heading += rand(-0.9, 0.9);
+          food.vx = Math.cos(food.heading) * def.speed;
+          food.vy = Math.sin(food.heading) * def.speed;
+        }
+        const nextX = clamp(food.x + food.vx * dt, 60, WORLD.width - 60);
+        const nextY = clamp(food.y + food.vy * dt, 60, WORLD.height - 60);
+        if (terrainAllows(def.terrains, getTerrainAt(nextX, nextY))) {
+          food.x = nextX;
+          food.y = nextY;
+        } else {
+          food.heading += Math.PI * 0.75;
+          food.vx = Math.cos(food.heading) * def.speed;
+          food.vy = Math.sin(food.heading) * def.speed;
+        }
+      }
+
+      const surface = getSurfaceHeight(food.x, food.y);
+      const lift = def.shape === "dragonfly" ? 10 + Math.sin(state.time * 5 + food.bob) * 4
+        : def.shape === "fish" || def.shape === "reefEel" || def.shape === "squid" ? 4 + Math.sin(state.time * 4 + food.bob) * 2.2
+        : def.moving ? 2 + Math.sin(state.time * 3 + food.bob) * 1.4
+        : 0;
+      food.visual.root.position.copy(worldToScene(food.x, food.y, surface));
+      food.visual.root.rotation.y = def.moving ? Math.atan2(food.vy, food.vx) : food.heading;
+      food.visual.model.position.y = def.radius * 0.1 + lift;
+      food.visual.shadow.scale.set(1 + lift * 0.04, 1 + lift * 0.04, 1);
+
+      food.glow = Math.max(0, food.glow - dt * 1.6);
+      food.visual.materials.forEach(mat => setMeshGlow(mat, def.color, food.glow > 0 ? 0.55 * food.glow : 0));
+
+      if (dist(state.player.x, state.player.y, food.x, food.y) <= 36 + AGE_STAGES[state.player.stage].scale * 10 && state.species.diet.includes(food.type)) {
+        state.player.hunger = Math.min(state.player.maxHunger, state.player.hunger + def.hunger);
+        state.player.foodEaten += 1;
+        giveXp(def.xp);
+        removeFood(food);
+        state.foods.splice(i, 1);
+        scheduleFoodRespawn(food.type);
+      }
+    }
+  }
+
+  function updateEnemies(dt) {
+    for (let i = state.enemies.length - 1; i >= 0; i--) {
+      const enemy = state.enemies[i];
+      const def = ENEMY_TYPES[enemy.type];
+      enemy.hitTimer = Math.max(0, enemy.hitTimer - dt);
+      enemy.attackCooldown = Math.max(0, enemy.attackCooldown - dt);
+      enemy.wanderTimer -= dt;
+
+      let targetVX = 0;
+      let targetVY = 0;
+      const terrain = getTerrainAt(enemy.x, enemy.y);
+      const speed = def.speed * getSpeedMultiplier(def.classType, terrain);
+      const d = dist(enemy.x, enemy.y, state.player.x, state.player.y);
+      const inArena = !enemy.shrineId || d <= (enemy.arenaRadius || def.sight);
+
+      if (d < def.sight && inArena) {
+        const angle = Math.atan2(state.player.y - enemy.y, state.player.x - enemy.x);
+        targetVX = Math.cos(angle) * speed;
+        targetVY = Math.sin(angle) * speed;
+        enemy.heading = angle;
+      } else {
+        if (enemy.wanderTimer <= 0) {
+          enemy.wanderTimer = rand(1.2, 2.8);
+          enemy.wanderAngle += rand(-1.4, 1.4);
+        }
+        targetVX = Math.cos(enemy.wanderAngle) * speed * 0.45;
+        targetVY = Math.sin(enemy.wanderAngle) * speed * 0.45;
+      }
+
+      enemy.vx = lerp(enemy.vx, targetVX, Math.min(1, dt * 3));
+      enemy.vy = lerp(enemy.vy, targetVY, Math.min(1, dt * 3));
+      enemy.speedFactor = Math.min(1, Math.hypot(enemy.vx, enemy.vy) / Math.max(1, def.speed));
+      enemy.walkPhase += dt * 6 * enemy.speedFactor;
+      enemy.x = clamp(enemy.x + enemy.vx * dt, 60, WORLD.width - 60);
+      enemy.y = clamp(enemy.y + enemy.vy * dt, 60, WORLD.height - 60);
+
+      if (enemy.bounds) {
+        enemy.x = clamp(enemy.x, enemy.bounds.xMin, enemy.bounds.xMax);
+        enemy.y = clamp(enemy.y, enemy.bounds.yMin, enemy.bounds.yMax);
+      }
+
+      updateCreatureVisual(enemy, def, 1.05);
+
+      if (d <= 54 + AGE_STAGES[state.player.stage].scale * 8 && enemy.attackCooldown <= 0) {
+        enemy.attackCooldown = 1.0;
+        damagePlayer(def.damage, def.name + " strikes.");
+      }
+    }
+  }
+
+  function updatePlayer(dt) {
+    const player = state.player;
+    player.attackCooldown = Math.max(0, player.attackCooldown - dt);
+    player.attackSwing = Math.max(0, player.attackSwing - dt);
+    player.pulseCooldown = Math.max(0, player.pulseCooldown - dt);
+    player.hitTimer = Math.max(0, player.hitTimer - dt);
+    player.morphTimer = Math.max(0, player.morphTimer - dt);
+
+    let moveX = 0;
+    let moveY = 0;
+    if (input.left) moveX -= 1;
+    if (input.right) moveX += 1;
+    if (input.up) moveY -= 1;
+    if (input.down) moveY += 1;
+    const moveLength = Math.hypot(moveX, moveY);
+    const terrain = getTerrainAt(player.x, player.y);
+    const stage = AGE_STAGES[player.stage];
+
+    let speed = state.species.speed * stage.speedBonus * getSpeedMultiplier(state.species.classType, terrain);
+    if (input.boost && player.boost > 0 && moveLength > 0) {
+      speed *= state.species.boostStrength;
+      player.boost = Math.max(0, player.boost - 26 * dt);
+    } else {
+      player.boost = Math.min(100, player.boost + 18 * dt);
+    }
+
+    let targetVX = 0;
+    let targetVY = 0;
+    if (moveLength > 0) {
+      targetVX = (moveX / moveLength) * speed;
+      targetVY = (moveY / moveLength) * speed;
+      player.heading = angleLerp(player.heading, Math.atan2(targetVY, targetVX), Math.min(1, dt * 10));
+    }
+
+    player.vx = lerp(player.vx, targetVX, Math.min(1, dt * 7));
+    player.vy = lerp(player.vy, targetVY, Math.min(1, dt * 7));
+    if (moveLength === 0) {
+      player.vx *= Math.pow(0.86, dt * 60);
+      player.vy *= Math.pow(0.86, dt * 60);
+    }
+
+    const prevX = player.x;
+    const prevY = player.y;
+    player.x = clamp(player.x + player.vx * dt, 60, WORLD.width - 60);
+    player.y = clamp(player.y + player.vy * dt, 60, WORLD.height - 60);
+
+    for (const gate of GATES) {
+      if (player.stage >= gate.requiredStage && player.relics >= gate.requiredRelics) continue;
+      if (prevX < gate.x - 28 && player.x >= gate.x - 28) {
+        player.x = gate.x - 32;
+        showToast(gate.name + " rejects you.");
+      }
+    }
+
+    player.speedFactor = Math.min(1, Math.hypot(player.vx, player.vy) / Math.max(1, state.species.speed));
+    player.walkPhase += dt * 8 * player.speedFactor;
+    updateCreatureVisual(player, state.species, 1.2);
+
+    const currentTerrain = getTerrainAt(player.x, player.y);
+    const hungerDrain = 1.4 + player.speedFactor * 0.5 + (input.boost ? 0.4 : 0);
+    player.hunger = Math.max(0, player.hunger - hungerDrain * dt);
+    if (currentTerrain === "lava") damagePlayer(14 * dt, "The volcanic pools burn.");
+    if (currentTerrain === "abyss" && state.species.classType === "land") damagePlayer(9 * dt, "The trench drags you under.");
+    if (player.hunger <= 0) damagePlayer(7 * dt, "Starvation bites.");
+    else if (player.hunger > player.maxHunger * 0.5 && player.hitTimer <= 0) {
+      player.health = Math.min(player.maxHealth, player.health + dt * 1.2);
+    }
+
+    if (player.health < player.maxHealth * 0.34 && !player.lowHealthWarn) {
+      player.lowHealthWarn = true;
+      showToast("Health critical.");
+    } else if (player.health >= player.maxHealth * 0.55) {
+      player.lowHealthWarn = false;
+    }
+
+    if (player.hunger < player.maxHunger * 0.22 && !player.lowHungerWarn) {
+      player.lowHungerWarn = true;
+      showToast("Find food soon.");
+    } else if (player.hunger >= player.maxHunger * 0.40) {
+      player.lowHungerWarn = false;
+    }
+
+    if (input.attack) performAttack();
+    if (input.pulse) performPulse();
+    input.attack = false;
+    input.pulse = false;
+
+    const region = getRegionName(player.x, player.y);
+    tryDiscoverRegion(region);
+    const cave = getCaveAt(player.x, player.y);
+    if (cave) tryDiscoverSecret(cave.name);
+
+    if (player.health <= 0) {
+      player.health = 0;
+      state.mode = "gameover";
+      setOverlay(
+        "Your dinosaur fell",
+        "You reached " + AGE_STAGES[player.stage].label + ". XP " + Math.floor(player.xp) + ", relics " + player.relics + ", booty " + player.booty + ".",
+        "Press R to return to species select."
+      );
+      stateOverlay.classList.remove("hidden");
+    }
+  }
+
+  function updateCamera() {
+    if (state.mode === "menu") {
+      updateAttractor();
+      return;
+    }
+    if (!state.player) return;
+    const playerPos = worldToScene(state.player.x, state.player.y, getSurfaceHeight(state.player.x, state.player.y) + 18);
+    const desired = playerPos.clone().add(CAMERA_OFFSET);
+    camera.position.lerp(desired, state.mode === "pause" || state.mode === "gameover" ? 0.05 : 0.08);
+    camera.lookAt(playerPos.x, playerPos.y + 16, playerPos.z);
+  }
+
+  function updateHud() {
+    if (!state.player || !state.species) return;
+    const player = state.player;
+    const nextStage = getNextStage();
+    stageLabel.textContent = AGE_STAGES[player.stage].label;
+    speciesLabel.textContent = state.species.name;
+    metaLine.textContent = "Class: " + CLASS_LABELS[state.species.classType].title.replace(" Dinosaurs", "").replace(" Giants", "").replace(" Hunters", "") + " | Region: " + state.lastRegion;
+    healthFill.style.width = (player.health / player.maxHealth * 100).toFixed(1) + "%";
+    healthValue.textContent = Math.floor(player.health) + " / " + Math.floor(player.maxHealth);
+    hungerFill.style.width = (player.hunger / player.maxHunger * 100).toFixed(1) + "%";
+    hungerValue.textContent = Math.floor(player.hunger) + " / " + Math.floor(player.maxHunger);
+    sprintFill.style.width = player.boost.toFixed(1) + "%";
+    sprintValue.textContent = Math.floor(player.boost) + "%";
+    const xpMax = nextStage ? nextStage.xp : AGE_STAGES[AGE_STAGES.length - 1].xp;
+    xpFill.style.width = clamp(player.xp / xpMax, 0, 1) * 100 + "%";
+    xpValue.textContent = nextStage ? Math.floor(player.xp) + " / " + nextStage.xp : Math.floor(player.xp) + " / MAX";
+    countsLine.textContent = "Kills: " + player.kills + " | Relics: " + player.relics + " | Booty: " + player.booty;
+    objectiveText.textContent = getObjectiveText();
+    hintLine.textContent = player.pulseCooldown > 0
+      ? "WASD move | Shift sprint | F attack | Space pulse in " + player.pulseCooldown.toFixed(1) + "s | Esc pause"
+      : "WASD move | Shift sprint | F attack | Space pulse | Esc pause";
+
+    const shrine = getFocusedShrine();
+    if (!shrine) {
+      shrinePanel.classList.add("hidden");
+    } else {
+      shrinePanel.classList.remove("hidden");
+      shrineTitle.textContent = shrine.name;
+      shrineClue.textContent = shrine.solved
+        ? "Complete. Relics and XP already claimed."
+        : shrine.type === "trial"
+          ? shrine.active ? "Enemies remaining: " + shrine.remainingEnemies : shrine.clue
+          : shrine.clue;
+      shrineNodes.innerHTML = "";
+      if (shrine.nodes.length) {
+        shrine.nodes.forEach(node => {
+          const pill = document.createElement("div");
+          pill.className = "node-pill" + (node.active ? " active" : "");
+          pill.textContent = node.order + " " + node.interaction.toUpperCase();
+          shrineNodes.appendChild(pill);
+        });
+      } else {
+        const pill = document.createElement("div");
+        pill.className = "node-pill" + (shrine.solved ? " active" : "");
+        pill.textContent = shrine.solved ? "TRIAL COMPLETE" : "TRIAL ACTIVE";
+        shrineNodes.appendChild(pill);
+      }
+    }
+    drawMinimap();
+  }
+
+  function drawMinimap() {
+    minimapCtx.clearRect(0, 0, minimap.width, minimap.height);
+    minimapCtx.fillStyle = "#253517";
+    minimapCtx.fillRect(0, 0, minimap.width, minimap.height);
+
+    const mapX = x => (x / WORLD.width) * minimap.width;
+    const mapY = y => (y / WORLD.height) * minimap.height;
+    const mapW = w => (w / WORLD.width) * minimap.width;
+    const mapH = h => (h / WORLD.height) * minimap.height;
+
+    minimapCtx.fillStyle = "#668737";
+    minimapCtx.fillRect(mapX(BERRY_GLADE.x), mapY(BERRY_GLADE.y), mapW(BERRY_GLADE.w), mapH(BERRY_GLADE.h));
+    minimapCtx.fillStyle = "#1d5a2d";
+    minimapCtx.fillRect(mapX(MOONFERN_WOODS.x), mapY(MOONFERN_WOODS.y), mapW(MOONFERN_WOODS.w), mapH(MOONFERN_WOODS.h));
+    minimapCtx.fillStyle = "#b98652";
+    minimapCtx.fillRect(mapX(EMBER_BASIN.x), mapY(EMBER_BASIN.y), mapW(EMBER_BASIN.w), mapH(EMBER_BASIN.h));
+    minimapCtx.fillStyle = "#6e8195";
+    minimapCtx.fillRect(mapX(SKYWATCH_CLIFFS.x), mapY(SKYWATCH_CLIFFS.y), mapW(SKYWATCH_CLIFFS.w), mapH(SKYWATCH_CLIFFS.h));
+    minimapCtx.fillStyle = "#50627b";
+    minimapCtx.fillRect(mapX(STORM_CROWN.x), mapY(STORM_CROWN.y), mapW(STORM_CROWN.w), mapH(STORM_CROWN.h));
+    minimapCtx.fillStyle = "#175128";
+    minimapCtx.fillRect(mapX(SUNROOT_JUNGLE.x), mapY(SUNROOT_JUNGLE.y), mapW(SUNROOT_JUNGLE.w), mapH(SUNROOT_JUNGLE.h));
+    minimapCtx.fillStyle = "#788aa0";
+    minimapCtx.fillRect(mapX(SUNROOT_HIGHLANDS.x), mapY(SUNROOT_HIGHLANDS.y), mapW(SUNROOT_HIGHLANDS.w), mapH(SUNROOT_HIGHLANDS.h));
+
+    minimapCtx.fillStyle = "#2cb4ff";
+    minimapCtx.fillRect(mapX(5200), mapY(2200), mapW(WORLD.width - 5200), mapH(WORLD.height - 2200));
+    minimapCtx.fillRect(mapX(6800), mapY(1600), mapW(WORLD.width - 6800), mapH(1000));
+    minimapCtx.fillRect(mapX(4200), mapY(3980), mapW(WORLD.width - 4200), mapH(WORLD.height - 3980));
+    minimapCtx.fillStyle = "#0b2846";
+    minimapCtx.fillRect(mapX(ABYSS_ZONE.x), mapY(ABYSS_ZONE.y), mapW(ABYSS_ZONE.w), mapH(ABYSS_ZONE.h));
+
+    minimapCtx.fillStyle = "#d9c285";
+    for (const island of ISLANDS) {
+      minimapCtx.beginPath();
+      minimapCtx.ellipse(mapX(island.x), mapY(island.y), mapW(island.rx), mapH(island.ry), 0, 0, TAU);
+      minimapCtx.fill();
+    }
+
+    for (const gate of GATES) {
+      const unlocked = state.player && state.player.stage >= gate.requiredStage && state.player.relics >= gate.requiredRelics;
+      minimapCtx.strokeStyle = unlocked ? "rgba(184,240,136,0.85)" : "rgba(255,110,110,0.85)";
+      minimapCtx.lineWidth = 2;
+      minimapCtx.beginPath();
+      minimapCtx.moveTo(mapX(gate.x), 4);
+      minimapCtx.lineTo(mapX(gate.x), minimap.height - 4);
+      minimapCtx.stroke();
+    }
+
+    for (const shrine of state.shrines) {
+      minimapCtx.fillStyle = shrine.rewardCollected ? "#cdb5ff" : "#ffe493";
+      minimapCtx.beginPath();
+      minimapCtx.arc(mapX(shrine.rewardX), mapY(shrine.rewardY), 4, 0, TAU);
+      minimapCtx.fill();
+    }
+
+    if (state.player) {
+      minimapCtx.fillStyle = "#ffffff";
+      minimapCtx.beginPath();
+      minimapCtx.arc(mapX(state.player.x), mapY(state.player.y), 4.5, 0, TAU);
+      minimapCtx.fill();
+    }
+  }
+
+  function updateWorld(dt) {
+    state.time += dt;
+    if (state.mode === "play") {
+      updatePlayer(dt);
+      updateFoods(dt);
+      updateEnemies(dt);
+      updateShrines(dt);
+      updateTreasures();
+      updateRespawns(dt);
+      updatePulseRing(dt);
+      updateObjectiveBeacon();
+      refreshGateVisuals();
+      updateHud();
+    } else if (state.mode === "menu") {
+      updateAttractor();
+    }
+    if (state.mode === "pause" || state.mode === "gameover") {
+      updateObjectiveBeacon();
+      refreshGateVisuals();
+    }
+  }
+
+  function animate(now) {
+    animate.last = animate.last || now;
+    const dt = Math.min(0.033, (now - animate.last) / 1000 || 0.016);
+    animate.last = now;
+    updateWorld(dt);
+    updateCamera();
+    renderer.render(scene, camera);
+    requestAnimationFrame(animate);
+  }
+
+  function togglePause() {
+    if (!state.player || state.mode === "gameover") return;
+    if (state.mode === "play") {
+      state.mode = "pause";
+      stateOverlay.classList.remove("hidden");
+      setOverlay("Game paused", "Press Esc to jump back in.", "Press R to return to species select.");
+    } else if (state.mode === "pause") {
+      state.mode = "play";
+      stateOverlay.classList.add("hidden");
+    }
+  }
+
+  function onKeyDown(event) {
+    const key = event.key.toLowerCase();
+    if (["w", "a", "s", "d", "arrowup", "arrowdown", "arrowleft", "arrowright", "shift", " ", "f", "escape", "r"].includes(key)) {
+      event.preventDefault();
+    }
+    if (key === "w" || key === "arrowup") input.up = true;
+    if (key === "s" || key === "arrowdown") input.down = true;
+    if (key === "a" || key === "arrowleft") input.left = true;
+    if (key === "d" || key === "arrowright") input.right = true;
+    if (key === "shift") input.boost = true;
+    if (key === " " && !event.repeat) input.pulse = true;
+    if (key === "f" && !event.repeat) input.attack = true;
+    if (key === "escape" && state.mode !== "menu") togglePause();
+    if (key === "r" && (state.mode === "pause" || state.mode === "gameover")) {
+      showMenu();
+    }
+  }
+
+  function onKeyUp(event) {
+    const key = event.key.toLowerCase();
+    if (key === "w" || key === "arrowup") input.up = false;
+    if (key === "s" || key === "arrowdown") input.down = false;
+    if (key === "a" || key === "arrowleft") input.left = false;
+    if (key === "d" || key === "arrowright") input.right = false;
+    if (key === "shift") input.boost = false;
+  }
+
+  function onResize() {
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+  }
+
+  window.addEventListener("keydown", onKeyDown);
+  window.addEventListener("keyup", onKeyUp);
+  window.addEventListener("resize", onResize);
+
+  buildStaticWorld();
+  populateSpeciesMenu();
+  showMenu();
+  requestAnimationFrame(animate);
+})();
+</script>
+</body>
+</html>

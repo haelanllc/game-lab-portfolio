@@ -1,0 +1,858 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Abyss Spear Hunter</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; overflow: hidden; }
+    body {
+      background: #04101f;
+      color: #f6fbff;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+      background: #04101f;
+      cursor: crosshair;
+      touch-action: none;
+    }
+    .hud {
+      position: fixed;
+      inset: 14px 14px auto;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      pointer-events: none;
+      text-shadow: 0 2px 10px rgba(0,0,0,.65);
+    }
+    .stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .pill {
+      min-width: 86px;
+      padding: 8px 10px;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 10px;
+      background: rgba(2, 12, 28, .58);
+      backdrop-filter: blur(12px);
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .pill span {
+      display: block;
+      color: #8fe9ff;
+      font-size: 18px;
+      line-height: 1.1;
+    }
+    .meter {
+      position: relative;
+      overflow: hidden;
+      width: 170px;
+      height: 16px;
+      margin-top: 4px;
+      border: 1px solid rgba(255,255,255,.22);
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+    }
+    .meter b {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #57f5ff, #fff176);
+      transform-origin: left center;
+    }
+    .right {
+      display: grid;
+      gap: 8px;
+      justify-items: end;
+      align-content: start;
+    }
+    .banner {
+      min-width: min(420px, 58vw);
+      padding: 10px 12px;
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: 12px;
+      background: rgba(2, 12, 28, .62);
+      color: #d9f7ff;
+      font-size: 13px;
+      font-weight: 750;
+      text-align: right;
+      backdrop-filter: blur(12px);
+    }
+    .overlay {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background: radial-gradient(circle at 50% 20%, rgba(30,180,220,.18), rgba(2,9,20,.82));
+    }
+    .panel {
+      width: min(720px, 100%);
+      padding: clamp(22px, 4vw, 34px);
+      border: 2px solid rgba(255,255,255,.24);
+      border-radius: 18px;
+      background: linear-gradient(160deg, rgba(3,20,38,.94), rgba(5,8,22,.96));
+      box-shadow: 0 26px 80px rgba(0,0,0,.42);
+    }
+    .panel h1 {
+      margin: 0 0 10px;
+      font-size: clamp(42px, 8vw, 78px);
+      line-height: .92;
+      letter-spacing: 0;
+    }
+    .panel p {
+      margin: 0 0 18px;
+      color: #c8e8f7;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+    .panel-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 18px 0;
+    }
+    .mini {
+      padding: 12px;
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 12px;
+      background: rgba(255,255,255,.06);
+      color: #dff9ff;
+      font-size: 13px;
+      font-weight: 800;
+    }
+    button {
+      min-height: 46px;
+      padding: 0 18px;
+      border: 0;
+      border-radius: 12px;
+      background: #75f2ff;
+      color: #06111e;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 950;
+    }
+    .hidden { display: none; }
+    @media (max-width: 720px) {
+      .hud { inset: 8px 8px auto; grid-template-columns: 1fr; }
+      .right { justify-items: start; }
+      .banner { min-width: 0; width: min(100%, 440px); text-align: left; }
+      .pill { min-width: 72px; padding: 7px 8px; }
+      .pill span { font-size: 15px; }
+      .panel-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="game" aria-label="Abyss Spear Hunter game"></canvas>
+  <div class="hud">
+    <div class="stats">
+      <div class="pill">Score<span id="score">0</span></div>
+      <div class="pill">Shells<span id="shells">0</span></div>
+      <div class="pill">Spear<span id="spear">Lv 1</span></div>
+      <div class="pill">Combo<span id="combo">x1</span></div>
+      <div class="pill">Depth<span id="depth">Sun Reef</span></div>
+      <div class="pill">Oxygen<div class="meter"><b id="oxygen"></b></div></div>
+      <div class="pill">Dash<div class="meter"><b id="dash"></b></div></div>
+    </div>
+    <div class="right">
+      <div class="banner" id="mission">Charge the spear, chain catches, and dive for relics.</div>
+      <div class="banner">Move WASD/arrows. Aim mouse/touch. Hold to charge. Release to throw. Shift dashes.</div>
+    </div>
+  </div>
+  <div class="overlay" id="overlay">
+    <div class="panel">
+      <h1>Abyss Spear Hunter</h1>
+      <p>Dive past the reef, spear rare fish, dodge hazards, grab relics, and survive the Abyss Leviathan. This one adds charged spear shots, dash movement, combo scoring, treasure bubbles, and depth-based biomes.</p>
+      <div class="panel-grid">
+        <div class="mini">Hold longer for a stronger spear.</div>
+        <div class="mini">Surface near the top to refill oxygen.</div>
+        <div class="mini">Relics trigger the boss hunt.</div>
+      </div>
+      <button id="start">Start Dive</button>
+    </div>
+  </div>
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+    const els = {
+      score: document.getElementById("score"),
+      shells: document.getElementById("shells"),
+      spear: document.getElementById("spear"),
+      combo: document.getElementById("combo"),
+      depth: document.getElementById("depth"),
+      oxygen: document.getElementById("oxygen"),
+      dash: document.getElementById("dash"),
+      mission: document.getElementById("mission"),
+      overlay: document.getElementById("overlay"),
+      start: document.getElementById("start")
+    };
+
+    const keys = Object.create(null);
+    const pointer = { x: 0, y: 0, down: false, chargeStart: 0 };
+    const game = {
+      running: false,
+      over: false,
+      width: 0,
+      height: 0,
+      time: 0,
+      last: 0,
+      score: 0,
+      shells: 0,
+      spearLevel: 1,
+      combo: 1,
+      comboTimer: 0,
+      bestCombo: 1,
+      relics: 0,
+      bossActive: false,
+      bossDefeated: false,
+      spawn: 0,
+      hazardSpawn: 2.5,
+      relicSpawn: 8,
+      messageTimer: 0,
+      message: "Charge the spear, chain catches, and dive for relics."
+    };
+
+    const diver = {
+      x: 480,
+      y: 280,
+      vx: 0,
+      vy: 0,
+      radius: 20,
+      oxygen: 100,
+      maxOxygen: 100,
+      dash: 1,
+      invulnerable: 0,
+      angle: 0
+    };
+
+    const fish = [];
+    const spears = [];
+    const bubbles = [];
+    const particles = [];
+    const hazards = [];
+    const relics = [];
+    let leviathan = null;
+
+    function resize() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      game.width = Math.floor(window.innerWidth * dpr);
+      game.height = Math.floor(window.innerHeight * dpr);
+      canvas.width = game.width;
+      canvas.height = game.height;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      game.width = window.innerWidth;
+      game.height = window.innerHeight;
+      pointer.x = pointer.x || game.width * 0.68;
+      pointer.y = pointer.y || game.height * 0.45;
+    }
+
+    function rand(min, max) { return Math.random() * (max - min) + min; }
+    function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
+    function dist(a, b, c, d) { return Math.hypot(a - c, b - d); }
+
+    function depthName() {
+      const t = diver.y / game.height;
+      if (t < .28) return "Sun Reef";
+      if (t < .52) return "Kelp Run";
+      if (t < .74) return "Crystal Drop";
+      return "Abyss Gate";
+    }
+
+    function setMessage(text, seconds = 2.5) {
+      game.message = text;
+      game.messageTimer = seconds;
+      els.mission.textContent = text;
+    }
+
+    function spawnFish() {
+      const depth = diver.y / game.height;
+      const rare = Math.random() < .14 + depth * .13;
+      const speedy = Math.random() < .22;
+      const side = Math.random() < .5 ? -1 : 1;
+      const y = rand(100, game.height - 80);
+      const size = rare ? rand(20, 30) : rand(13, 24);
+      fish.push({
+        x: side < 0 ? -50 : game.width + 50,
+        y,
+        vx: side * -rand(75, speedy ? 210 : 150),
+        vy: rand(-22, 22),
+        size,
+        value: Math.round((rare ? 90 : 35) + depth * 80 + size),
+        hp: rare ? 2 : 1,
+        rare,
+        phase: rand(0, 9),
+        color: rare ? "#ffe66d" : ["#56d7ff", "#ff8fab", "#80ff72", "#ffa94d"][Math.floor(rand(0, 4))]
+      });
+    }
+
+    function spawnHazard() {
+      const fromTop = Math.random() < .5;
+      hazards.push({
+        x: rand(60, game.width - 60),
+        y: fromTop ? -40 : game.height + 40,
+        vx: rand(-35, 35),
+        vy: fromTop ? rand(60, 120) : -rand(60, 120),
+        r: rand(18, 32),
+        spin: rand(-2, 2)
+      });
+    }
+
+    function spawnRelic() {
+      relics.push({
+        x: rand(80, game.width - 80),
+        y: rand(game.height * .42, game.height - 80),
+        r: 18,
+        pulse: 0
+      });
+    }
+
+    function spawnBubbleTrail(x, y, count) {
+      for (let i = 0; i < count; i++) {
+        bubbles.push({ x: x + rand(-14, 14), y: y + rand(-8, 8), r: rand(2, 7), vy: rand(18, 60), life: rand(.7, 1.8) });
+      }
+    }
+
+    function burst(x, y, color, count = 14) {
+      for (let i = 0; i < count; i++) {
+        const a = rand(0, Math.PI * 2);
+        const s = rand(60, 240);
+        particles.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: rand(.35, .9), color, r: rand(2, 6) });
+      }
+    }
+
+    function throwSpear(power) {
+      const offsets = game.spearLevel >= 3 ? [-.12, 0, .12] : game.spearLevel >= 2 ? [-.07, 0, .07] : [0];
+      for (const offset of offsets) {
+        const a = diver.angle + offset;
+        spears.push({
+          x: diver.x + Math.cos(a) * 24,
+          y: diver.y + Math.sin(a) * 24,
+          vx: Math.cos(a) * (430 + power * 360 + (game.spearLevel - 1) * 55),
+          vy: Math.sin(a) * (430 + power * 360 + (game.spearLevel - 1) * 55),
+          life: .95 + power * .55 + (game.spearLevel - 1) * .08,
+          power,
+          damage: 1 + Math.floor(power * 2) + Math.floor((game.spearLevel - 1) / 2),
+          spin: a
+        });
+      }
+      spawnBubbleTrail(diver.x, diver.y, 8);
+    }
+
+    function dash() {
+      if (diver.dash < .95) return;
+      diver.dash = 0;
+      diver.vx += Math.cos(diver.angle) * 520;
+      diver.vy += Math.sin(diver.angle) * 520;
+      diver.invulnerable = .35;
+      spawnBubbleTrail(diver.x, diver.y, 22);
+      burst(diver.x, diver.y, "#8ff4ff", 12);
+    }
+
+    function startBoss() {
+      game.bossActive = true;
+      leviathan = {
+        x: game.width + 240,
+        y: game.height * .68,
+        vx: -65,
+        hp: 18,
+        maxHp: 18,
+        phase: 0,
+        bite: 0
+      };
+      setMessage("Abyss Leviathan woke up. Hit the glowing head!", 4);
+    }
+
+    function reset() {
+      fish.length = spears.length = bubbles.length = particles.length = hazards.length = relics.length = 0;
+      Object.assign(game, {
+        running: true, over: false, time: 0, last: 0, score: 0, shells: 0, spearLevel: 1, combo: 1,
+        comboTimer: 0, bestCombo: 1, relics: 0, bossActive: false, bossDefeated: false,
+        spawn: 0, hazardSpawn: 2.5, relicSpawn: 5, messageTimer: 0,
+        message: "Find 3 relics to wake the Abyss Leviathan."
+      });
+      Object.assign(diver, {
+        x: game.width * .35, y: game.height * .38, vx: 0, vy: 0,
+        oxygen: 100, dash: 1, invulnerable: 0, angle: 0
+      });
+      leviathan = null;
+      els.overlay.classList.add("hidden");
+      setMessage(game.message, 3);
+    }
+
+    function endGame(reason) {
+      game.running = false;
+      game.over = true;
+      els.overlay.classList.remove("hidden");
+      els.overlay.querySelector("h1").textContent = game.bossDefeated ? "Legendary Dive" : "Dive Over";
+      els.overlay.querySelector("p").textContent = `${reason} Score ${game.score}. Shells ${game.shells}. Best combo x${game.bestCombo}.`;
+      els.start.textContent = "Dive Again";
+    }
+
+    function update(dt) {
+      if (!game.running) return;
+      game.time += dt;
+      game.spawn -= dt;
+      game.hazardSpawn -= dt;
+      game.relicSpawn -= dt;
+      game.messageTimer -= dt;
+      diver.invulnerable = Math.max(0, diver.invulnerable - dt);
+
+      if (game.messageTimer <= 0) els.mission.textContent = game.bossActive ? "Boss hunt: spear the head, dodge the charge." : "Find relics, chain catches, and keep oxygen above zero.";
+
+      const speed = keys.shift ? 250 : 190;
+      const ax = (keys.arrowright || keys.d ? 1 : 0) - (keys.arrowleft || keys.a ? 1 : 0);
+      const ay = (keys.arrowdown || keys.s ? 1 : 0) - (keys.arrowup || keys.w ? 1 : 0);
+      const mag = Math.hypot(ax, ay) || 1;
+      diver.vx += (ax / mag) * speed * dt * 4.2;
+      diver.vy += (ay / mag) * speed * dt * 4.2;
+      diver.vx *= Math.pow(.82, dt * 60);
+      diver.vy *= Math.pow(.82, dt * 60);
+      diver.x += diver.vx * dt;
+      diver.y += diver.vy * dt;
+      diver.x = clamp(diver.x, 26, game.width - 26);
+      diver.y = clamp(diver.y, 42, game.height - 30);
+      diver.angle = Math.atan2(pointer.y - diver.y, pointer.x - diver.x);
+      diver.dash = clamp(diver.dash + dt * .42, 0, 1);
+
+      if (diver.y < game.height * .22) diver.oxygen = Math.min(diver.maxOxygen, diver.oxygen + 26 * dt);
+      else diver.oxygen -= (4.5 + diver.y / game.height * 9) * dt;
+      if (diver.oxygen <= 0) endGame("You ran out of oxygen.");
+
+      if (game.spawn <= 0) {
+        spawnFish();
+        game.spawn = Math.max(.24, 1.05 - game.time * .012);
+      }
+      if (game.hazardSpawn <= 0) {
+        spawnHazard();
+        game.hazardSpawn = rand(2.1, 3.8);
+      }
+      if (game.relicSpawn <= 0 && game.relics < 3 && relics.length < 1) {
+        spawnRelic();
+        game.relicSpawn = rand(6.5, 9.5);
+      }
+      if (game.relics >= 3 && !game.bossActive && !game.bossDefeated) startBoss();
+
+      for (const f of fish) {
+        f.phase += dt * 4;
+        f.x += f.vx * dt;
+        f.y += (f.vy + Math.sin(f.phase) * 18) * dt;
+      }
+      for (let i = fish.length - 1; i >= 0; i--) {
+        if (fish[i].x < -120 || fish[i].x > game.width + 120) fish.splice(i, 1);
+      }
+
+      for (const h of hazards) {
+        h.x += h.vx * dt;
+        h.y += h.vy * dt;
+        h.spin += dt;
+        if (diver.invulnerable <= 0 && dist(h.x, h.y, diver.x, diver.y) < h.r + diver.radius) {
+          diver.oxygen -= 24;
+          diver.invulnerable = 1;
+          game.combo = 1;
+          game.comboTimer = 0;
+          burst(diver.x, diver.y, "#ff5c7a", 18);
+          setMessage("Hazard hit. Surface if oxygen is low.", 2.5);
+        }
+      }
+      for (let i = hazards.length - 1; i >= 0; i--) {
+        const h = hazards[i];
+        if (h.y < -80 || h.y > game.height + 80) hazards.splice(i, 1);
+      }
+
+      for (const r of relics) {
+        r.pulse += dt * 5;
+        if (dist(r.x, r.y, diver.x, diver.y) < r.r + diver.radius) {
+          game.relics++;
+          game.shells += 25;
+          burst(r.x, r.y, "#d7b8ff", 24);
+          setMessage(`Relic ${game.relics}/3 recovered.`, 2.4);
+          r.collected = true;
+        }
+      }
+      for (let i = relics.length - 1; i >= 0; i--) if (relics[i].collected) relics.splice(i, 1);
+
+      for (const s of spears) {
+        s.x += s.vx * dt;
+        s.y += s.vy * dt;
+        s.life -= dt;
+        s.spin = Math.atan2(s.vy, s.vx);
+      }
+      for (let si = spears.length - 1; si >= 0; si--) {
+        const s = spears[si];
+        let used = false;
+        for (let fi = fish.length - 1; fi >= 0; fi--) {
+          const f = fish[fi];
+          if (dist(s.x, s.y, f.x, f.y) < f.size + 10) {
+            f.hp -= s.damage;
+            burst(f.x, f.y, f.color, 18);
+            if (f.hp <= 0) {
+              const comboBonus = Math.round(f.value * game.combo);
+              game.score += comboBonus;
+              game.shells += f.rare ? 8 : 3;
+              game.combo = Math.min(12, game.combo + .5);
+              game.bestCombo = Math.max(game.bestCombo, Math.floor(game.combo));
+              game.comboTimer = 3.2;
+              fish.splice(fi, 1);
+              setMessage(`+${comboBonus} ${f.rare ? "rare catch" : "catch"} combo x${Math.floor(game.combo)}`, 1.4);
+            }
+            used = true;
+            break;
+          }
+        }
+        if (!used && leviathan && dist(s.x, s.y, leviathan.x - 80, leviathan.y) < 90) {
+          leviathan.hp -= s.damage;
+          game.score += 120;
+          game.shells += 4;
+          burst(leviathan.x - 80, leviathan.y, "#8ff4ff", 26);
+          used = true;
+          if (leviathan.hp <= 0) {
+            game.bossDefeated = true;
+            game.bossActive = false;
+            game.score += 2500;
+            burst(leviathan.x - 80, leviathan.y, "#ffe66d", 60);
+            endGame("You defeated the Abyss Leviathan.");
+          }
+        }
+        if (used || s.life <= 0 || s.x < -60 || s.x > game.width + 60 || s.y < -60 || s.y > game.height + 60) spears.splice(si, 1);
+      }
+
+      if (game.comboTimer > 0) game.comboTimer -= dt;
+      else game.combo = Math.max(1, game.combo - dt * 1.6);
+
+      if (leviathan) {
+        leviathan.phase += dt * 2;
+        leviathan.x += leviathan.vx * dt;
+        leviathan.y += Math.sin(leviathan.phase) * 42 * dt;
+        if (leviathan.x < -260) {
+          leviathan.x = game.width + 260;
+          leviathan.y = rand(game.height * .42, game.height * .82);
+          leviathan.vx = -rand(80, 150);
+        }
+        if (diver.invulnerable <= 0 && dist(diver.x, diver.y, leviathan.x - 110, leviathan.y) < 92) {
+          diver.oxygen -= 36;
+          diver.invulnerable = 1.2;
+          burst(diver.x, diver.y, "#ff5c7a", 28);
+          setMessage("Leviathan clipped you. Dash through danger.", 2.4);
+        }
+      }
+
+      for (const b of bubbles) {
+        b.y -= b.vy * dt;
+        b.life -= dt;
+        b.x += Math.sin(game.time * 3 + b.r) * 8 * dt;
+      }
+      for (let i = bubbles.length - 1; i >= 0; i--) if (bubbles[i].life <= 0) bubbles.splice(i, 1);
+      for (const p of particles) {
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.vx *= Math.pow(.9, dt * 60);
+        p.vy *= Math.pow(.9, dt * 60);
+        p.life -= dt;
+      }
+      for (let i = particles.length - 1; i >= 0; i--) if (particles[i].life <= 0) particles.splice(i, 1);
+      if (Math.random() < .18) spawnBubbleTrail(rand(0, game.width), game.height + 20, 1);
+      updateHud();
+    }
+
+    function updateHud() {
+      const nextLevel = Math.min(4, 1 + Math.floor(game.shells / 30));
+      if (nextLevel > game.spearLevel) {
+        game.spearLevel = nextLevel;
+        setMessage(`Spear upgraded to level ${game.spearLevel}.`, 2.8);
+      }
+      els.score.textContent = game.score;
+      els.shells.textContent = game.shells;
+      els.spear.textContent = `Lv ${game.spearLevel}`;
+      els.combo.textContent = `x${Math.max(1, Math.floor(game.combo))}`;
+      els.depth.textContent = depthName();
+      els.oxygen.style.transform = `scaleX(${clamp(diver.oxygen / diver.maxOxygen, 0, 1)})`;
+      els.dash.style.transform = `scaleX(${diver.dash})`;
+    }
+
+    function drawBackground() {
+      const g = ctx.createLinearGradient(0, 0, 0, game.height);
+      g.addColorStop(0, "#5ad8ff");
+      g.addColorStop(.22, "#0477a9");
+      g.addColorStop(.55, "#043456");
+      g.addColorStop(1, "#020712");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, game.width, game.height);
+      ctx.globalAlpha = .18;
+      for (let i = 0; i < 8; i++) {
+        const y = (i / 8) * game.height + Math.sin(game.time + i) * 18;
+        ctx.fillStyle = i % 2 ? "#b7f6ff" : "#02233d";
+        ctx.beginPath();
+        ctx.ellipse(game.width * (.15 + i * .1), y, game.width * .25, 24, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = "#07101a";
+      ctx.beginPath();
+      ctx.moveTo(0, game.height);
+      for (let x = 0; x <= game.width; x += 80) {
+        ctx.lineTo(x, game.height - 38 - Math.sin(x * .02 + game.time) * 22);
+      }
+      ctx.lineTo(game.width, game.height);
+      ctx.closePath();
+      ctx.fill();
+      for (let i = 0; i < 10; i++) {
+        const x = (i * 173 + game.time * 14) % (game.width + 160) - 80;
+        drawKelp(x, game.height - 15, 70 + (i % 4) * 22);
+      }
+    }
+
+    function drawKelp(x, base, h) {
+      ctx.strokeStyle = "rgba(75, 255, 173, .42)";
+      ctx.lineWidth = 7;
+      ctx.beginPath();
+      ctx.moveTo(x, base);
+      ctx.bezierCurveTo(x - 16, base - h * .32, x + 24, base - h * .68, x + Math.sin(game.time + x) * 12, base - h);
+      ctx.stroke();
+    }
+
+    function drawFish(f) {
+      ctx.save();
+      ctx.translate(f.x, f.y);
+      ctx.scale(f.vx < 0 ? 1 : -1, 1);
+      ctx.fillStyle = f.color;
+      ctx.strokeStyle = "#04101f";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, f.size * 1.35, f.size * .72, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(-f.size * 1.25, 0);
+      ctx.lineTo(-f.size * 2.05, -f.size * .68);
+      ctx.lineTo(-f.size * 1.9, f.size * .68);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#04101f";
+      ctx.beginPath();
+      ctx.arc(f.size * .72, -f.size * .16, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+      if (f.rare) {
+        ctx.strokeStyle = "rgba(255, 245, 130, .82)";
+        ctx.lineWidth = 4;
+        ctx.strokeRect(-f.size, -f.size, f.size * 1.6, f.size * 1.8);
+      }
+      ctx.restore();
+    }
+
+    function drawDiver() {
+      ctx.save();
+      ctx.translate(diver.x, diver.y);
+      ctx.rotate(diver.angle);
+      if (diver.invulnerable > 0 && Math.floor(game.time * 16) % 2) ctx.globalAlpha = .45;
+      ctx.fillStyle = "#111827";
+      ctx.strokeStyle = "#e6fbff";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 23, 15, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#75f2ff";
+      ctx.fillRect(10, -9, 18, 18);
+      ctx.strokeRect(10, -9, 18, 18);
+      ctx.strokeStyle = "#ffe66d";
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(12, 0);
+      ctx.lineTo(58, 0);
+      ctx.stroke();
+      if (pointer.down) {
+        const power = clamp((performance.now() - pointer.chargeStart) / 900, 0, 1);
+        ctx.strokeStyle = `rgba(255, 230, 109, ${.3 + power * .7})`;
+        ctx.lineWidth = 9 + power * 8;
+        ctx.beginPath();
+        ctx.moveTo(44, 0);
+        ctx.lineTo(86 + power * 24, 0);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawSpear(s) {
+      ctx.save();
+      ctx.translate(s.x, s.y);
+      ctx.rotate(s.spin);
+      ctx.strokeStyle = "#fff4a8";
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(-22, 0);
+      ctx.lineTo(24, 0);
+      ctx.stroke();
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.moveTo(30, 0);
+      ctx.lineTo(14, -7);
+      ctx.lineTo(14, 7);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawHazard(h) {
+      ctx.save();
+      ctx.translate(h.x, h.y);
+      ctx.rotate(h.spin);
+      ctx.fillStyle = "#2b3445";
+      ctx.strokeStyle = "#9fb3c8";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      for (let i = 0; i < 9; i++) {
+        const a = i / 9 * Math.PI * 2;
+        const r = h.r * (i % 2 ? .72 : 1.22);
+        ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawRelic(r) {
+      ctx.save();
+      ctx.translate(r.x, r.y);
+      ctx.rotate(r.pulse * .25);
+      const glow = .45 + Math.sin(r.pulse) * .18;
+      ctx.globalAlpha = glow;
+      ctx.fillStyle = "#d7b8ff";
+      ctx.beginPath();
+      ctx.arc(0, 0, 40, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = "#8b5cf6";
+      ctx.strokeStyle = "#fff7cc";
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(0, -24);
+      ctx.lineTo(22, 0);
+      ctx.lineTo(0, 24);
+      ctx.lineTo(-22, 0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawLeviathan() {
+      if (!leviathan) return;
+      ctx.save();
+      ctx.translate(leviathan.x, leviathan.y);
+      ctx.fillStyle = "#17153b";
+      ctx.strokeStyle = "#9bf6ff";
+      ctx.lineWidth = 7;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 205, 62, Math.sin(leviathan.phase) * .08, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(158, 0);
+      ctx.lineTo(250, -64);
+      ctx.lineTo(238, 62);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#ff5c7a";
+      ctx.beginPath();
+      ctx.arc(-92, -18, 11, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#9bf6ff";
+      ctx.fillRect(-150, -92, 300 * clamp(leviathan.hp / leviathan.maxHp, 0, 1), 10);
+      ctx.strokeStyle = "#e6fbff";
+      ctx.strokeRect(-150, -92, 300, 10);
+      ctx.restore();
+    }
+
+    function render() {
+      drawBackground();
+      for (const r of relics) drawRelic(r);
+      for (const h of hazards) drawHazard(h);
+      for (const f of fish) drawFish(f);
+      drawLeviathan();
+      for (const s of spears) drawSpear(s);
+      for (const b of bubbles) {
+        ctx.globalAlpha = clamp(b.life, 0, 1) * .65;
+        ctx.strokeStyle = "#c7f9ff";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+      for (const p of particles) {
+        ctx.globalAlpha = clamp(p.life, 0, 1);
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      drawDiver();
+    }
+
+    function frame(now) {
+      const dt = Math.min(.033, (now - (game.last || now)) / 1000);
+      game.last = now;
+      update(dt);
+      render();
+      requestAnimationFrame(frame);
+    }
+
+    window.addEventListener("resize", resize);
+    window.addEventListener("keydown", (e) => {
+      keys[e.key.toLowerCase()] = true;
+      keys[e.code.toLowerCase()] = true;
+      if (e.key === "Shift") keys.shift = true;
+      if (e.key === " " && game.over) reset();
+      if (e.key === "Shift") dash();
+    });
+    window.addEventListener("keyup", (e) => {
+      keys[e.key.toLowerCase()] = false;
+      keys[e.code.toLowerCase()] = false;
+      if (e.key === "Shift") keys.shift = false;
+    });
+
+    function pointerMove(e) {
+      const rect = canvas.getBoundingClientRect();
+      const point = e.touches ? e.touches[0] : e;
+      pointer.x = point.clientX - rect.left;
+      pointer.y = point.clientY - rect.top;
+    }
+    canvas.addEventListener("pointermove", pointerMove);
+    canvas.addEventListener("pointerdown", (e) => {
+      pointerMove(e);
+      pointer.down = true;
+      pointer.chargeStart = performance.now();
+    });
+    window.addEventListener("pointerup", () => {
+      if (!pointer.down || !game.running) {
+        pointer.down = false;
+        return;
+      }
+      const power = clamp((performance.now() - pointer.chargeStart) / 900, 0, 1);
+      throwSpear(power);
+      pointer.down = false;
+    });
+    canvas.addEventListener("touchmove", (e) => {
+      e.preventDefault();
+      pointerMove(e);
+    }, { passive: false });
+
+    els.start.addEventListener("click", reset);
+    resize();
+    updateHud();
+    requestAnimationFrame(frame);
+  </script>
+</body>
+</html>

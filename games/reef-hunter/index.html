@@ -1,0 +1,1555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Ocean Spear Fishing – Reef Hunter</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    overflow: hidden;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #021221;
+    color: #f5f5f5;
+  }
+  #game-wrapper {
+    display: grid;
+    grid-template-columns: 3fr 1fr;
+    height: 100vh;
+  }
+  #game-container {
+    position: relative;
+    background: radial-gradient(circle at 50% -50%, #7fd3ff 0, #004472 40%, #010b18 100%);
+  }
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  #hud {
+    position: absolute;
+    top: 8px;
+    left: 10px;
+    right: 10px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    text-shadow: 0 0 4px #000;
+    pointer-events: none;
+  }
+  #hud-left span {
+    margin-right: 12px;
+  }
+  #instructions {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    font-size: 12px;
+    max-width: 70%;
+    color: #e2f3ff;
+    text-shadow: 0 0 4px #000;
+  }
+  #sidebar {
+    background: linear-gradient(180deg, #031524 0%, #020812 100%);
+    border-left: 1px solid rgba(255,255,255,0.1);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  #sidebar h1 {
+    font-size: 20px;
+    margin: 0;
+  }
+  #sidebar h2 {
+    margin: 6px 0 2px;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #7ecbff;
+  }
+  #upgrade-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+  .upgrade {
+    border-radius: 10px;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .upgrade-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+  }
+  .upgrade-title {
+    font-weight: 600;
+  }
+  .upgrade-level {
+    font-size: 12px;
+    color: #c0e8ff;
+  }
+  .upgrade-desc {
+    font-size: 12px;
+    color: #cfdbe8;
+  }
+  .upgrade button {
+    margin-top: 4px;
+    padding: 5px 8px;
+    border-radius: 999px;
+    border: none;
+    font-size: 12px;
+    cursor: pointer;
+    font-weight: 500;
+    background: #0b7bd1;
+    color: #fdfdfd;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .upgrade button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background: #23425f;
+  }
+  #sidebar-footer {
+    margin-top: auto;
+    font-size: 11px;
+    color: #9cb3c7;
+  }
+  #sidebar-footer strong {
+    color: #e1f3ff;
+  }
+
+  #game-over {
+    position: absolute;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at 50% 30%, rgba(0,0,0,0.2), rgba(0,0,0,0.85));
+    z-index: 10;
+    text-align: center;
+  }
+  #game-over-inner {
+    background: rgba(5, 15, 30, 0.9);
+    border-radius: 16px;
+    padding: 20px 26px;
+    border: 1px solid rgba(255,255,255,0.15);
+    max-width: 340px;
+  }
+  #game-over h2 {
+    margin: 0 0 8px;
+    font-size: 20px;
+  }
+  #game-over p {
+    margin: 0 0 16px;
+    font-size: 13px;
+    color: #d3e5f7;
+  }
+  #restart-btn {
+    padding: 8px 16px;
+    border-radius: 999px;
+    border: none;
+    background: #0b7bd1;
+    color: #fdfdfd;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  #restart-btn:hover {
+    background: #1290f0;
+  }
+
+  #weapon-info {
+    font-size: 12px;
+    color: #cfdbe8;
+    line-height: 1.4;
+  }
+  #weapon-info .current {
+    color: #e1f3ff;
+    font-weight: 600;
+  }
+  #weapon-info .locked {
+    opacity: 0.5;
+  }
+
+  @media (max-width: 900px) {
+    #game-wrapper {
+      grid-template-columns: 1fr;
+      grid-template-rows: 3fr 2fr;
+    }
+    #sidebar {
+      border-left: none;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+  }
+</style>
+</head>
+<body>
+<div id="game-wrapper">
+  <div id="game-container">
+    <canvas id="game"></canvas>
+    <div id="hud">
+      <div id="hud-left">
+        <span>Score: <strong id="score">0</strong></span>
+        <span>Shells: <strong id="coins">0</strong></span>
+        <span>Health: <strong id="health">♥♥♥</strong></span>
+        <span>O₂: <strong id="oxygen">100%</strong></span>
+      </div>
+      <div id="hud-right">
+        Depth: <strong id="depth">Shallow Reef</strong>
+      </div>
+    </div>
+    <div id="instructions">
+      Move: ← / → / ↑ / ↓ or WASD · Aim: mouse · Fire: Space or Click<br/>
+      Hit fish, stingrays, swordfish & legendaries to earn <strong>shells</strong>.<br/>
+      Avoid stingrays & bosses, watch your oxygen (surface to refill).<br/>
+      <strong>Weapons:</strong> [1] Spear · [2] Triple · [3] Net · [4] Explosive (unlocks via upgrades)
+    </div>
+
+    <div id="game-over">
+      <div id="game-over-inner">
+        <h2>Game Over</h2>
+        <p>You took too many hits or ran out of air…<br/>Ready to dive again?</p>
+        <button id="restart-btn">Restart Dive (R)</button>
+      </div>
+    </div>
+  </div>
+
+  <aside id="sidebar">
+    <h1>Reef Hunter</h1>
+    <p style="font-size:12px; margin:4px 0 10px;">
+      Upgrade your freediver, dodge rays & bosses, grab chests, and manage your oxygen.
+    </p>
+
+    <h2>Upgrades</h2>
+    <div id="upgrade-list"></div>
+
+    <h2>Weapons</h2>
+    <div id="weapon-info"></div>
+
+    <div id="sidebar-footer">
+      Tip: Go <strong>Reload</strong> → <strong>Spear Speed</strong> → <strong>Swim Fins</strong>.  
+      Unlock weapons in upgrades, then switch with <strong>1–4</strong>.
+    </div>
+  </aside>
+</div>
+
+<script>
+(function () {
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
+  const scoreSpan = document.getElementById("score");
+  const coinsSpan = document.getElementById("coins");
+  const depthSpan = document.getElementById("depth");
+  const healthSpan = document.getElementById("health");
+  const oxygenSpan = document.getElementById("oxygen");
+  const upgradeListEl = document.getElementById("upgrade-list");
+  const weaponInfoEl = document.getElementById("weapon-info");
+  const gameOverEl = document.getElementById("game-over");
+  const restartBtn = document.getElementById("restart-btn");
+
+  let width = canvas.clientWidth;
+  let height = canvas.clientHeight;
+
+  function resizeCanvas() {
+    width = canvas.clientWidth = canvas.parentElement.clientWidth;
+    height = canvas.clientHeight = canvas.parentElement.clientHeight;
+    canvas.width = width;
+    canvas.height = height;
+  }
+  window.addEventListener("resize", resizeCanvas);
+  resizeCanvas();
+
+  // Game state
+  let lastTime = 0;
+  let score = 0;
+  let coins = 0;
+  let gameOver = false;
+
+  const keys = {
+    left: false,
+    right: false,
+    up: false,
+    down: false,
+    shoot: false
+  };
+
+  const mouse = {
+    x: width * 0.8,
+    y: height * 0.5
+  };
+
+  const player = {
+    x: width * 0.5,
+    y: height * 0.6,
+    radius: 18,
+    baseSpeed: 200,
+    speedMultiplier: 1,
+    reloadBase: 0.8,
+    reloadMultiplier: 1,
+    lastShot: 0,
+    maxSpears: 1,
+    health: 3,
+    maxHealth: 3,
+    lastHitTime: -999,
+    oxygen: 100,
+    maxOxygen: 100
+  };
+
+  const weaponState = {
+    current: "spear",
+    unlocked: {
+      spear: true,
+      triple: false,
+      net: false,
+      explosive: false
+    }
+  };
+
+  const spears = [];
+  const fish = [];
+  const bubbles = [];
+  const bosses = [];
+  const loot = [];
+
+  // Oxygen parameters
+  const oxygenDepleteRate = 7;   // per second underwater
+  const oxygenRechargeRate = 18; // per second near surface
+
+  // Upgrades & probabilities
+  let rareFishChance = 0.06;
+  let legendaryChance = 0.01;
+  let spearSpeedBase = 260;
+
+  // Boss thresholds
+  let nextBossScore = 120; // first boss
+  const bossThresholds = [
+    { minScore: 0,   id: "abyssal-manta" },
+    { minScore: 250, id: "titan-marlin" },
+    { minScore: 500, id: "leviathan-ray" }
+  ];
+
+  const upgrades = [
+    {
+      id: "swim",
+      name: "Swim Fins",
+      desc: "Increase swim speed for faster repositioning.",
+      level: 0,
+      baseCost: 20,
+      costMult: 1.7,
+      apply: () => {
+        upgrades[0].level++;
+        player.speedMultiplier += 0.2;
+      }
+    },
+    {
+      id: "reload",
+      name: "Quick Reload",
+      desc: "Shorten reload time between spear shots.",
+      level: 0,
+      baseCost: 25,
+      costMult: 1.8,
+      apply: () => {
+        upgrades[1].level++;
+        player.reloadMultiplier += 0.22;
+      }
+    },
+    {
+      id: "spearSpeed",
+      name: "Carbon Spear",
+      desc: "Spears fly faster, improving your hit chance.",
+      level: 0,
+      baseCost: 30,
+      costMult: 1.85,
+      apply: () => {
+        upgrades[2].level++;
+        spearSpeedBase += 80;
+      }
+    },
+    {
+      id: "multi",
+      name: "Extra Spear",
+      desc: "Carry one more spear at a time.",
+      level: 0,
+      baseCost: 60,
+      costMult: 2.1,
+      maxLevel: 3,
+      apply: () => {
+        upgrades[3].level++;
+        player.maxSpears++;
+      }
+    },
+    {
+      id: "rareFish",
+      name: "Deep Currents",
+      desc: "Attract rarer, more valuable fish and legendaries.",
+      level: 0,
+      baseCost: 70,
+      costMult: 2.2,
+      apply: () => {
+        upgrades[4].level++;
+        rareFishChance += 0.03;
+        legendaryChance += 0.01;
+      }
+    },
+    {
+      id: "tripleUnlock",
+      name: "Triple Spear",
+      desc: "Unlock weapon [2] Triple Spear (3-shot spread).",
+      level: 0,
+      baseCost: 90,
+      costMult: 999,
+      maxLevel: 1,
+      apply: () => {
+        upgrades[5].level++;
+        weaponState.unlocked.triple = true;
+      }
+    },
+    {
+      id: "netUnlock",
+      name: "Net Gun",
+      desc: "Unlock weapon [3] Net Gun (AoE net for fish).",
+      level: 0,
+      baseCost: 110,
+      costMult: 999,
+      maxLevel: 1,
+      apply: () => {
+        upgrades[6].level++;
+        weaponState.unlocked.net = true;
+      }
+    },
+    {
+      id: "explosiveUnlock",
+      name: "Explosive Spear",
+      desc: "Unlock weapon [4] Explosive Spear (AoE blast).",
+      level: 0,
+      baseCost: 140,
+      costMult: 999,
+      maxLevel: 1,
+      apply: () => {
+        upgrades[7].level++;
+        weaponState.unlocked.explosive = true;
+      }
+    }
+  ];
+
+  function getUpgradeCost(up) {
+    return Math.round(up.baseCost * Math.pow(up.costMult, up.level));
+  }
+
+  function renderUpgrades() {
+    upgradeListEl.innerHTML = "";
+    upgrades.forEach(up => {
+      const wrapper = document.createElement("div");
+      wrapper.className = "upgrade";
+
+      const header = document.createElement("div");
+      header.className = "upgrade-header";
+
+      const title = document.createElement("div");
+      title.className = "upgrade-title";
+      title.textContent = up.name;
+
+      const level = document.createElement("div");
+      level.className = "upgrade-level";
+      level.textContent = `Lv. ${up.level}`;
+
+      header.appendChild(title);
+      header.appendChild(level);
+
+      const desc = document.createElement("div");
+      desc.className = "upgrade-desc";
+      desc.textContent = up.desc;
+
+      const btn = document.createElement("button");
+      const cost = getUpgradeCost(up);
+      btn.textContent = `Buy – ${cost} shells`;
+
+      const reachedMax = typeof up.maxLevel === "number" && up.level >= up.maxLevel;
+      if (reachedMax) {
+        btn.textContent = "Max level";
+        btn.disabled = true;
+      } else if (coins < cost) {
+        btn.disabled = true;
+      }
+
+      btn.addEventListener("click", () => {
+        if (coins >= cost && !reachedMax && !gameOver) {
+          coins -= cost;
+          up.apply();
+          updateHUD();
+          renderUpgrades();
+        }
+      });
+
+      wrapper.appendChild(header);
+      wrapper.appendChild(desc);
+      wrapper.appendChild(btn);
+      upgradeListEl.appendChild(wrapper);
+    });
+  }
+
+  // Fish, rays, swordfish, legendaries
+  const fishTypes = [
+    {
+      name: "Reef Runner",
+      speedRange: [50, 90],
+      value: 3,
+      color: "#ffcc66",
+      size: 18,
+      kind: "fish"
+    },
+    {
+      name: "Blueback",
+      speedRange: [70, 110],
+      value: 5,
+      color: "#65b7ff",
+      size: 20,
+      kind: "fish"
+    },
+    {
+      name: "Sand Ray",
+      speedRange: [40, 70],
+      value: 8,
+      color: "#b0a288",
+      size: 32,
+      kind: "ray"
+    },
+    {
+      name: "Swordfish",
+      speedRange: [130, 180],
+      value: 20,
+      color: "#a8d0ff",
+      size: 28,
+      rare: true,
+      kind: "fish"
+    },
+    {
+      name: "Golden Snapper",
+      speedRange: [90, 140],
+      value: 9,
+      color: "#ffd74d",
+      size: 22,
+      rare: true,
+      kind: "fish"
+    },
+    {
+      name: "Elder Ray",
+      speedRange: [60, 90],
+      value: 18,
+      color: "#e0cf9a",
+      size: 40,
+      rare: true,
+      kind: "ray"
+    },
+    {
+      name: "Azure Marlin",
+      speedRange: [140, 190],
+      value: 40,
+      color: "#4dd3ff",
+      size: 30,
+      rare: true,
+      legendary: true,
+      kind: "fish"
+    },
+    {
+      name: "Crimson King Tuna",
+      speedRange: [120, 170],
+      value: 55,
+      color: "#ff5a5a",
+      size: 34,
+      rare: true,
+      legendary: true,
+      kind: "fish"
+    }
+  ];
+
+  function spawnFish() {
+    if (fish.length > 18) return;
+    const side = Math.random() < 0.5 ? -40 : width + 40;
+    const commonPool = fishTypes.filter(ft => !ft.rare);
+    const rarePool = fishTypes.filter(ft => ft.rare && !ft.legendary);
+    const legendaryPool = fishTypes.filter(ft => ft.legendary);
+
+    let chosen;
+    const roll = Math.random();
+    const dynamicLegendaryChance = legendaryChance + score * 0.00002;
+    const dynamicRareChance = rareFishChance + score * 0.00005;
+
+    if (roll < dynamicLegendaryChance && legendaryPool.length > 0) {
+      chosen = legendaryPool[Math.floor(Math.random() * legendaryPool.length)];
+    } else if (roll < dynamicLegendaryChance + dynamicRareChance && rarePool.length > 0) {
+      chosen = rarePool[Math.floor(Math.random() * rarePool.length)];
+    } else {
+      chosen = commonPool[Math.floor(Math.random() * commonPool.length)];
+    }
+
+    let yMin = height * 0.25;
+    let yMax = height * 0.9;
+    if (chosen.kind === "ray") {
+      yMin = height * 0.6;
+      yMax = height * 0.9;
+    }
+
+    const y = yMin + Math.random() * (yMax - yMin);
+    const dir = side < 0 ? 1 : -1;
+    const speed =
+      chosen.speedRange[0] +
+      Math.random() * (chosen.speedRange[1] - chosen.speedRange[0]);
+
+    fish.push({
+      x: side,
+      y,
+      dir,
+      speed,
+      type: chosen,
+      width: chosen.size * 2,
+      height: chosen.size,
+      value: chosen.value
+    });
+  }
+
+  // Boss patterns based on score
+  function getBossPatternForScore(scoreVal) {
+    let chosenId = bossThresholds[0].id;
+    for (const entry of bossThresholds) {
+      if (scoreVal >= entry.minScore) chosenId = entry.id;
+    }
+    if (chosenId === "titan-marlin") {
+      return {
+        name: "Titan Marlin",
+        hp: 110,
+        speed: 70,
+        width: 260,
+        height: 80,
+        color: "#43d3ff",
+        kind: "fish"
+      };
+    } else if (chosenId === "leviathan-ray") {
+      return {
+        name: "Leviathan Ray",
+        hp: 160,
+        speed: 55,
+        width: 280,
+        height: 110,
+        color: "#8f5dff",
+        kind: "ray"
+      };
+    }
+    // default
+    return {
+      name: "Abyssal Manta",
+      hp: 80,
+      speed: 50,
+      width: 220,
+      height: 100,
+      color: "#7b63ff",
+      kind: "ray"
+    };
+  }
+
+  // Bosses
+  function spawnBoss(currentScore) {
+    if (bosses.length > 0) return;
+    const chosen = getBossPatternForScore(currentScore);
+    const side = Math.random() < 0.5 ? -chosen.width : width + chosen.width;
+    const dir = side < 0 ? 1 : -1;
+    const y = height * 0.5;
+
+    bosses.push({
+      x: side,
+      y,
+      dir,
+      baseY: y,
+      speed: chosen.speed,
+      width: chosen.width,
+      height: chosen.height,
+      color: chosen.color,
+      kind: chosen.kind,
+      name: chosen.name,
+      hp: chosen.hp,
+      maxHp: chosen.hp,
+      alive: true
+    });
+  }
+
+  function updateBosses(dt, nowSec) {
+    for (let i = bosses.length - 1; i >= 0; i--) {
+      const b = bosses[i];
+      if (!b.alive) {
+        bosses.splice(i, 1);
+        continue;
+      }
+      b.y = b.baseY + Math.sin(nowSec * 1.5 + b.x * 0.002) * 30;
+      b.x += b.dir * b.speed * dt;
+
+      if (b.dir === 1 && b.x > width - b.width * 0.3) b.dir = -1;
+      if (b.dir === -1 && b.x < b.width * 0.3) b.dir = 1;
+    }
+  }
+
+  // Loot (chests)
+  function spawnLoot(x, y) {
+    loot.push({
+      x,
+      y,
+      vy: 20,
+      radius: 12,
+      value: 120,
+      type: "chest",
+      collected: false,
+      settleY: height - height * 0.12 - 18
+    });
+  }
+
+  function updateLoot(dt) {
+    for (let i = loot.length - 1; i >= 0; i--) {
+      const l = loot[i];
+      if (l.collected) {
+        loot.splice(i, 1);
+        continue;
+      }
+      if (l.y < l.settleY) {
+        l.y += l.vy * dt;
+        if (l.y > l.settleY) l.y = l.settleY;
+      } else {
+        l.y = l.settleY + Math.sin(performance.now() * 0.002 + l.x * 0.03) * 2;
+      }
+    }
+  }
+
+  function spawnBubble() {
+    if (bubbles.length > 40) return;
+    const x = Math.random() * width;
+    const y = height + 10 + Math.random() * 40;
+    bubbles.push({
+      x,
+      y,
+      radius: 2 + Math.random() * 3,
+      speed: 15 + Math.random() * 30
+    });
+  }
+
+  function handleBossDeath(b) {
+    if (!b.alive) return;
+    b.alive = false;
+    const reward = 80;
+    score += reward;
+    coins += reward;
+    spawnLoot(b.x, b.y + b.height / 3);
+    if (Math.random() < 0.25) {
+      spawnLoot(b.x + 40 * (Math.random() < 0.5 ? -1 : 1), b.y);
+    }
+  }
+
+  // Input
+  window.addEventListener("keydown", (e) => {
+    if (e.code === "ArrowLeft" || e.code === "KeyA") keys.left = true;
+    if (e.code === "ArrowRight" || e.code === "KeyD") keys.right = true;
+    if (e.code === "ArrowUp" || e.code === "KeyW") keys.up = true;
+    if (e.code === "ArrowDown" || e.code === "KeyS") keys.down = true;
+    if (e.code === "Space") {
+      keys.shoot = true;
+      e.preventDefault();
+    }
+    if (e.code === "KeyR" && gameOver) {
+      resetGame();
+    }
+    if (e.code === "Digit1") setWeapon("spear");
+    if (e.code === "Digit2") setWeapon("triple");
+    if (e.code === "Digit3") setWeapon("net");
+    if (e.code === "Digit4") setWeapon("explosive");
+  });
+
+  window.addEventListener("keyup", (e) => {
+    if (e.code === "ArrowLeft" || e.code === "KeyA") keys.left = false;
+    if (e.code === "ArrowRight" || e.code === "KeyD") keys.right = false;
+    if (e.code === "ArrowUp" || e.code === "KeyW") keys.up = false;
+    if (e.code === "ArrowDown" || e.code === "KeyS") keys.down = false;
+    if (e.code === "Space") keys.shoot = false;
+  });
+
+  canvas.addEventListener("mousedown", () => {
+    keys.shoot = true;
+  });
+  canvas.addEventListener("mouseup", () => {
+    keys.shoot = false;
+  });
+
+  canvas.addEventListener("mousemove", (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    mouse.x = (e.clientX - rect.left) * scaleX;
+    mouse.y = (e.clientY - rect.top) * scaleY;
+  });
+
+  restartBtn.addEventListener("click", resetGame);
+
+  function setWeapon(name) {
+    if (!weaponState.unlocked[name]) return;
+    weaponState.current = name;
+    updateWeaponInfo();
+  }
+
+  // Health & damage
+  function damagePlayer(amount, nowSec) {
+    const invuln = 1.0;
+    if (nowSec - player.lastHitTime < invuln || gameOver) return;
+    player.lastHitTime = nowSec;
+    player.health -= amount;
+    if (player.health <= 0) {
+      player.health = 0;
+      triggerGameOver();
+    }
+    updateHUD();
+  }
+
+  function triggerGameOver() {
+    gameOver = true;
+    gameOverEl.style.display = "flex";
+  }
+
+  function resetGame() {
+    score = 0;
+    coins = 0;
+    gameOver = false;
+    player.x = width * 0.5;
+    player.y = height * 0.6;
+    player.speedMultiplier = 1;
+    player.reloadMultiplier = 1;
+    player.maxSpears = 1;
+    player.health = player.maxHealth = 3;
+    player.lastHitTime = -999;
+    player.oxygen = player.maxOxygen = 100;
+
+    rareFishChance = 0.06;
+    legendaryChance = 0.01;
+    spearSpeedBase = 260;
+    nextBossScore = 120;
+
+    spears.length = 0;
+    fish.length = 0;
+    bubbles.length = 0;
+    bosses.length = 0;
+    loot.length = 0;
+
+    upgrades.forEach(up => (up.level = 0));
+    weaponState.current = "spear";
+    weaponState.unlocked = {
+      spear: true,
+      triple: false,
+      net: false,
+      explosive: false
+    };
+
+    renderUpgrades();
+    updateHUD();
+    gameOverEl.style.display = "none";
+  }
+
+  // Shooting with mouse-aim + weapons
+  function tryShoot(nowSec) {
+    const reloadTime = player.reloadBase / player.reloadMultiplier;
+    if (nowSec - player.lastShot < reloadTime) return;
+
+    const activeSpears = spears.filter(s => !s.dead).length;
+    if (activeSpears >= player.maxSpears) return;
+
+    const originX = player.x + 10;
+    const originY = player.y - 6;
+
+    let dx = mouse.x - originX;
+    let dy = mouse.y - originY;
+    if (dx === 0 && dy === 0) {
+      dx = 1; dy = 0;
+    }
+    const len = Math.hypot(dx, dy) || 1;
+    let ux = dx / len;
+    let uy = dy / len;
+
+    player.lastShot = nowSec;
+
+    const pushSpear = (vx, vy, kind, extra = {}) => {
+      spears.push({
+        x: originX,
+        y: originY,
+        vx,
+        vy,
+        length: 40,
+        dead: false,
+        kind,
+        ...extra
+      });
+    };
+
+    if (weaponState.current === "spear") {
+      pushSpear(ux * spearSpeedBase, uy * spearSpeedBase, "spear");
+    } else if (weaponState.current === "triple") {
+      const angle = 10 * Math.PI / 180;
+      const cos = Math.cos(angle);
+      const sin = Math.sin(angle);
+
+      const rotate = (x, y, aCos, aSin) => ({
+        x: x * aCos - y * aSin,
+        y: x * aSin + y * aCos
+      });
+
+      const d0 = { x: ux, y: uy };
+      const d1 = rotate(ux, uy, cos, sin);
+      const d2 = rotate(ux, uy, cos, -sin);
+
+      [d0, d1, d2].forEach(d => {
+        pushSpear(d.x * spearSpeedBase, d.y * spearSpeedBase, "spear");
+      });
+    } else if (weaponState.current === "net") {
+      pushSpear(
+        ux * spearSpeedBase * 0.7,
+        uy * spearSpeedBase * 0.7,
+        "net",
+        { radius: 80 }
+      );
+    } else if (weaponState.current === "explosive") {
+      pushSpear(
+        ux * spearSpeedBase * 0.85,
+        uy * spearSpeedBase * 0.85,
+        "explosive",
+        { radius: 100 }
+      );
+    }
+  }
+
+  // Game update
+  function update(dt, timestamp) {
+    const nowSec = timestamp / 1000;
+
+    // Player movement
+    const speed = player.baseSpeed * player.speedMultiplier;
+    if (keys.left) player.x -= speed * dt;
+    if (keys.right) player.x += speed * dt;
+    if (keys.up) player.y -= speed * dt;
+    if (keys.down) player.y += speed * dt;
+
+    const topLimit = height * 0.15;
+    const bottomLimit = height * 0.9;
+    player.x = Math.max(40, Math.min(width - 40, player.x));
+    player.y = Math.max(topLimit, Math.min(bottomLimit, player.y));
+
+    // Oxygen handling
+    const surfaceBand = topLimit + 20;
+    if (player.y > surfaceBand) {
+      player.oxygen -= oxygenDepleteRate * dt;
+    } else {
+      player.oxygen += oxygenRechargeRate * dt;
+    }
+    if (player.oxygen > player.maxOxygen) player.oxygen = player.maxOxygen;
+    if (player.oxygen <= 0 && !gameOver) {
+      player.oxygen = 0;
+      triggerGameOver();
+    }
+
+    // Shooting
+    if (keys.shoot) {
+      tryShoot(nowSec);
+    }
+
+    // Fish spawn
+    if (Math.random() < 0.03) spawnFish();
+
+    // Boss spawn by score
+    if (score >= nextBossScore) {
+      spawnBoss(score);
+      nextBossScore += 220;
+    }
+
+    // Bubble spawn
+    if (Math.random() < 0.12) spawnBubble();
+
+    // Update fish
+    for (let i = fish.length - 1; i >= 0; i--) {
+      const f = fish[i];
+      f.x += f.dir * f.speed * dt;
+      if (f.dir === 1 && f.x > width + 60) fish.splice(i, 1);
+      else if (f.dir === -1 && f.x < -60) fish.splice(i, 1);
+    }
+
+    // Update bubbles
+    for (let i = bubbles.length - 1; i >= 0; i--) {
+      const b = bubbles[i];
+      b.y -= b.speed * dt;
+      if (b.y < -10) bubbles.splice(i, 1);
+    }
+
+    // Update bosses
+    updateBosses(dt, nowSec);
+
+    // Update loot
+    updateLoot(dt);
+
+    // Update spears (with weapon-specific behavior)
+    for (let i = spears.length - 1; i >= 0; i--) {
+      const s = spears[i];
+      if (s.dead) {
+        spears.splice(i, 1);
+        continue;
+      }
+      s.x += s.vx * dt;
+      s.y += s.vy * dt;
+      if (s.x > width + 80 || s.x < -80 || s.y < -80 || s.y > height + 80) {
+        s.dead = true;
+        continue;
+      }
+
+      let impactX = null;
+      let impactY = null;
+      let impactType = null;
+      let impactFishIndex = -1;
+      let impactBossIndex = -1;
+
+      // Check fish hit
+      for (let j = fish.length - 1; j >= 0; j--) {
+        const f = fish[j];
+        const fx = f.x;
+        const fy = f.y;
+        if (
+          s.x > fx - f.width / 2 &&
+          s.x < fx + f.width / 2 &&
+          s.y > fy - f.height / 2 &&
+          s.y < fy + f.height / 2
+        ) {
+          impactX = s.x;
+          impactY = s.y;
+          impactType = "fish";
+          impactFishIndex = j;
+          break;
+        }
+      }
+
+      // Check boss hit if no fish impact
+      if (!impactType) {
+        for (let k = bosses.length - 1; k >= 0; k--) {
+          const b = bosses[k];
+          if (!b.alive) continue;
+          const bx = b.x;
+          const by = b.y;
+          if (
+            s.x > bx - b.width / 2 &&
+            s.x < bx + b.width / 2 &&
+            s.y > by - b.height / 2 &&
+            s.y < by + b.height / 2
+          ) {
+            impactX = s.x;
+            impactY = s.y;
+            impactType = "boss";
+            impactBossIndex = k;
+            break;
+          }
+        }
+      }
+
+      if (impactType) {
+        if (s.kind === "net") {
+          const radius = s.radius || 80;
+          // nets capture fish only (no boss damage)
+          for (let j = fish.length - 1; j >= 0; j--) {
+            const f = fish[j];
+            const dx = f.x - impactX;
+            const dy = f.y - impactY;
+            if (dx * dx + dy * dy <= radius * radius) {
+              score += f.value;
+              coins += f.value;
+              fish.splice(j, 1);
+            }
+          }
+        } else if (s.kind === "explosive") {
+          const radius = s.radius || 100;
+          // AoE fish
+          for (let j = fish.length - 1; j >= 0; j--) {
+            const f = fish[j];
+            const dx = f.x - impactX;
+            const dy = f.y - impactY;
+            if (dx * dx + dy * dy <= radius * radius) {
+              score += f.value;
+              coins += f.value;
+              fish.splice(j, 1);
+            }
+          }
+          // AoE bosses
+          bosses.forEach(b => {
+            if (!b.alive) return;
+            const dx = b.x - impactX;
+            const dy = b.y - impactY;
+            if (dx * dx + dy * dy <= radius * radius) {
+              b.hp -= 25;
+              if (b.hp <= 0) {
+                handleBossDeath(b);
+              }
+            }
+          });
+        } else {
+          // normal spear hit
+          if (impactType === "fish" && impactFishIndex >= 0) {
+            const f = fish[impactFishIndex];
+            score += f.value;
+            coins += f.value;
+            fish.splice(impactFishIndex, 1);
+          } else if (impactType === "boss" && impactBossIndex >= 0) {
+            const b = bosses[impactBossIndex];
+            if (b && b.alive) {
+              b.hp -= 10;
+              if (b.hp <= 0) {
+                handleBossDeath(b);
+              }
+            }
+          }
+        }
+
+        s.dead = true;
+      }
+    }
+
+    // Collision: stingrays & bosses hurt player
+    const px = player.x;
+    const py = player.y;
+
+    fish.forEach(f => {
+      if (f.type.kind !== "ray") return;
+      const dx = Math.abs(f.x - px);
+      const dy = Math.abs(f.y - py);
+      const hw = f.width / 2 + player.radius * 0.6;
+      const hh = f.height / 2 + player.radius * 0.6;
+      if (dx < hw && dy < hh) {
+        damagePlayer(1, nowSec);
+      }
+    });
+
+    bosses.forEach(b => {
+      if (!b.alive) return;
+      const dx = Math.abs(b.x - px);
+      const dy = Math.abs(b.y - py);
+      const hw = b.width / 2 + player.radius * 0.6;
+      const hh = b.height / 2 + player.radius * 0.6;
+      if (dx < hw && dy < hh) {
+        damagePlayer(1, nowSec);
+      }
+    });
+
+    // Loot collection
+    for (let i = loot.length - 1; i >= 0; i--) {
+      const l = loot[i];
+      const dx = l.x - px;
+      const dy = l.y - py;
+      const distSq = dx * dx + dy * dy;
+      const rad = l.radius + player.radius;
+      if (distSq < rad * rad) {
+        coins += l.value;
+        score += Math.round(l.value * 0.4);
+        l.collected = true;
+      }
+    }
+
+    updateDepthLabel();
+    updateHUD();
+  }
+
+  function updateDepthLabel() {
+    if (score < 40) {
+      depthSpan.textContent = "Shallow Reef";
+    } else if (score < 120) {
+      depthSpan.textContent = "Drop-off Edge";
+    } else if (score < 250) {
+      depthSpan.textContent = "Bluewater Channel";
+    } else if (score < 500) {
+      depthSpan.textContent = "Pelagic Hunter Grounds";
+    } else {
+      depthSpan.textContent = "Legendary Waters";
+    }
+  }
+
+  function healthString() {
+    let s = "";
+    for (let i = 0; i < player.maxHealth; i++) {
+      s += i < player.health ? "♥" : "♡";
+    }
+    return s;
+  }
+
+  function updateWeaponInfo() {
+    const w = weaponState;
+    const line = (key, id, label) => {
+      const unlocked = w.unlocked[id];
+      const isCurrent = w.current === id;
+      let cls = "";
+      if (!unlocked) cls += " locked";
+      if (isCurrent) cls += " current";
+      return `<div class="${cls.trim()}">[${key}] ${label}${unlocked ? "" : " (locked)"}</div>`;
+    };
+
+    weaponInfoEl.innerHTML = `
+      <div>Current: <span class="current">${w.current.toUpperCase()}</span></div>
+      ${line(1, "spear", "Spear – single shot")}
+      ${line(2, "triple", "Triple Spear – 3-shot spread")}
+      ${line(3, "net", "Net Gun – AoE capture (fish only)")}
+      ${line(4, "explosive", "Explosive Spear – AoE damage")}
+      <div style="margin-top:4px; opacity:0.8;">Press number keys 1–4 to switch weapons.</div>
+    `;
+  }
+
+  function updateHUD() {
+    scoreSpan.textContent = score;
+    coinsSpan.textContent = coins;
+    healthSpan.textContent = healthString();
+    const o2Pct = Math.round((player.oxygen / player.maxOxygen) * 100);
+    oxygenSpan.textContent = `${o2Pct}%`;
+    Array.from(upgradeListEl.querySelectorAll("button")).forEach((btn, idx) => {
+      const up = upgrades[idx];
+      if (!up) return;
+      const cost = getUpgradeCost(up);
+      const reachedMax =
+        typeof up.maxLevel === "number" && up.level >= up.maxLevel;
+      if (reachedMax) {
+        btn.textContent = "Max level";
+        btn.disabled = true;
+      } else {
+        btn.textContent = `Buy – ${cost} shells`;
+        btn.disabled = coins < cost || gameOver;
+      }
+    });
+    updateWeaponInfo();
+  }
+
+  // Drawing helpers
+  function drawBackground() {
+    const seabedHeight = height * 0.12;
+    ctx.fillStyle = "#263a3f";
+    ctx.beginPath();
+    ctx.moveTo(0, height - seabedHeight);
+    for (let x = 0; x <= width; x += 80) {
+      const yOffset = Math.sin(x * 0.01) * 10;
+      ctx.lineTo(x, height - seabedHeight + yOffset);
+    }
+    ctx.lineTo(width, height);
+    ctx.lineTo(0, height);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.save();
+    ctx.globalAlpha = 0.06;
+    ctx.fillStyle = "#ffffff";
+    for (let i = 0; i < 5; i++) {
+      const startX = (i / 5) * width + Math.sin(performance.now() * 0.0003 + i) * 30;
+      ctx.beginPath();
+      ctx.moveTo(startX, 0);
+      ctx.lineTo(startX + 80, 0);
+      ctx.lineTo(startX + 160, height);
+      ctx.lineTo(startX, height);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawBubbles() {
+    ctx.save();
+    ctx.fillStyle = "rgba(200,230,255,0.7)";
+    bubbles.forEach(b => {
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.restore();
+  }
+
+  function drawLoot() {
+    ctx.save();
+    loot.forEach(l => {
+      if (l.collected) return;
+      ctx.save();
+      ctx.translate(l.x, l.y);
+      ctx.fillStyle = "#c9902b";
+      ctx.beginPath();
+      ctx.roundRect(-14, -10, 28, 20, 4);
+      ctx.fill();
+      ctx.fillStyle = "#e0ad3b";
+      ctx.beginPath();
+      ctx.roundRect(-14, -12, 28, 10, 4);
+      ctx.fill();
+      ctx.fillStyle = "#3a2810";
+      ctx.fillRect(-3, -3, 6, 8);
+      ctx.fillStyle = "#e5d18a";
+      ctx.beginPath();
+      ctx.arc(0, 0, 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    });
+    ctx.restore();
+  }
+
+  function drawPlayer(timestamp) {
+    const x = player.x;
+    const y = player.y;
+    const nowSec = timestamp / 1000;
+    const invulnAlpha =
+      nowSec - player.lastHitTime < 1.0
+        ? 0.5 + 0.5 * Math.sin(nowSec * 20)
+        : 1.0;
+
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.globalAlpha = Math.max(0.3, invulnAlpha);
+
+    ctx.fillStyle = "#fffbf2";
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 20, 12, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#1a3d7a";
+    ctx.beginPath();
+    ctx.ellipse(-2, 0, 14, 9, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#89e0ff";
+    ctx.beginPath();
+    ctx.roundRect(6, -6, 10, 10, 3);
+    ctx.fill();
+
+    ctx.fillStyle = "#0bd1a8";
+    ctx.beginPath();
+    ctx.moveTo(-18, 4);
+    ctx.lineTo(-30, 10);
+    ctx.lineTo(-26, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(-18, -4);
+    ctx.lineTo(-30, -10);
+    ctx.lineTo(-26, 0);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = "#3b2b1a";
+    ctx.fillRect(10, -2, 28, 4);
+    ctx.fillStyle = "#c7c7c7";
+    ctx.fillRect(38, -1, 20, 2);
+
+    ctx.restore();
+  }
+
+  function drawSpears() {
+    ctx.save();
+    ctx.strokeStyle = "#f3f3f3";
+    ctx.lineWidth = 3;
+    spears.forEach(s => {
+      if (s.dead) return;
+      ctx.beginPath();
+      ctx.moveTo(s.x - s.length * (s.vx / (Math.hypot(s.vx, s.vy) || 1)), s.y - s.length * (s.vy / (Math.hypot(s.vx, s.vy) || 1)));
+      ctx.lineTo(s.x, s.y);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(s.x, s.y);
+      ctx.lineTo(s.x + 6, s.y - 3);
+      ctx.lineTo(s.x + 6, s.y + 3);
+      ctx.closePath();
+      ctx.fillStyle = "#f3f3f3";
+      ctx.fill();
+    });
+    ctx.restore();
+  }
+
+  function drawFish() {
+    fish.forEach(f => {
+      const dir = f.dir;
+      ctx.save();
+      ctx.translate(f.x, f.y);
+      if (dir === -1) ctx.scale(-1, 1);
+
+      const w = f.width;
+      const h = f.height;
+      const color = f.type.color;
+
+      if (f.type.legendary) {
+        ctx.save();
+        ctx.globalAlpha = 0.35;
+        const gradGlow = ctx.createRadialGradient(0, 0, 0, 0, 0, Math.max(w, h));
+        gradGlow.addColorStop(0, "rgba(255,255,255,0.9)");
+        gradGlow.addColorStop(1, "rgba(255,255,255,0)");
+        ctx.fillStyle = gradGlow;
+        ctx.beginPath();
+        ctx.arc(0, 0, Math.max(w, h), 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      if (f.type.kind === "ray") {
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(0, -h / 2);
+        ctx.lineTo(w / 2, 0);
+        ctx.lineTo(0, h / 2);
+        ctx.lineTo(-w / 2, 0);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(-w / 2, 0);
+        ctx.lineTo(-w / 2 - 16, 0);
+        ctx.lineTo(-w / 2 - 26, 4 * Math.sin(performance.now() * 0.004 + f.x * 0.03));
+        ctx.stroke();
+
+        ctx.fillStyle = "#000";
+        ctx.beginPath();
+        ctx.arc(w * 0.15, -h * 0.15, 2, 0, Math.PI * 2);
+        ctx.arc(w * 0.15, h * 0.15, 2, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        const grad = ctx.createLinearGradient(-w/2, 0, w/2, 0);
+        grad.addColorStop(0, color);
+        grad.addColorStop(1, "#ffffff");
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, w / 2, h / 2, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(-w/2, 0);
+        ctx.lineTo(-w/2 - 8, -h / 3);
+        ctx.lineTo(-w/2 - 8, h / 3);
+        ctx.closePath();
+        ctx.fill();
+
+        if (f.type.name === "Swordfish") {
+          ctx.fillStyle = "#e8f4ff";
+          ctx.beginPath();
+          ctx.moveTo(w/2, 0);
+          ctx.lineTo(w/2 + 18, -2);
+          ctx.lineTo(w/2 + 18, 2);
+          ctx.closePath();
+          ctx.fill();
+        }
+
+        ctx.fillStyle = "#000";
+        ctx.beginPath();
+        ctx.arc(w/4, -h/6, 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.restore();
+    });
+  }
+
+  function drawBosses() {
+    bosses.forEach(b => {
+      if (!b.alive) return;
+      ctx.save();
+      ctx.translate(b.x, b.y);
+
+      ctx.save();
+      ctx.globalAlpha = 0.3;
+      const glow = ctx.createRadialGradient(0, 0, 0, 0, 0, Math.max(b.width, b.height));
+      glow.addColorStop(0, "rgba(255,255,255,0.9)");
+      glow.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(0, 0, Math.max(b.width, b.height), 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      if (b.kind === "ray") {
+        ctx.fillStyle = b.color;
+        ctx.beginPath();
+        ctx.moveTo(0, -b.height / 2);
+        ctx.lineTo(b.width / 2, -b.height / 6);
+        ctx.lineTo(b.width / 4, b.height / 2);
+        ctx.lineTo(-b.width / 4, b.height / 2);
+        ctx.lineTo(-b.width / 2, -b.height / 6);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.strokeStyle = b.color;
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(-b.width / 4, b.height / 2);
+        ctx.lineTo(-b.width / 2, b.height / 2 + 20);
+        ctx.lineTo(-b.width / 2 - 30, b.height / 2 + 10);
+        ctx.stroke();
+      } else {
+        ctx.fillStyle = b.color;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, b.width / 2, b.height / 2, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(-b.width/2, 0);
+        ctx.lineTo(-b.width/2 - 20, -b.height / 3);
+        ctx.lineTo(-b.width/2 - 20, b.height / 3);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = "#e8f4ff";
+        ctx.beginPath();
+        ctx.moveTo(b.width/2, 0);
+        ctx.lineTo(b.width/2 + 40, -4);
+        ctx.lineTo(b.width/2 + 40, 4);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      ctx.fillStyle = "#000";
+      ctx.beginPath();
+      ctx.arc(b.width/6, -b.height/8, 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      const barW = b.width * 0.7;
+      const barH = 6;
+      const hpRatio = b.hp / b.maxHp;
+      ctx.translate(0, -b.height / 2 - 14);
+      ctx.fillStyle = "rgba(0,0,0,0.6)";
+      ctx.fillRect(-barW/2, -barH/2, barW, barH);
+      ctx.fillStyle = "#4df57b";
+      ctx.fillRect(-barW/2, -barH/2, barW * hpRatio, barH);
+
+      ctx.restore();
+    });
+  }
+
+  function gameLoop(timestamp) {
+    if (!lastTime) lastTime = timestamp;
+    const dt = Math.min((timestamp - lastTime) / 1000, 0.03);
+    lastTime = timestamp;
+
+    if (!gameOver) {
+      update(dt, timestamp);
+    }
+
+    ctx.clearRect(0, 0, width, height);
+    drawBackground();
+    drawBubbles();
+    drawLoot();
+    drawFish();
+    drawBosses();
+    drawSpears();
+    drawPlayer(timestamp);
+
+    requestAnimationFrame(gameLoop);
+  }
+
+  renderUpgrades();
+  updateHUD();
+  requestAnimationFrame(gameLoop);
+})();
+</script>
+</body>
+</html>
