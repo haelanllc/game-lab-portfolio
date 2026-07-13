@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Conical Feast</title>
+    <link rel="icon" href='data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"%3E%3Crect width="32" height="32" fill="%23061015"/%3E%3Cpath d="M7 17 C12 9 21 10 26 16 C21 23 12 24 7 17 Z" fill="%23d6f2df"/%3E%3Cpath d="M8 17 L3 12 L4 22 Z" fill="%2383c9c1"/%3E%3C/svg%3E'>
+    <link rel="stylesheet" href="./style.css" />
+    <script src="./game.js" defer></script>
+  </head>
+  <body>
+    <main class="app" aria-label="Conical Feast">
+      <header class="topbar">
+        <div class="brand">
+          <div class="title">Conical Feast</div>
+          <div class="subtitle">Hunt, bank, upgrade, descend.</div>
+        </div>
+        <div class="hud" id="hud" aria-live="polite"></div>
+      </header>
+
+      <section class="stage" aria-label="Game area">
+        <canvas id="gameCanvas" aria-label="Conical Feast canvas"></canvas>
+
+        <aside class="upgrade-panel" aria-label="Upgrade panel">
+          <div class="panel-heading">
+            <span>Reef Lab</span>
+            <strong id="bankedBiomass">0</strong>
+          </div>
+          <div class="upgrade-grid">
+            <button class="upgrade-btn" type="button" data-upgrade="capacity">
+              <span>Capacity</span>
+              <strong id="capacityCost">25</strong>
+            </button>
+            <button class="upgrade-btn" type="button" data-upgrade="speed">
+              <span>Speed</span>
+              <strong id="speedCost">28</strong>
+            </button>
+            <button class="upgrade-btn" type="button" data-upgrade="health">
+              <span>Health</span>
+              <strong id="healthCost">30</strong>
+            </button>
+            <button class="upgrade-btn" type="button" data-upgrade="cone">
+              <span>Cone</span>
+              <strong id="coneCost">34</strong>
+            </button>
+            <button class="upgrade-btn" type="button" data-upgrade="size">
+              <span>Size</span>
+              <strong id="sizeCost">38</strong>
+            </button>
+          </div>
+        </aside>
+
+        <div class="overlay" id="overlay" role="dialog" aria-modal="true">
+          <div class="overlay-card">
+            <div class="overlay-title">Conical Feast</div>
+            <div class="overlay-body">
+              Keep prey inside the cone until its HP empties. Full cargo must be banked at the reef before it becomes upgrade biomass.
+            </div>
+            <button id="startButton" class="primary-btn" type="button">Start Dive</button>
+          </div>
+        </div>
+      </section>
+
+      <footer class="bottombar">
+        <span>Move: WASD / Arrows</span>
+        <span>Aim: mouse / touch</span>
+        <span>Upgrade: click buttons or 1-5</span>
+      </footer>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" role="img" aria-labelledby="title desc">
+  <title id="title">CONICAL FEAST</title>
+  <desc id="desc">Game thumbnail for Conical Feast showing a fish aiming a sonar cone at prey.</desc>
+  <defs>
+    <linearGradient id="bg-conical-feast" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#c7f9ff"/>
+      <stop offset="1" stop-color="#f7fff9"/>
+    </linearGradient>
+    <pattern id="dots-conical-feast" width="42" height="42" patternUnits="userSpaceOnUse">
+      <circle cx="8" cy="8" r="3" fill="#0476a8" opacity="0.18"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="675" rx="36" fill="url(#bg-conical-feast)"/>
+  <rect width="1200" height="675" rx="36" fill="url(#dots-conical-feast)"/>
+  <path d="M0 250 C175 198 330 286 515 230 C735 162 930 202 1200 132 L1200 675 L0 675 Z" fill="#0891b2"/>
+  <path d="M0 430 C185 370 350 490 560 428 C785 362 945 420 1200 342 L1200 675 L0 675 Z" fill="#0e7490"/>
+  <circle cx="176" cy="390" r="76" fill="#9ee6ae" opacity="0.24" stroke="#ecfff2" stroke-width="8"/>
+  <path d="M174 420 C150 360 172 320 202 282 M216 426 C230 348 268 324 306 292 M132 428 C110 382 116 346 144 308" fill="none" stroke="#9ee6ae" stroke-width="20" stroke-linecap="round"/>
+  <path d="M390 340 L885 190 A520 520 0 0 1 885 490 Z" fill="#d6f2df" opacity="0.34" stroke="#effff6" stroke-width="8"/>
+  <ellipse cx="392" cy="340" rx="86" ry="48" fill="#eef7f4" stroke="#14213d" stroke-width="10"/>
+  <path d="M318 340 L232 290 L242 390 Z" fill="#83c9c1" stroke="#14213d" stroke-width="10" stroke-linejoin="round"/>
+  <circle cx="452" cy="326" r="10" fill="#14213d"/>
+  <g fill="#f2c57c" stroke="#14213d" stroke-width="8">
+    <ellipse cx="736" cy="305" rx="55" ry="28"/>
+    <path d="M686 305 L632 272 L638 338 Z"/>
+  </g>
+  <g fill="#d98b78" stroke="#14213d" stroke-width="8">
+    <ellipse cx="870" cy="415" rx="72" ry="34"/>
+    <path d="M805 415 L742 377 L748 455 Z"/>
+  </g>
+  <circle cx="672" cy="214" r="18" fill="#b7f4d2" stroke="#14213d" stroke-width="6"/>
+  <circle cx="970" cy="278" r="25" fill="#b7f4d2" stroke="#14213d" stroke-width="6"/>
+  <rect x="48" y="552" width="1104" height="78" rx="24" fill="#fffaf0" stroke="#14213d" stroke-width="8"/>
+  <text x="83" y="606" fill="#14213d" font-family="Arial, Helvetica, sans-serif" font-size="48" font-weight="900" letter-spacing="0">CONICAL FEAST</text>
+</svg>

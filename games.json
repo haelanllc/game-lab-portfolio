@@ -1,5 +1,21 @@
 [
   {
+    "id": "conical-feast",
+    "title": "Conical Feast",
+    "description": "A fish growth game inspired by Octopus Feast: aim a conical sonar window, drain prey HP to zero, haul biomass home, and upgrade capacity, speed, health, cone size, and fish size.",
+    "status": "Testing",
+    "playUrl": "/games/conical-feast/",
+    "codeUrl": "",
+    "image": "/assets/thumbnails/conical-feast.svg",
+    "tags": [
+      "Canvas",
+      "Ocean",
+      "Upgrades"
+    ],
+    "learned": "Growth games feel clearer when eating, carrying, banking, and upgrading are separate actions with visible limits.",
+    "accent": "sky"
+  },
+  {
     "id": "pocket-drift-signal-run",
     "title": "Pocket Drift: Signal Run",
     "description": "A one-thumb mobile canvas game. Drag through shifting signal gates, collect pulses, and keep the run alive as the lane tightens.",
