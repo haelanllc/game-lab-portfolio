@@ -16,6 +16,22 @@
     "accent": "sky"
   },
   {
+    "id": "abyssal-relic-quest",
+    "title": "Abyssal Relic Quest",
+    "description": "A super adventurous water game: explore a scrolling abyss map, manage oxygen and hull, collect five relics, open the trench gate, and fight the leviathan.",
+    "status": "Ready",
+    "playUrl": "/games/abyssal-relic-quest/",
+    "codeUrl": "",
+    "image": "/assets/thumbnails/abyssal-relic-quest.svg",
+    "tags": [
+      "Canvas",
+      "Ocean",
+      "Adventure"
+    ],
+    "learned": "Adventure games feel bigger when the map has a clear quest chain: explore, collect, unlock, survive, and face a final threat.",
+    "accent": "sky"
+  },
+  {
     "id": "pocket-drift-signal-run",
     "title": "Pocket Drift: Signal Run",
     "description": "A one-thumb mobile canvas game. Drag through shifting signal gates, collect pulses, and keep the run alive as the lane tightens.",

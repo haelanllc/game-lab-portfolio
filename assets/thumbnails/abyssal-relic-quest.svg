@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Abyssal Relic Quest thumbnail">
+  <rect width="640" height="360" fill="#f4f0df"/>
+  <rect x="44" y="30" width="552" height="300" rx="10" fill="#08252e"/>
+  <path d="M72 86c94 38 172 24 266 0s160-28 230 2M72 156c94 38 172 24 266 0s160-28 230 2M72 226c94 38 172 24 266 0s160-28 230 2" fill="none" stroke="#7bd8d8" stroke-width="9" stroke-linecap="round" opacity=".34"/>
+  <ellipse cx="178" cy="102" rx="108" ry="48" fill="#061418" opacity=".68"/>
+  <ellipse cx="430" cy="236" rx="126" ry="58" fill="#061418" opacity=".68"/>
+  <path d="M238 188c42-34 102-34 146 0-42 42-104 42-146 0Z" fill="#f4f0df"/>
+  <rect x="288" y="176" width="38" height="24" fill="#7bd8d8"/>
+  <circle cx="340" cy="180" r="7" fill="#061418"/>
+  <circle cx="492" cy="112" r="21" fill="#e8b75d"/>
+  <circle cx="128" cy="244" r="18" fill="#e8b75d"/>
+  <ellipse cx="470" cy="190" rx="70" ry="42" fill="#17363d" stroke="#df6651" stroke-width="7"/>
+  <circle cx="512" cy="176" r="6" fill="#df6651"/>
+  <path d="M104 306h432" stroke="#061418" stroke-width="8" stroke-linecap="round" opacity=".58"/>
+</svg>
