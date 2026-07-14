@@ -1,0 +1,576 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+    <meta name="description" content="Forest Archer is a mobile-friendly archery arcade game.">
+    <title>Forest Archer</title>
+    <style>
+      :root {
+        --ink: #15170f;
+        --forest: #203927;
+        --leaf: #6f9b58;
+        --gold: #e1b760;
+        --coral: #b54d3c;
+        --paper: #f4efd9;
+        --line: rgba(244, 239, 217, 0.2);
+      }
+      * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+      html, body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background: var(--ink);
+        color: var(--paper);
+        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        overscroll-behavior: none;
+      }
+      body { position: fixed; inset: 0; }
+      main {
+        position: relative;
+        width: 100vw;
+        height: 100svh;
+        min-height: 500px;
+        overflow: hidden;
+        background:
+          linear-gradient(180deg, rgba(244, 239, 217, 0.18), transparent 32%),
+          radial-gradient(circle at 50% 118%, rgba(225, 183, 96, 0.2), transparent 38%),
+          var(--forest);
+        touch-action: none;
+      }
+      canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+      .hud {
+        position: absolute;
+        z-index: 2;
+        top: max(12px, env(safe-area-inset-top));
+        left: 12px;
+        right: 12px;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+        pointer-events: none;
+      }
+      .eyebrow {
+        margin: 0 0 5px;
+        color: rgba(244, 239, 217, 0.7);
+        font-size: 10px;
+        font-weight: 850;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      h1 {
+        margin: 0;
+        max-width: 230px;
+        font-size: clamp(32px, 10vw, 52px);
+        line-height: 0.9;
+        letter-spacing: 0;
+      }
+      .meters {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(66px, auto));
+        gap: 6px;
+      }
+      .meter {
+        min-width: 66px;
+        padding: 8px 9px;
+        border: 1px solid var(--line);
+        background: rgba(21, 23, 15, 0.64);
+        text-align: right;
+        backdrop-filter: blur(12px);
+      }
+      .meter span {
+        display: block;
+        color: rgba(244, 239, 217, 0.66);
+        font-size: 9px;
+        font-weight: 850;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+      .meter strong {
+        display: block;
+        margin-top: 2px;
+        font-variant-numeric: tabular-nums;
+        font-size: 20px;
+        line-height: 1;
+      }
+      .message {
+        position: absolute;
+        z-index: 3;
+        left: 16px;
+        right: 16px;
+        bottom: max(18px, env(safe-area-inset-bottom));
+        display: grid;
+        gap: 12px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        background: rgba(21, 23, 15, 0.82);
+        backdrop-filter: blur(16px);
+      }
+      .message[hidden] { display: none; }
+      .message p { margin: 0; color: rgba(244, 239, 217, 0.8); font-size: 14px; line-height: 1.42; }
+      .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+      button, a {
+        display: inline-flex;
+        min-height: 42px;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 13px;
+        border: 1px solid rgba(244, 239, 217, 0.32);
+        border-radius: 3px;
+        background: var(--gold);
+        color: var(--ink);
+        font: inherit;
+        font-size: 14px;
+        font-weight: 850;
+        text-decoration: none;
+      }
+      a { background: transparent; color: var(--paper); }
+      .sound {
+        position: absolute;
+        z-index: 4;
+        right: 12px;
+        bottom: max(12px, env(safe-area-inset-bottom));
+        min-height: 38px;
+        padding: 8px 11px;
+        background: rgba(21, 23, 15, 0.62);
+        color: var(--paper);
+        backdrop-filter: blur(12px);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <canvas id="game" aria-label="Forest Archer playfield"></canvas>
+      <section class="hud" aria-label="Game status">
+        <div>
+          <p class="eyebrow">Archery Arcade</p>
+          <h1>Forest Archer</h1>
+        </div>
+        <div class="meters">
+          <div class="meter"><span>Score</span><strong id="score">0</strong></div>
+          <div class="meter"><span>Arrows</span><strong id="arrows">12</strong></div>
+          <div class="meter"><span>Wind</span><strong id="wind">0</strong></div>
+          <div class="meter"><span>Best</span><strong id="best">0</strong></div>
+        </div>
+      </section>
+      <section class="message" id="message">
+        <p><strong>Pull back and release.</strong> Drag from the archer to aim. Longer pull means more power. Read the wind, hit moving targets, and make 12 arrows count.</p>
+        <div class="actions">
+          <button id="start" type="button">Start Round</button>
+          <a href="../../">Game Lab</a>
+        </div>
+      </section>
+      <button class="sound" id="sound" type="button" aria-pressed="true">Sound On</button>
+    </main>
+    <script>
+      (() => {
+        const canvas = document.getElementById("game");
+        const ctx = canvas.getContext("2d");
+        const scoreEl = document.getElementById("score");
+        const arrowsEl = document.getElementById("arrows");
+        const windEl = document.getElementById("wind");
+        const bestEl = document.getElementById("best");
+        const message = document.getElementById("message");
+        const startButton = document.getElementById("start");
+        const soundButton = document.getElementById("sound");
+        const bestKey = "forest-archer-best";
+
+        const state = {
+          w: 0, h: 0, dpr: 1, playing: false, muted: false,
+          score: 0, arrows: 12, best: Number(localStorage.getItem(bestKey) || 0),
+          wind: 0, time: 0, audio: null,
+          archer: { x: 78, y: 0 },
+          aim: { active: false, x: 0, y: 0, power: 0 },
+          target: { x: 0, y: 0, r: 58, vy: 74, phase: 0 },
+          shots: [],
+          leaves: [],
+          pings: []
+        };
+
+        function setupAudio() {
+          if (state.muted) return;
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContext) return;
+          state.audio ||= new AudioContext();
+          if (state.audio.state === "suspended") state.audio.resume();
+        }
+
+        function tone(kind) {
+          if (state.muted || !state.audio) return;
+          const now = state.audio.currentTime;
+          const osc = state.audio.createOscillator();
+          const gain = state.audio.createGain();
+          const map = {
+            shoot: [360, 160, 0.12, "triangle"],
+            hit: [520, 920, 0.2, "sine"],
+            miss: [150, 90, 0.18, "sawtooth"],
+            end: [240, 620, 0.36, "sine"]
+          }[kind] || [220, 110, 0.12, "sine"];
+          osc.type = map[3];
+          osc.frequency.setValueAtTime(map[0], now);
+          osc.frequency.exponentialRampToValueAtTime(map[1], now + map[2]);
+          gain.gain.setValueAtTime(0.001, now);
+          gain.gain.exponentialRampToValueAtTime(kind === "miss" ? 0.1 : 0.15, now + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + map[2]);
+          osc.connect(gain);
+          gain.connect(state.audio.destination);
+          osc.start(now);
+          osc.stop(now + map[2] + 0.03);
+        }
+
+        function resize() {
+          const rect = canvas.parentElement.getBoundingClientRect();
+          state.dpr = Math.min(window.devicePixelRatio || 1, 2);
+          state.w = Math.floor(rect.width);
+          state.h = Math.floor(rect.height);
+          canvas.width = Math.floor(state.w * state.dpr);
+          canvas.height = Math.floor(state.h * state.dpr);
+          canvas.style.width = `${state.w}px`;
+          canvas.style.height = `${state.h}px`;
+          ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+          state.archer.y = state.h * 0.64;
+          state.target.x = state.w - 86;
+          state.target.y = state.h * 0.5;
+        }
+
+        function reset() {
+          setupAudio();
+          state.playing = true;
+          state.score = 0;
+          state.arrows = 12;
+          state.wind = 0;
+          state.time = 0;
+          state.shots = [];
+          state.pings = [];
+          state.leaves = Array.from({ length: 26 }, () => ({
+            x: Math.random() * state.w,
+            y: Math.random() * state.h,
+            s: 0.5 + Math.random() * 1.6,
+            a: Math.random() * Math.PI * 2
+          }));
+          state.target = { x: state.w - 86, y: state.h * 0.5, r: 58, vy: 74, phase: 0 };
+          message.hidden = true;
+          updateHud();
+          tone("end");
+        }
+
+        function updateHud() {
+          scoreEl.textContent = String(state.score);
+          arrowsEl.textContent = String(state.arrows);
+          windEl.textContent = String(Math.round(state.wind));
+          bestEl.textContent = String(state.best);
+        }
+
+        function endRound() {
+          state.playing = false;
+          state.best = Math.max(state.best, state.score);
+          localStorage.setItem(bestKey, String(state.best));
+          bestEl.textContent = String(state.best);
+          message.hidden = false;
+          message.querySelector("p").innerHTML = `<strong>Round complete.</strong> Score ${state.score}. Pull cleanly, account for wind, and aim for the gold center.`;
+          startButton.textContent = "Play Again";
+          tone("end");
+        }
+
+        function pointer(event) {
+          const rect = canvas.getBoundingClientRect();
+          return { x: event.clientX - rect.left, y: event.clientY - rect.top };
+        }
+
+        function beginAim(event) {
+          setupAudio();
+          if (!state.playing) { reset(); return; }
+          const p = pointer(event);
+          state.aim.active = true;
+          state.aim.x = p.x;
+          state.aim.y = p.y;
+        }
+
+        function moveAim(event) {
+          if (!state.aim.active) return;
+          const p = pointer(event);
+          state.aim.x = p.x;
+          state.aim.y = p.y;
+          const dx = state.archer.x - p.x;
+          const dy = state.archer.y - p.y;
+          state.aim.power = Math.min(1, Math.hypot(dx, dy) / 190);
+        }
+
+        function releaseAim() {
+          if (!state.aim.active || !state.playing) {
+            state.aim.active = false;
+            return;
+          }
+          const dx = state.archer.x - state.aim.x;
+          const dy = state.archer.y - state.aim.y;
+          const len = Math.hypot(dx, dy);
+          if (len > 18 && state.arrows > 0) {
+            const speed = 520 + state.aim.power * 520;
+            state.shots.push({
+              x: state.archer.x + 20,
+              y: state.archer.y - 4,
+              vx: dx / len * speed,
+              vy: dy / len * speed,
+              age: 0,
+              hit: false
+            });
+            state.arrows -= 1;
+            tone("shoot");
+            updateHud();
+          }
+          state.aim.active = false;
+        }
+
+        function scoreHit(distance) {
+          const r = state.target.r;
+          if (distance < r * 0.18) return 10;
+          if (distance < r * 0.38) return 7;
+          if (distance < r * 0.62) return 5;
+          if (distance < r) return 2;
+          return 0;
+        }
+
+        function update(dt) {
+          state.time += dt;
+          state.wind = Math.sin(state.time * 0.7) * 44 + Math.sin(state.time * 1.8) * 10;
+          state.target.phase += dt;
+          state.target.y += Math.sin(state.target.phase * 1.4) * state.target.vy * dt;
+          state.target.y = Math.max(170, Math.min(state.h - 120, state.target.y));
+          state.leaves.forEach((leaf) => {
+            leaf.x += (state.wind * 0.55 + leaf.s * 18) * dt;
+            leaf.y += Math.sin(state.time + leaf.a) * dt * 18;
+            if (leaf.x > state.w + 20) leaf.x = -20;
+            if (leaf.x < -30) leaf.x = state.w + 20;
+          });
+          state.pings.forEach((ping) => ping.life -= dt);
+          state.pings = state.pings.filter((ping) => ping.life > 0);
+
+          for (const shot of state.shots) {
+            shot.age += dt;
+            shot.x += shot.vx * dt;
+            shot.y += shot.vy * dt;
+            shot.vx += state.wind * dt * 2.7;
+            shot.vy += 360 * dt;
+            const d = Math.hypot(shot.x - state.target.x, shot.y - state.target.y);
+            if (!shot.hit && d < state.target.r) {
+              const points = scoreHit(d);
+              state.score += points;
+              shot.hit = true;
+              shot.age = 10;
+              state.pings.push({ x: shot.x, y: shot.y, life: 0.72, points });
+              tone("hit");
+              updateHud();
+            }
+            if (!shot.hit && (shot.x > state.w + 80 || shot.y > state.h + 80 || shot.age > 2.8)) {
+              shot.hit = true;
+              shot.age = 10;
+              tone("miss");
+            }
+          }
+          state.shots = state.shots.filter((shot) => shot.age < 3);
+          if (state.playing && state.arrows === 0 && state.shots.length === 0) endRound();
+        }
+
+        function drawBackground() {
+          const g = ctx.createLinearGradient(0, 0, 0, state.h);
+          g.addColorStop(0, "#86b68d");
+          g.addColorStop(0.45, "#37593b");
+          g.addColorStop(1, "#15170f");
+          ctx.fillStyle = g;
+          ctx.fillRect(0, 0, state.w, state.h);
+          ctx.fillStyle = "rgba(21,23,15,.42)";
+          for (let x = -30; x < state.w + 80; x += 74) {
+            const h = 170 + (x % 5) * 28;
+            ctx.beginPath();
+            ctx.moveTo(x, state.h);
+            ctx.lineTo(x + 36, state.h - h);
+            ctx.lineTo(x + 72, state.h);
+            ctx.fill();
+          }
+          for (const leaf of state.leaves) {
+            ctx.save();
+            ctx.translate(leaf.x, leaf.y);
+            ctx.rotate(leaf.a + state.time);
+            ctx.fillStyle = "rgba(244,239,217,.34)";
+            ctx.fillRect(-5, -2, 10, 4);
+            ctx.restore();
+          }
+        }
+
+        function drawTarget() {
+          const t = state.target;
+          const rings = [
+            ["#f4efd9", 1],
+            ["#b54d3c", 0.78],
+            ["#f4efd9", 0.55],
+            ["#e1b760", 0.33],
+            ["#15170f", 0.16]
+          ];
+          ctx.save();
+          ctx.translate(t.x, t.y);
+          ctx.fillStyle = "#5d3c25";
+          ctx.fillRect(16, t.r, 9, state.h - t.y);
+          for (const [color, scale] of rings) {
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(0, 0, t.r * scale, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.restore();
+        }
+
+        function drawArcher() {
+          const a = state.archer;
+          ctx.save();
+          ctx.translate(a.x, a.y);
+          ctx.strokeStyle = "#e1b760";
+          ctx.lineWidth = 5;
+          ctx.beginPath();
+          ctx.arc(0, 0, 36, -Math.PI * 0.55, Math.PI * 0.55);
+          ctx.stroke();
+          ctx.strokeStyle = "#f4efd9";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(22, -28);
+          if (state.aim.active) {
+            ctx.lineTo(state.aim.x - a.x, state.aim.y - a.y);
+            ctx.lineTo(22, 28);
+          } else {
+            ctx.lineTo(26, 0);
+            ctx.lineTo(22, 28);
+          }
+          ctx.stroke();
+          ctx.fillStyle = "#15170f";
+          ctx.beginPath();
+          ctx.arc(-12, -34, 13, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = "#f4efd9";
+          ctx.fillRect(-22, -20, 20, 44);
+          ctx.restore();
+        }
+
+        function drawAim() {
+          if (!state.aim.active) return;
+          const a = state.archer;
+          const dx = a.x - state.aim.x;
+          const dy = a.y - state.aim.y;
+          const len = Math.hypot(dx, dy) || 1;
+          ctx.strokeStyle = "rgba(244,239,217,.52)";
+          ctx.setLineDash([9, 9]);
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(a.x + 22, a.y - 4);
+          ctx.lineTo(a.x + dx / len * 260 * state.aim.power, a.y + dy / len * 260 * state.aim.power);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.fillStyle = "#e1b760";
+          ctx.fillRect(a.x - 34, a.y + 58, 68 * state.aim.power, 7);
+        }
+
+        function drawShots() {
+          ctx.strokeStyle = "#f4efd9";
+          ctx.lineWidth = 3;
+          for (const shot of state.shots) {
+            const angle = Math.atan2(shot.vy, shot.vx);
+            ctx.save();
+            ctx.translate(shot.x, shot.y);
+            ctx.rotate(angle);
+            ctx.beginPath();
+            ctx.moveTo(-22, 0);
+            ctx.lineTo(22, 0);
+            ctx.stroke();
+            ctx.fillStyle = "#b54d3c";
+            ctx.beginPath();
+            ctx.moveTo(24, 0);
+            ctx.lineTo(12, -6);
+            ctx.lineTo(12, 6);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+          }
+        }
+
+        function drawPings() {
+          for (const ping of state.pings) {
+            const alpha = Math.max(0, ping.life / 0.72);
+            ctx.globalAlpha = alpha;
+            ctx.strokeStyle = ping.points >= 7 ? "#e1b760" : "#f4efd9";
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(ping.x, ping.y, 20 + (1 - alpha) * 54, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fillStyle = "#f4efd9";
+            ctx.font = "800 18px system-ui";
+            ctx.fillText(`+${ping.points}`, ping.x + 20, ping.y - 16);
+          }
+          ctx.globalAlpha = 1;
+        }
+
+        function drawWind() {
+          const x = state.w - 118;
+          const y = Math.max(136, state.h * 0.18);
+          ctx.save();
+          ctx.translate(x, y);
+          ctx.strokeStyle = "rgba(244,239,217,.72)";
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(-38, 0);
+          ctx.lineTo(38, 0);
+          ctx.lineTo(24, -12);
+          ctx.moveTo(38, 0);
+          ctx.lineTo(24, 12);
+          ctx.stroke();
+          ctx.fillStyle = "#f4efd9";
+          ctx.font = "800 11px system-ui";
+          ctx.textAlign = "center";
+          ctx.fillText(state.wind >= 0 ? "WIND ->" : "<- WIND", 0, 28);
+          ctx.restore();
+        }
+
+        function draw() {
+          drawBackground();
+          drawTarget();
+          drawShots();
+          drawArcher();
+          drawAim();
+          drawPings();
+          drawWind();
+        }
+
+        let last = performance.now();
+        function frame(now) {
+          const dt = Math.min(0.033, (now - last) / 1000);
+          last = now;
+          update(dt);
+          draw();
+          requestAnimationFrame(frame);
+        }
+
+        canvas.addEventListener("pointerdown", (event) => {
+          event.preventDefault();
+          beginAim(event);
+        });
+        canvas.addEventListener("pointermove", (event) => {
+          event.preventDefault();
+          moveAim(event);
+        });
+        window.addEventListener("pointerup", releaseAim);
+        window.addEventListener("keydown", (event) => {
+          if (event.key === "Enter" && !state.playing) reset();
+        });
+        startButton.addEventListener("click", reset);
+        soundButton.addEventListener("click", () => {
+          state.muted = !state.muted;
+          soundButton.textContent = state.muted ? "Sound Off" : "Sound On";
+          soundButton.setAttribute("aria-pressed", String(!state.muted));
+          if (!state.muted) setupAudio();
+        });
+        window.addEventListener("resize", resize);
+        bestEl.textContent = String(state.best);
+        resize();
+        requestAnimationFrame(frame);
+      })();
+    </script>
+  </body>
+</html>

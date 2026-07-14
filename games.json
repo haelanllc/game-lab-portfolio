@@ -32,6 +32,22 @@
     "accent": "sky"
   },
   {
+    "id": "forest-archer",
+    "title": "Forest Archer",
+    "description": "A mobile-friendly archery game: pull back, read the wind, release arrows, and score points on moving targets before your quiver runs out.",
+    "status": "Ready",
+    "playUrl": "/games/forest-archer/",
+    "codeUrl": "",
+    "image": "/assets/thumbnails/forest-archer.svg",
+    "tags": [
+      "Canvas",
+      "Archery",
+      "Arcade"
+    ],
+    "learned": "Archery feels best when the shot has a readable ritual: pull for power, adjust for wind, release, and get instant scoring feedback.",
+    "accent": "lime"
+  },
+  {
     "id": "pocket-drift-signal-run",
     "title": "Pocket Drift: Signal Run",
     "description": "A one-thumb mobile canvas game. Drag through shifting signal gates, collect pulses, and keep the run alive as the lane tightens.",

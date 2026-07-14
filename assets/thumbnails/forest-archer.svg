@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Forest Archer thumbnail">
+  <rect width="640" height="360" fill="#f4efd9"/>
+  <rect x="44" y="30" width="552" height="300" rx="10" fill="#203927"/>
+  <path d="M56 312l52-150 50 150M128 312l60-190 68 190M462 312l54-164 60 164" fill="#15170f" opacity=".55"/>
+  <path d="M92 90c80 26 148 20 226-4s150-18 226 16" fill="none" stroke="#6f9b58" stroke-width="13" stroke-linecap="round" opacity=".8"/>
+  <circle cx="482" cy="176" r="70" fill="#f4efd9"/>
+  <circle cx="482" cy="176" r="54" fill="#b54d3c"/>
+  <circle cx="482" cy="176" r="36" fill="#f4efd9"/>
+  <circle cx="482" cy="176" r="20" fill="#e1b760"/>
+  <circle cx="482" cy="176" r="9" fill="#15170f"/>
+  <path d="M162 244c44-28 44-102 0-132" fill="none" stroke="#e1b760" stroke-width="10" stroke-linecap="round"/>
+  <path d="M184 112L130 178l54 66" fill="none" stroke="#f4efd9" stroke-width="4" stroke-linecap="round"/>
+  <path d="M196 178h178" stroke="#f4efd9" stroke-width="8" stroke-linecap="round"/>
+  <path d="M382 178l-24-14 8 14-8 14Z" fill="#b54d3c"/>
+  <circle cx="136" cy="106" r="16" fill="#15170f"/>
+  <rect x="118" y="124" width="26" height="62" rx="7" fill="#f4efd9"/>
+  <path d="M86 326h468" stroke="#15170f" stroke-width="8" stroke-linecap="round" opacity=".58"/>
+</svg>
