@@ -286,12 +286,12 @@
         const fishSpriteSheet = new Image();
         fishSpriteSheet.src = "../../assets/sprites/maldives-fish-sprites.png";
         const fishSpots = atolls.flatMap((a, atollIndex) => {
-          const shoalCount = a.harbor ? 4 : 3;
+          const shoalCount = a.harbor ? 3 : 2;
           return Array.from({ length: shoalCount }, (_, shoalIndex) => {
             const index = atollIndex * 5 + shoalIndex;
             const angle = index * 2.1 + shoalIndex * 0.8;
             const ring = 0.62 + (shoalIndex % 2) * 0.18;
-            const max = 3 + (index % 3);
+            const max = 2 + (index % 3);
             return {
               x: a.x + Math.sin(angle) * a.rx * ring,
               y: a.y + Math.cos(angle) * a.ry * ring,
@@ -305,6 +305,21 @@
             };
           });
         });
+        const treasures = atolls
+          .filter((atoll, index) => index % 2 === 0 || atoll.harbor)
+          .map((atoll, index) => {
+            const angle = index * 1.9 + 0.7;
+            const ring = 0.88;
+            return {
+              x: atoll.x + Math.cos(angle) * atoll.rx * ring,
+              y: atoll.y + Math.sin(angle) * atoll.ry * ring,
+              kind: index % 3 === 0 ? "pearl" : "crate",
+              value: index % 3 === 0 ? 45 : 25,
+              active: true,
+              respawn: 0,
+              atoll: atoll.name
+            };
+          });
 
         const state = {
           w: 0, h: 0, dpr: 1, playing: false, muted: false, time: 0,
@@ -314,6 +329,7 @@
           player: { onLand: false, x: 860, y: 1770, targetX: 860, targetY: 1770, atoll: "Kaafu / Male" },
           boat: newBoat(),
           nets: [],
+          treasures,
           ripples: [],
           pings: [],
           lastSave: 0,
@@ -379,6 +395,7 @@
             s.vy = Math.cos(index * 1.9) * 7;
           });
           state.nets = [];
+          state.treasures.forEach((treasure) => { treasure.active = true; treasure.respawn = 0; });
           state.ripples = [];
           state.pings = [];
           setNetArmed(false);
@@ -448,6 +465,7 @@
               spot.vy = Math.cos(index * 1.9) * 7;
             });
             state.nets = [];
+            state.treasures.forEach((treasure) => { treasure.active = true; treasure.respawn = 0; });
             state.ripples = [];
             state.pings = [];
             setNetArmed(false);
@@ -763,11 +781,34 @@
           state.camera.y = clamp(player.y - state.h * 0.54, 0, world.h - state.h);
         }
 
+        function updateTreasures(dt) {
+          if (state.player.onLand) return;
+          for (const treasure of state.treasures) {
+            if (!treasure.active) {
+              treasure.respawn -= dt;
+              if (treasure.respawn <= 0) treasure.active = true;
+              continue;
+            }
+            const distance = Math.hypot(treasure.x - state.boat.x, treasure.y - state.boat.y);
+            if (distance < 42) {
+              treasure.active = false;
+              treasure.respawn = 18 + Math.random() * 14;
+              state.boat.money += treasure.value;
+              state.pings.push({ x: treasure.x, y: treasure.y, life: 0.8, color: treasure.kind === "pearl" ? "#f5f1df" : "#e9b85d" });
+              setToast(`Found a ${treasure.kind} near ${treasure.atoll}: +${treasure.value} rufiyaa.`);
+              tone("sell");
+              updateHud();
+              saveGame();
+            }
+          }
+        }
+
         function update(dt) {
           state.time += dt;
           if (!state.playing) return;
           moveBoat(dt);
           movePlayer(dt);
+          updateTreasures(dt);
           const boat = state.boat;
           if (Math.random() < dt * 16) state.ripples.push({ x: boat.x - Math.cos(boat.angle) * 26, y: boat.y - Math.sin(boat.angle) * 26, life: 0.55 });
           state.ripples.forEach((r) => r.life -= dt);
@@ -901,6 +942,44 @@
               ctx.textAlign = "center";
               ctx.fillText(spot.species.common, x, y - 34);
             }
+          }
+        }
+
+        function drawTreasures() {
+          for (const treasure of state.treasures) {
+            if (!treasure.active) continue;
+            const x = screenX(treasure.x), y = screenY(treasure.y);
+            if (x < -40 || x > state.w + 40 || y < -40 || y > state.h + 40) continue;
+            const bob = Math.sin(state.time * 3 + treasure.x) * 3;
+            ctx.save();
+            ctx.translate(x, y + bob);
+            if (treasure.kind === "pearl") {
+              ctx.fillStyle = "#f5f1df";
+              ctx.strokeStyle = "rgba(6,32,38,.55)";
+              ctx.lineWidth = 2;
+              ctx.beginPath();
+              ctx.arc(0, 0, 10, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.stroke();
+              ctx.fillStyle = "rgba(142,221,209,.85)";
+              ctx.beginPath();
+              ctx.arc(4, -4, 3, 0, Math.PI * 2);
+              ctx.fill();
+            } else {
+              ctx.fillStyle = "#d8a955";
+              ctx.strokeStyle = "rgba(6,32,38,.55)";
+              ctx.lineWidth = 2;
+              ctx.fillRect(-12, -10, 24, 20);
+              ctx.strokeRect(-12, -10, 24, 20);
+              ctx.strokeStyle = "#7f4e2d";
+              ctx.beginPath();
+              ctx.moveTo(-12, -2);
+              ctx.lineTo(12, -2);
+              ctx.moveTo(0, -10);
+              ctx.lineTo(0, 10);
+              ctx.stroke();
+            }
+            ctx.restore();
           }
         }
 
@@ -1175,6 +1254,7 @@
         function draw() {
           drawOcean();
           drawAtolls();
+          drawTreasures();
           drawFishSpots();
           drawNets();
           drawEffects();
