@@ -153,6 +153,30 @@
         color: var(--paper);
         backdrop-filter: blur(12px);
       }
+      .upgrade-button {
+        position: absolute;
+        z-index: 4;
+        right: 12px;
+        bottom: max(58px, calc(env(safe-area-inset-bottom) + 58px));
+        min-height: 38px;
+        padding: 8px 11px;
+      }
+      .upgrade-panel {
+        position: absolute;
+        z-index: 5;
+        left: 16px;
+        right: 16px;
+        bottom: max(66px, calc(env(safe-area-inset-bottom) + 66px));
+        display: grid;
+        gap: 10px;
+        padding: 14px;
+        border: 1px solid var(--line);
+        background: rgba(6, 32, 38, 0.9);
+        backdrop-filter: blur(16px);
+      }
+      .upgrade-panel[hidden] { display: none; }
+      .upgrade-panel p { margin: 0; color: rgba(245, 241, 223, 0.82); font-size: 13px; line-height: 1.35; }
+      .upgrade-options { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     </style>
   </head>
   <body>
@@ -167,17 +191,26 @@
           <div class="meter"><span>Rufiyaa</span><strong id="money">0</strong></div>
           <div class="meter"><span>Catch</span><strong id="catch">0/8</strong></div>
           <div class="meter"><span>Net</span><strong id="net">1</strong></div>
-          <div class="meter"><span>Boat</span><strong id="boat">1</strong></div>
+          <div class="meter"><span>Boat/Sonar</span><strong id="boat">1/1</strong></div>
         </div>
       </section>
       <section class="message" id="message">
-        <p><strong>Adventure across the Maldives.</strong> Drag or use arrows/WASD to sail. Move over visible fish shoals, tap or press Space to drop your net on top of them, then return to harbors to sell and upgrade.</p>
+        <p><strong>Adventure across the Maldives.</strong> Drag or use arrows/WASD to sail. Move over visible fish shoals, tap or press Space to drop your net on top of them, return to harbors, press Upgrade, then choose Net or Sonar. Your voyage saves automatically.</p>
         <div class="actions">
           <button id="start" type="button">Start Voyage</button>
           <a href="../../">Game Lab</a>
         </div>
       </section>
       <div class="toast" id="toast">Start at Kaafu / Male. Place your net directly over fish shoals, then sell at harbor islands.</div>
+      <section class="upgrade-panel" id="upgrade-panel" hidden>
+        <p id="upgrade-copy">Choose what to upgrade at this harbor.</p>
+        <div class="upgrade-options">
+          <button id="upgrade-net" type="button">Net</button>
+          <button id="upgrade-sonar" type="button">Sonar</button>
+        </div>
+        <button id="upgrade-close" type="button">Close</button>
+      </section>
+      <button class="upgrade-button" id="upgrade" type="button">Upgrade</button>
       <button class="sound" id="sound" type="button" aria-pressed="true">Sound On</button>
     </main>
     <script>
@@ -192,6 +225,13 @@
         const startButton = document.getElementById("start");
         const toast = document.getElementById("toast");
         const soundButton = document.getElementById("sound");
+        const upgradeButton = document.getElementById("upgrade");
+        const upgradePanel = document.getElementById("upgrade-panel");
+        const upgradeCopy = document.getElementById("upgrade-copy");
+        const upgradeNetButton = document.getElementById("upgrade-net");
+        const upgradeSonarButton = document.getElementById("upgrade-sonar");
+        const upgradeCloseButton = document.getElementById("upgrade-close");
+        const saveKey = "maldives-boat-quest-save-v2";
 
         const world = { w: 1700, h: 4200 };
         const keys = new Set();
@@ -240,12 +280,17 @@
           w: 0, h: 0, dpr: 1, playing: false, muted: false, time: 0,
           camera: { x: 0, y: 0 },
           target: { x: 860, y: 1770, active: false },
-          boat: { x: 860, y: 1770, vx: 0, vy: 0, angle: 0, level: 1, net: 1, catch: 0, capacity: 8, money: 0, hold: {} },
+          boat: newBoat(),
           nets: [],
           ripples: [],
           pings: [],
+          lastSave: 0,
           audio: null
         };
+
+        function newBoat() {
+          return { x: 860, y: 1770, vx: 0, vy: 0, angle: 0, level: 1, net: 1, sonar: 1, catch: 0, capacity: 8, money: 0, hold: {} };
+        }
 
         function setupAudio() {
           if (state.muted) return;
@@ -294,7 +339,7 @@
           setupAudio();
           state.playing = true;
           state.time = 0;
-          state.boat = { x: 860, y: 1770, vx: 0, vy: 0, angle: 0, level: 1, net: 1, catch: 0, capacity: 8, money: 0, hold: {} };
+          state.boat = newBoat();
           fishSpots.forEach((s, index) => {
             s.stock = s.max;
             s.vx = Math.sin(index * 1.3) * 9;
@@ -306,7 +351,68 @@
           message.hidden = true;
           setToast("Departed Kaafu / Male. Place the net on top of a fish shoal.");
           updateHud();
+          saveGame();
           tone("sell");
+        }
+
+        function startVoyage() {
+          setupAudio();
+          if (loadGame()) {
+            state.playing = true;
+            message.hidden = true;
+            setToast("Saved voyage loaded. Sail to a harbor to upgrade.");
+            updateHud();
+            return;
+          }
+          reset();
+        }
+
+        function saveGame() {
+          const data = {
+            boat: {
+              x: state.boat.x,
+              y: state.boat.y,
+              level: state.boat.level,
+              net: state.boat.net,
+              sonar: state.boat.sonar,
+              catch: state.boat.catch,
+              money: state.boat.money,
+              hold: state.boat.hold
+            },
+            fish: fishSpots.map((spot) => ({ x: spot.x, y: spot.y, stock: spot.stock }))
+          };
+          try {
+            localStorage.setItem(saveKey, JSON.stringify(data));
+            state.lastSave = state.time;
+          } catch {
+            // Saving is best-effort; gameplay should continue if storage is unavailable.
+          }
+        }
+
+        function loadGame() {
+          try {
+            const data = JSON.parse(localStorage.getItem(saveKey) || "null");
+            if (!data?.boat) return false;
+            state.boat = { ...newBoat(), ...data.boat, vx: 0, vy: 0, angle: 0, hold: data.boat.hold || {} };
+            fishSpots.forEach((spot, index) => {
+              const saved = data.fish?.[index];
+              if (saved) {
+                spot.x = saved.x;
+                spot.y = saved.y;
+                spot.stock = saved.stock;
+              } else {
+                spot.stock = spot.max;
+              }
+              spot.vx = Math.sin(index * 1.3) * 9;
+              spot.vy = Math.cos(index * 1.9) * 7;
+            });
+            state.nets = [];
+            state.ripples = [];
+            state.pings = [];
+            return true;
+          } catch {
+            return false;
+          }
         }
 
         function setToast(text) { toast.textContent = text; }
@@ -319,7 +425,7 @@
           moneyEl.textContent = String(Math.round(state.boat.money));
           catchEl.textContent = `${state.boat.catch}/${capacity()}`;
           netEl.textContent = String(state.boat.net);
-          boatEl.textContent = String(state.boat.level);
+          boatEl.textContent = `${state.boat.level}/${state.boat.sonar}`;
         }
 
         function pointerWorld(event) {
@@ -369,6 +475,7 @@
           setToast(`Caught ${haul} ${species.common} (${species.local}) near ${spot.atoll}.`);
           tone("fish");
           updateHud();
+          saveGame();
         }
 
         function harborActions() {
@@ -389,22 +496,63 @@
             boat.hold = {};
             setToast(`Sold ${summary} at ${near.atoll} for ${earned} rufiyaa.`);
             tone("sell");
-          } else if (boat.money >= boat.net * 90 && boat.net < 5) {
-            const cost = boat.net * 90;
-            boat.money -= cost;
-            boat.net += 1;
-            setToast(`Upgraded fishing nets to level ${boat.net}.`);
-            tone("upgrade");
-          } else if (boat.money >= boat.level * 120 && boat.level < 5) {
-            const cost = boat.level * 120;
-            boat.money -= cost;
-            boat.level += 1;
-            setToast(`Upgraded boat to level ${boat.level}: faster and bigger hold.`);
-            tone("upgrade");
           } else {
             return;
           }
           updateHud();
+          saveGame();
+        }
+
+        function upgradeCost(kind) {
+          if (kind === "net") return state.boat.net * 90;
+          if (kind === "sonar") return state.boat.sonar * 105;
+          return 0;
+        }
+
+        function openUpgradePanel() {
+          const near = nearestHarbor();
+          if (!state.playing) { startVoyage(); return; }
+          if (!near || near.d > 125) {
+            setToast("Upgrade at a harbor island. Look for the gold harbor dots.");
+            return;
+          }
+          harborActions();
+          const netCost = upgradeCost("net");
+          const sonarCost = upgradeCost("sonar");
+          upgradeCopy.textContent = `${near.atoll.name} harbor: choose an upgrade. Net ${netCost} rufiyaa. Sonar ${sonarCost} rufiyaa.`;
+          upgradeNetButton.textContent = `Net ${netCost}`;
+          upgradeSonarButton.textContent = `Sonar ${sonarCost}`;
+          upgradePanel.hidden = false;
+        }
+
+        function buyUpgrade(kind) {
+          const near = nearestHarbor();
+          if (!near || near.d > 125) {
+            upgradePanel.hidden = true;
+            setToast("You need to be at a harbor to upgrade.");
+            return;
+          }
+          const boat = state.boat;
+          const cost = upgradeCost(kind);
+          if (boat.money < cost) {
+            setToast(`Need ${cost} rufiyaa for ${kind}. Sell more fish first.`);
+            return;
+          }
+          if (kind === "net") {
+            if (boat.net >= 5) { setToast("Nets are already maxed."); return; }
+            boat.money -= cost;
+            boat.net += 1;
+            setToast(`Upgraded net to level ${boat.net}: wider net and bigger hauls.`);
+          } else {
+            if (boat.sonar >= 5) { setToast("Sonar is already maxed."); return; }
+            boat.money -= cost;
+            boat.sonar += 1;
+            setToast(`Upgraded sonar to level ${boat.sonar}: shoals show farther away.`);
+          }
+          upgradePanel.hidden = true;
+          tone("upgrade");
+          updateHud();
+          saveGame();
         }
 
         function moveBoat(dt) {
@@ -471,6 +619,7 @@
           state.nets = state.nets.filter((net) => net.life > 0);
           const near = nearestHarbor();
           if (near && near.d < 105 && Math.random() < dt * 1.8) harborActions();
+          if (state.time - state.lastSave > 1.5) saveGame();
         }
 
         function drawOcean() {
@@ -519,18 +668,27 @@
         }
 
         function drawFishSpots() {
+          const sonarRange = 120 + state.boat.sonar * 95;
           for (const spot of fishSpots) {
             if (spot.stock <= 0) continue;
             const x = screenX(spot.x), y = screenY(spot.y);
-            ctx.strokeStyle = "rgba(233,184,93,.72)";
+            const distance = Math.hypot(spot.x - state.boat.x, spot.y - state.boat.y);
+            const sonarVisible = distance < sonarRange;
+            ctx.strokeStyle = sonarVisible ? "rgba(233,184,93,.9)" : "rgba(233,184,93,.42)";
             ctx.lineWidth = 3;
             ctx.beginPath();
-            ctx.ellipse(x, y, 34 + Math.sin(state.time * 4) * 4, 22, Math.sin(state.time + spot.x) * 0.35, 0, Math.PI * 2);
+            ctx.ellipse(x, y, (sonarVisible ? 38 : 30) + Math.sin(state.time * 4) * 4, sonarVisible ? 25 : 18, Math.sin(state.time + spot.x) * 0.35, 0, Math.PI * 2);
             ctx.stroke();
             for (let i = 0; i < spot.stock; i += 1) {
               const fishX = x + Math.cos(i * 1.4 + state.time) * 16;
               const fishY = y + Math.sin(i * 1.7 + state.time) * 9;
               drawFishIcon(fishX, fishY, Math.sin(i + state.time) * 0.25, spot.species);
+            }
+            if (sonarVisible && state.boat.sonar >= 2) {
+              ctx.fillStyle = "rgba(245,241,223,.88)";
+              ctx.font = "800 11px system-ui";
+              ctx.textAlign = "center";
+              ctx.fillText(spot.species.common, x, y - 34);
             }
           }
         }
@@ -673,6 +831,22 @@
           ctx.restore();
         }
 
+        function drawSonar() {
+          if (!state.playing || state.boat.sonar < 2) return;
+          const boat = state.boat;
+          const x = screenX(boat.x), y = screenY(boat.y);
+          const radius = 120 + state.boat.sonar * 95;
+          ctx.strokeStyle = "rgba(142,221,209,.22)";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(x, y, radius, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.strokeStyle = "rgba(142,221,209,.36)";
+          ctx.beginPath();
+          ctx.arc(x, y, 18 + (state.time * 90) % Math.max(30, radius), 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
         function drawEffects() {
           ctx.strokeStyle = "rgba(245,241,223,.5)";
           for (const ripple of state.ripples) {
@@ -717,6 +891,7 @@
           drawFishSpots();
           drawNets();
           drawEffects();
+          drawSonar();
           drawBoat();
           drawMiniMap();
         }
@@ -733,7 +908,7 @@
         canvas.addEventListener("pointerdown", (event) => {
           event.preventDefault();
           setupAudio();
-          if (!state.playing) { reset(); return; }
+          if (!state.playing) { startVoyage(); return; }
           state.target = { ...pointerWorld(event), active: true };
           dropNet();
           harborActions();
@@ -746,10 +921,15 @@
         window.addEventListener("keydown", (event) => {
           keys.add(event.key);
           if (event.key === " ") { dropNet(); harborActions(); }
-          if (event.key === "Enter" && !state.playing) reset();
+          if (event.key === "Enter" && !state.playing) startVoyage();
+          if (event.key.toLowerCase() === "u") openUpgradePanel();
         });
         window.addEventListener("keyup", (event) => keys.delete(event.key));
-        startButton.addEventListener("click", reset);
+        startButton.addEventListener("click", startVoyage);
+        upgradeButton.addEventListener("click", openUpgradePanel);
+        upgradeNetButton.addEventListener("click", () => buyUpgrade("net"));
+        upgradeSonarButton.addEventListener("click", () => buyUpgrade("sonar"));
+        upgradeCloseButton.addEventListener("click", () => { upgradePanel.hidden = true; });
         soundButton.addEventListener("click", () => {
           state.muted = !state.muted;
           soundButton.textContent = state.muted ? "Sound Off" : "Sound On";
