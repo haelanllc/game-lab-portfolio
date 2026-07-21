@@ -33,7 +33,7 @@ if (!accessCode) {
   await library.waitFor({ state: "visible" });
 
   const gameCount = await page.locator("#plus-grid .game-card").count();
-  if (gameCount !== 8) throw new Error(`Expected 8 curated games, found ${gameCount}`);
+  if (gameCount !== 9) throw new Error(`Expected 9 curated games, found ${gameCount}`);
 
   const hasHorizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
   if (hasHorizontalOverflow) throw new Error("Game Lab+ overflows the mobile viewport");

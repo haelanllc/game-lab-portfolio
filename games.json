@@ -1,5 +1,22 @@
 [
   {
+    "id": "fossil-fury",
+    "title": "Fossil Fury",
+    "description": "Race four friends from separate devices, clear three difficult paleontology trivia gates, and open a Common, Rare, Epic, or Legendary dinosaur crate based on your finish.",
+    "status": "Ready",
+    "plusOnly": true,
+    "playUrl": "https://fossil-fury-gate-race.haelan.chatgpt.site",
+    "codeUrl": "",
+    "image": "/assets/thumbnails/fossil-fury.png",
+    "tags": [
+      "Multiplayer",
+      "Trivia",
+      "Dinosaur"
+    ],
+    "learned": "A multiplayer race becomes more memorable when speed is interrupted by real knowledge checks and every finish advances a visible collection.",
+    "accent": "coral"
+  },
+  {
     "id": "stagecoach-gold-run",
     "title": "Wells Fargo Express Run",
     "description": "A Wells Fargo-style frontier express overworld: take posted contracts, pick up marked bullion, mail, payroll, and treasury shipments, use way stations, and deliver to the right office while road agents close in.",

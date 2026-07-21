@@ -6,6 +6,7 @@ const accents = new Set(["sky", "lime", "coral", "gold", "violet"]);
 const plusSessionKey = "game-lab-plus-access";
 const plusCodeDigest = "0ce50d1ec89796bceb59a4b6b42fc7dace40993d719655b47070bb786b7a0f8d";
 const plusGameIds = [
+  "fossil-fury",
   "stagecoach-gold-run",
   "maldives-boat-quest",
   "abyssal-relic-quest",
@@ -119,7 +120,7 @@ function gameCard(game, compact = false) {
 }
 
 async function loadGames() {
-  const response = await fetch("/games.json?v=wells-fargo-express-run", { cache: "reload" });
+  const response = await fetch("/games.json?v=fossil-fury-plus", { cache: "reload" });
   if (!response.ok) throw new Error("Could not load games.json");
   state.games = await response.json();
   return state.games;
@@ -132,7 +133,7 @@ function renderHome() {
     grid.innerHTML = `<div class="empty-state">No games have been added yet.</div>`;
     return;
   }
-  grid.innerHTML = state.games.map((game) => gameCard(game)).join("");
+  grid.innerHTML = state.games.filter((game) => !game.plusOnly).map((game) => gameCard(game)).join("");
 }
 
 function plusGames() {
@@ -235,7 +236,7 @@ function renderDetail() {
       <div class="play-panel external-play-panel">
         <div class="external-play-card">
           ${generatedArt(game)}
-          <p>Open-source reference game</p>
+          <p>${game.codeUrl ? "Open-source reference game" : "Hosted browser game"}</p>
         </div>
       </div>
     `
