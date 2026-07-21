@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Enter Game Lab+ to play original and experimental browser games.">
+    <title>Game Lab+ | Special Games</title>
+    <link rel="icon" href='data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"%3E%3Crect width="32" height="32" rx="4" fill="%23123b3d"/%3E%3Cpath d="M16 8v16M8 16h16" stroke="%23f1d377" stroke-width="3"/%3E%3C/svg%3E'>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body data-page="plus">
+    <header class="site-header plus-header">
+      <a class="brand" href="/" aria-label="Game Lab home">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span>Game Lab<span class="brand-plus">+</span></span>
+      </a>
+      <nav class="nav-links" aria-label="Main navigation">
+        <a href="/">Home</a>
+        <a href="/#games">All games</a>
+        <a class="button button-small button-light" href="/add-game.html">
+          <span class="plus-icon" aria-hidden="true"></span>
+          Add Game
+        </a>
+      </nav>
+    </header>
+
+    <main class="plus-main">
+      <section class="plus-hero" aria-labelledby="plus-title">
+        <div>
+          <p class="eyebrow">The special shelf</p>
+          <h1 id="plus-title">Game Lab<span class="title-plus">+</span></h1>
+          <p class="hero-text">Original games, live experiments, and the builds that make this lab its own.</p>
+        </div>
+        <div class="plus-stamp" aria-hidden="true">
+          <span>GL</span>
+          <strong>+</strong>
+          <small>Special access</small>
+        </div>
+      </section>
+
+      <section class="access-vault" id="plus-vault" aria-labelledby="access-title">
+        <div class="vault-lock" aria-hidden="true">
+          <span class="vault-shackle"></span>
+          <span class="vault-keyhole"></span>
+        </div>
+        <div class="vault-copy">
+          <p class="eyebrow">Members’ entrance</p>
+          <h2 id="access-title">Enter the access code</h2>
+          <p>The code opens every Game Lab+ title for this browser session.</p>
+        </div>
+        <form class="access-form" id="plus-form" novalidate>
+          <label for="plus-code">Access code</label>
+          <div class="code-entry">
+            <input id="plus-code" name="code" type="password" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="24" required aria-describedby="plus-feedback">
+            <button class="button button-plus" type="submit">Unlock games</button>
+          </div>
+          <p class="access-feedback" id="plus-feedback" role="status" aria-live="polite">Ask the Game Lab keeper for the code.</p>
+        </form>
+      </section>
+
+      <section class="plus-library" id="plus-library" aria-labelledby="plus-library-title" hidden>
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Access granted</p>
+            <h2 id="plus-library-title" tabindex="-1">The special game shelf</h2>
+          </div>
+          <button class="text-button" id="plus-lock" type="button">Lock Game Lab+</button>
+        </div>
+        <div class="game-grid" id="plus-grid" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <span>Game Lab+</span>
+      <span>Original games and experimental builds.</span>
+    </footer>
+
+    <script src="/app.js" defer></script>
+  </body>
+</html>

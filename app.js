@@ -3,6 +3,8 @@ const state = {
 };
 
 const accents = new Set(["sky", "lime", "coral", "gold", "violet"]);
+const plusSessionKey = "game-lab-plus-access";
+const plusCodeDigest = "0ce50d1ec89796bceb59a4b6b42fc7dace40993d719655b47070bb786b7a0f8d";
 
 function escapeHtml(value = "") {
   return String(value)
@@ -121,6 +123,80 @@ function renderHome() {
     return;
   }
   grid.innerHTML = state.games.map((game) => gameCard(game)).join("");
+}
+
+function plusGames() {
+  return state.games.filter((game) => game.status?.toLowerCase() !== "bonus");
+}
+
+async function digest(value) {
+  const bytes = new TextEncoder().encode(value.trim().toUpperCase());
+  const hash = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(hash), (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+function setPlusAccess(unlocked) {
+  const vault = document.querySelector("#plus-vault");
+  const library = document.querySelector("#plus-library");
+  const grid = document.querySelector("#plus-grid");
+  const input = document.querySelector("#plus-code");
+  const feedback = document.querySelector("#plus-feedback");
+  if (!vault || !library || !grid) return;
+
+  vault.hidden = unlocked;
+  library.hidden = !unlocked;
+  document.body.classList.toggle("plus-unlocked", unlocked);
+
+  if (unlocked) {
+    grid.innerHTML = plusGames().map((game) => gameCard(game)).join("");
+    sessionStorage.setItem(plusSessionKey, "unlocked");
+    document.querySelector("#plus-library-title")?.focus({ preventScroll: true });
+  } else {
+    grid.innerHTML = "";
+    sessionStorage.removeItem(plusSessionKey);
+    if (input) input.value = "";
+    if (feedback) feedback.textContent = "Ask the Game Lab keeper for the code.";
+    input?.focus({ preventScroll: true });
+  }
+}
+
+function renderPlus() {
+  const form = document.querySelector("#plus-form");
+  const input = document.querySelector("#plus-code");
+  const feedback = document.querySelector("#plus-feedback");
+  const lock = document.querySelector("#plus-lock");
+  if (!form || !input || !feedback || !lock) return;
+
+  if (sessionStorage.getItem(plusSessionKey) === "unlocked") {
+    setPlusAccess(true);
+  }
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const submittedCode = input.value;
+    if (!submittedCode.trim()) {
+      feedback.textContent = "Enter the access code first.";
+      input.focus();
+      return;
+    }
+
+    form.classList.add("is-checking");
+    try {
+      if (await digest(submittedCode) === plusCodeDigest) {
+        feedback.textContent = "Access granted.";
+        setPlusAccess(true);
+      } else {
+        feedback.textContent = "That code did not work. Try again.";
+        input.select();
+      }
+    } catch {
+      feedback.textContent = "This browser could not check the code.";
+    } finally {
+      form.classList.remove("is-checking");
+    }
+  });
+
+  lock.addEventListener("click", () => setPlusAccess(false));
 }
 
 function renderDetail() {
@@ -282,13 +358,14 @@ function renderBuilder() {
 
 async function boot() {
   const page = document.body.dataset.page;
-  if (page === "home" || page === "detail") {
+  if (page === "home" || page === "detail" || page === "plus") {
     try {
       await loadGames();
       renderHome();
       renderDetail();
+      renderPlus();
     } catch (error) {
-      const target = document.querySelector("#game-grid") || document.querySelector("#game-detail");
+      const target = document.querySelector("#game-grid") || document.querySelector("#game-detail") || document.querySelector("#plus-vault");
       if (target) target.innerHTML = `<div class="empty-state">${escapeHtml(error.message)}</div>`;
     }
   }
