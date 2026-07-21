@@ -5,6 +5,16 @@ const state = {
 const accents = new Set(["sky", "lime", "coral", "gold", "violet"]);
 const plusSessionKey = "game-lab-plus-access";
 const plusCodeDigest = "0ce50d1ec89796bceb59a4b6b42fc7dace40993d719655b47070bb786b7a0f8d";
+const plusGameIds = [
+  "stagecoach-gold-run",
+  "maldives-boat-quest",
+  "abyssal-relic-quest",
+  "forest-archer",
+  "tide-skimmer",
+  "spine-laser-dino-duel",
+  "dino-growth-ancient-isles-reborn",
+  "abyss-spear-hunter"
+];
 
 function escapeHtml(value = "") {
   return String(value)
@@ -126,7 +136,9 @@ function renderHome() {
 }
 
 function plusGames() {
-  return state.games.filter((game) => game.status?.toLowerCase() !== "bonus");
+  return plusGameIds
+    .map((id) => state.games.find((game) => game.id === id))
+    .filter(Boolean);
 }
 
 async function digest(value) {
