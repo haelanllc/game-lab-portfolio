@@ -129,11 +129,18 @@ async function loadGames() {
 function renderHome() {
   const grid = document.querySelector("#game-grid");
   if (!grid) return;
-  if (!state.games.length) {
+  const publicGames = state.games.filter((game) => !game.plusOnly && !plusGameIds.includes(game.id));
+  document.querySelectorAll("[data-plus-count]").forEach((count) => {
+    count.textContent = String(plusGames().length);
+  });
+  document.querySelectorAll("[data-public-count]").forEach((count) => {
+    count.textContent = String(publicGames.length);
+  });
+  if (!publicGames.length) {
     grid.innerHTML = `<div class="empty-state">No games have been added yet.</div>`;
     return;
   }
-  grid.innerHTML = state.games.filter((game) => !game.plusOnly).map((game) => gameCard(game)).join("");
+  grid.innerHTML = publicGames.map((game) => gameCard(game)).join("");
 }
 
 function plusGames() {

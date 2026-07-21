@@ -6,3 +6,4 @@
 - Added a persistent homepage entry point, responsive access screen, session unlock, and explicit relock control.
 - Curated Game Lab+ down to eight finished, high-signal games so the shelf represents the lab’s best work.
 - Added Fossil Fury to Game Lab+: a hosted four-player dinosaur race with difficult trivia gates and collectible rarity crates.
+- Promoted Game Lab+ into the homepage’s main attraction and removed every Plus title from the public game grid.
