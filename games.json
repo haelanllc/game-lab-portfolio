@@ -1,5 +1,17 @@
 [
   {
+    "id": "wildlings-ar",
+    "title": "Wildlings AR",
+    "description": "An outdoor camera game: turn to find hidden leaves, stones, flowers, bark, clouds, and puddles, watch them transform into little creatures, and collect a different local population wherever you go.",
+    "status": "Ready",
+    "playUrl": "/games/wildlings-ar/",
+    "codeUrl": "",
+    "image": "/assets/thumbnails/wildlings-ar.svg",
+    "tags": ["Camera", "AR", "Outdoor"],
+    "learned": "Camera play feels magical when turning reveals a clue, holding steady creates anticipation, and every location becomes a deterministic field of discoveries.",
+    "accent": "lime"
+  },
+  {
     "id": "fossil-fury",
     "title": "Fossil Fury",
     "description": "Race four friends from separate devices, clear three difficult paleontology trivia gates, and open a Common, Rare, Epic, or Legendary dinosaur crate based on your finish.",

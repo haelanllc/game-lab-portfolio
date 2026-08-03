@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-08-02
+
+- Added Wildlings AR, an outdoor camera game with 18 collectible creatures, device-orientation scanning, location-seeded local populations, clue-to-creature transformations, and a persistent field guide.
+- Added a no-camera demo field, mouse/keyboard look controls, on-device privacy language, and camera/motion/location permission fallbacks.
+
 ## 2026-07-21
 
 - Added Game Lab+, a code-gated shelf for original and experimental games.

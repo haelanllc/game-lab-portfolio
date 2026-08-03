@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#18251d">
+  <meta name="description" content="Turn your camera, discover tiny outdoor creatures, and keep a field guide of every Wildling you meet.">
+  <title>Wildlings — An outdoor camera game</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="camera-stage" aria-hidden="true">
+    <div class="fallback-world"></div>
+    <video id="camera" autoplay muted playsinline></video>
+    <div class="shade"></div><div class="grain"></div>
+  </div>
+
+  <section class="start-screen" aria-labelledby="game-title">
+    <div class="start-top">
+      <div class="wordmark"><span class="mark"></span> Field Notes No. 01</div>
+      <div class="edition">Outdoor edition</div>
+    </div>
+    <div class="start-copy">
+      <p class="eyebrow">A camera game for curious walkers</p>
+      <h1 id="game-title">Find the <em>Wildlings.</em></h1>
+      <p>Turn slowly. A leaf, stone, or flower may be <span>something alive</span>. Every place in the world keeps a different little population.</p>
+    </div>
+    <div class="start-actions">
+      <button class="primary-action" id="start-button"><span>Open the field guide</span><span>→</span></button>
+      <p class="permission-note">Uses your camera, motion, and approximate location while you play. Images never leave this device.</p>
+    </div>
+  </section>
+
+  <main class="hud" aria-live="polite">
+    <div class="topbar">
+      <div class="place-chip"><span class="place-dot"></span><span><small>Current habitat</small><strong id="place-name">Finding your field…</strong></span></div>
+      <div class="count-chip"><small>Guide</small><strong><span id="found-count">0</span> / 18</strong></div>
+    </div>
+    <div class="compass" aria-hidden="true"><div class="compass-track"><span>W</span><span>NW</span><span>N</span><span>NE</span><span>E</span></div></div>
+    <div class="search-copy" id="search-copy"><strong>Turn slowly</strong><span>A nearby clue is rustling</span></div>
+    <div class="reticle" id="reticle"><div class="scan-ring"></div></div>
+    <div class="edge-arrow" id="edge-arrow"><span>↑</span></div>
+    <button class="ar-target" id="ar-target" aria-label="Hidden nature clue"></button>
+    <article class="discovery-card" id="discovery-card">
+      <p class="rarity" id="discovery-rarity">Common wildling</p>
+      <div><h2 id="discovery-name">Maple Mote</h2><p id="discovery-copy">A tiny keeper of autumn color.</p></div>
+      <button class="befriend" id="befriend" aria-label="Add creature to field guide">＋</button>
+    </article>
+    <nav class="bottom-nav" aria-label="Game controls">
+      <button class="nav-button" id="guide-button"><i>⌑</i><span>Field guide</span></button>
+      <button class="nav-button" id="hint-button"><i>⌁</i><span>Find clue</span></button>
+      <button class="nav-button" id="info-button"><i>i</i><span>How to play</span></button>
+    </nav>
+  </main>
+
+  <section class="sheet" id="guide-sheet" aria-labelledby="guide-title">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><div><p>Your discoveries</p><h2 id="guide-title">Field guide</h2></div><button class="close-sheet" aria-label="Close field guide">×</button></div>
+    <div class="field-grid" id="field-grid"></div>
+  </section>
+
+  <section class="sheet" id="info-sheet" aria-labelledby="info-title">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><div><p>Field method</p><h2 id="info-title">How to look</h2></div><button class="close-sheet" aria-label="Close instructions">×</button></div>
+    <div class="about-copy">
+      <p><strong>1.</strong> Go outdoors and turn your camera slowly. The arrow points toward a hidden clue.</p>
+      <p><strong>2.</strong> Hold the clue inside the circle. A leaf, bit of bark, flower, stone, cloud, or puddle will transform.</p>
+      <p><strong>3.</strong> Tap the ＋ to befriend the Wildling. Walk somewhere new to meet a different local population.</p>
+      <hr>
+      <p>The camera view stays on your device. Location is rounded into a broad habitat cell and is not stored or sent anywhere.</p>
+      <div class="setting-row"><span>Camera direction</span><button id="flip-camera">Flip camera</button></div>
+      <div class="setting-row"><span>Start a new local trail</span><button id="new-trail">New trail</button></div>
+    </div>
+  </section>
+  <div class="toast" id="toast" role="status"></div>
+  <script src="game.js"></script>
+</body>
+</html>

@@ -120,7 +120,7 @@ function gameCard(game, compact = false) {
 }
 
 async function loadGames() {
-  const response = await fetch("/games.json?v=fossil-fury-plus", { cache: "reload" });
+  const response = await fetch("/games.json?v=wildlings-ar", { cache: "reload" });
   if (!response.ok) throw new Error("Could not load games.json");
   state.games = await response.json();
   return state.games;
@@ -250,7 +250,7 @@ function renderDetail() {
     : `
       <div class="play-panel">
         <div class="game-frame-wrap">
-          <iframe class="game-frame" title="${escapeHtml(game.title)}" src="${escapeHtml(playUrl)}"></iframe>
+          <iframe class="game-frame" title="${escapeHtml(game.title)}" src="${escapeHtml(playUrl)}" allow="camera; geolocation; gyroscope; accelerometer"></iframe>
         </div>
       </div>
     `;
