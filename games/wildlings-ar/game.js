@@ -44,12 +44,9 @@ function normalizeAngle(angle){return((angle+540)%360)-180}
 function shuffle(items,random){const copy=[...items];for(let index=copy.length-1;index>0;index--){const other=Math.floor(random()*(index+1));[copy[index],copy[other]]=[copy[other],copy[index]]}return copy}
 
 function creatureArt(c,mini=false){
-  const extra=c.form==='ears'?`<path d="M50 52L42 22l25 20M110 52l9-30-26 20" fill="${c.body}" stroke="#172019" stroke-width="3"/>`
-    :c.form==='wings'?`<path d="M47 78C16 59 13 96 49 103M113 78c31-19 34 18-2 25" fill="${c.belly}" stroke="#172019" stroke-width="3"/>`
-    :c.form==='horns'?`<path d="M56 48C40 31 47 19 62 38M104 48c16-17 9-29-6-10" fill="none" stroke="${c.belly}" stroke-width="8" stroke-linecap="round"/>`
-    :c.form==='fins'?`<path d="M43 81L16 65l18 34M117 81l27-16-18 34" fill="${c.belly}" stroke="#172019" stroke-width="3"/>`
-    :c.form==='cap'?`<path d="M39 53C44 16 116 16 121 53c-22-8-60-8-82 0Z" fill="${c.belly}" stroke="#172019" stroke-width="3"/>`:'';
-  return `<svg viewBox="0 0 160 160" role="img" aria-label="${mini?c.name:''}"><ellipse class="creature-shadow" cx="80" cy="137" rx="42" ry="9"/>${extra}<path d="M45 79C46 48 66 37 80 39c14-2 34 9 35 40 10 12 9 35-5 46-13 10-47 10-60 0-14-11-15-34-5-46Z" fill="${c.body}" stroke="#172019" stroke-width="3"/><ellipse cx="80" cy="101" rx="25" ry="26" fill="${c.belly}" opacity=".9"/><circle class="eye" cx="66" cy="76" r="6"/><circle class="eye" cx="94" cy="76" r="6"/><circle class="eye-glint" cx="68" cy="74" r="2"/><circle class="eye-glint" cx="96" cy="74" r="2"/><path d="M75 88q5 6 10 0" fill="none" stroke="#172019" stroke-width="2.5" stroke-linecap="round"/><path d="M55 123q-13 12-20 1M105 123q13 12 20 1" fill="none" stroke="#172019" stroke-width="5" stroke-linecap="round"/></svg>`
+  const alt=mini?c.name:'';
+  const loading=mini?' loading="lazy"':'';
+  return `<img class="wildling-sprite" src="assets/creatures/${c.id}.png" alt="${alt}"${loading}>`
 }
 
 function clueArt(type){

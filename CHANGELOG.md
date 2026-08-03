@@ -5,6 +5,7 @@
 - Added Wildlings AR, an outdoor camera game with 18 collectible creatures, device-orientation scanning, location-seeded local populations, clue-to-creature transformations, and a persistent field guide.
 - Added a no-camera demo field, mouse/keyboard look controls, on-device privacy language, and camera/motion/location permission fallbacks.
 - Upgraded Wildlings with an on-device Nature Lens that classifies real leaves, rocks, flowers, bark, moss, pinecones, acorns, mushrooms, and water in the center camera crop before revealing a matching creature.
+- Replaced the placeholder creature drawings with 18 generated transparent sprites blending Fossil Fury's pulp-comic texture with Clash of Critters' chunky, competitive mobile-battler energy.
 
 ## 2026-07-21
 
