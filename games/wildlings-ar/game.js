@@ -2,10 +2,16 @@ const CREATURES = [
   {id:'maple-mote',name:'Maple Mote',clue:'leaf',rarity:'Common',bio:'A tiny keeper of autumn color.',body:'#c85a39',belly:'#f0bc55',habitat:'woodland',form:'ears'},
   {id:'mosskin',name:'Mosskin',clue:'moss',rarity:'Common',bio:'Sleeps wherever the ground feels soft.',body:'#73905b',belly:'#c9d5a5',habitat:'woodland',form:'round'},
   {id:'pebble-pip',name:'Pebble Pip',clue:'stone',rarity:'Common',bio:'Collects the smallest stones for very serious reasons.',body:'#7f8b82',belly:'#d6d2bd',habitat:'urban',form:'ears'},
-  {id:'dandy-drift',name:'Dandy Drift',clue:'flower',rarity:'Uncommon',bio:'Rides the breeze and never hurries home.',body:'#efe1a1',belly:'#fff7d4',habitat:'meadow',form:'wings'},
+  {id:'dandy-drift',name:'Dandy Drift',clue:'dandelion',rarity:'Uncommon',bio:'Rides the breeze and never hurries home.',body:'#efe1a1',belly:'#fff7d4',habitat:'meadow',form:'round'},
   {id:'barkback',name:'Barkback',clue:'bark',rarity:'Common',bio:'Knows every old tree by its wrinkles.',body:'#745540',belly:'#cba77d',habitat:'woodland',form:'horns'},
   {id:'puddle-purl',name:'Puddle Purl',clue:'water',rarity:'Uncommon',bio:'Appears just after rain and leaves no footprints.',body:'#4e92a1',belly:'#a8d6d2',habitat:'wetland',form:'fins'},
-  {id:'sunseed',name:'Sunseed',clue:'flower',rarity:'Common',bio:'Carries a pocket of warm afternoon light.',body:'#e3a82f',belly:'#fae7a3',habitat:'meadow',form:'wings'},
+  {id:'sunseed',name:'Sunseed',clue:'sunflower',rarity:'Common',bio:'Carries a pocket of warm afternoon light.',body:'#e3a82f',belly:'#fae7a3',habitat:'meadow',form:'round'},
+  {id:'rosette-rumble',name:'Rosette Rumble',clue:'rose',rarity:'Uncommon',bio:'Tumbles through rose beds without bending a single thorn.',body:'#cf493d',belly:'#f3ab76',habitat:'meadow',form:'ears'},
+  {id:'daisy-doodle',name:'Daisy Doodle',clue:'daisy',rarity:'Common',bio:'Draws sunny circles wherever the path feels lonely.',body:'#f4e9c8',belly:'#f2c347',habitat:'meadow',form:'round'},
+  {id:'poppy-bop',name:'Poppy Bop',clue:'poppy',rarity:'Uncommon',bio:'Bounces once whenever a breeze crosses the field.',body:'#dd4f38',belly:'#49372d',habitat:'meadow',form:'round'},
+  {id:'bluebell-bounce',name:'Bluebell Bounce',clue:'bluebell',rarity:'Rare',bio:'Rings a tiny blue note that only beetles can hear.',body:'#4e82c8',belly:'#b7d3df',habitat:'woodland',form:'ears'},
+  {id:'lotus-loop',name:'Lotus Loop',clue:'lotus',rarity:'Rare',bio:'Glides in quiet circles at the edge of still water.',body:'#2d8c83',belly:'#f1d795',habitat:'wetland',form:'round'},
+  {id:'snapdragon-sprout',name:'Snapdragon Sprout',clue:'snapdragon',rarity:'Rare',bio:'Looks dragon-sized to ants and treats them very kindly.',body:'#e69a2e',belly:'#f5d56d',habitat:'dry',form:'horns'},
   {id:'mooncap',name:'Mooncap',clue:'mushroom',rarity:'Rare',bio:'Only wakes when the shadows grow long.',body:'#665d7a',belly:'#cfc4d4',habitat:'woodland',form:'cap'},
   {id:'clover-skip',name:'Clover Skip',clue:'clover',rarity:'Common',bio:'Lucky, but far too polite to mention it.',body:'#4f8a58',belly:'#cae6b8',habitat:'meadow',form:'ears'},
   {id:'pinecone-pal',name:'Pinecone Pal',clue:'cone',rarity:'Uncommon',bio:'Builds perfect towers when nobody is watching.',body:'#875e39',belly:'#d2aa72',habitat:'woodland',form:'horns'},
@@ -19,12 +25,14 @@ const CREATURES = [
   {id:'star-nook',name:'Star Nook',clue:'starlight',rarity:'Legendary',bio:'A patient listener from somewhere very far away.',body:'#273f55',belly:'#f1cb6a',habitat:'any',form:'horns'}
 ];
 
-const CLUE_LABELS={leaf:'maple leaf',moss:'patch of moss',stone:'small stone',flower:'wildflower',bark:'piece of bark',water:'rain puddle',mushroom:'mushroom cap',clover:'clover',cone:'pinecone',shell:'seashell',cloud:'small cloud',acorn:'acorn',reed:'river reed',brick:'warm brick',snow:'snow crystal',ash:'charcoal fleck',starlight:'pinprick of light'};
+const CLUE_LABELS={leaf:'maple leaf',moss:'patch of moss',stone:'small stone',flower:'flower',dandelion:'dandelion',sunflower:'sunflower',rose:'rose',daisy:'daisy',poppy:'poppy',bluebell:'bluebell',lotus:'lotus',snapdragon:'snapdragon',bark:'piece of bark',water:'rain puddle',mushroom:'mushroom cap',clover:'clover',cone:'pinecone',shell:'seashell',cloud:'small cloud',acorn:'acorn',reed:'river reed',brick:'warm brick',snow:'snow crystal',ash:'charcoal fleck',starlight:'pinprick of light'};
+const SPECIES_LABELS={leaf:'Leaf',moss:'Moss',stone:'Rock',dandelion:'Dandelion',sunflower:'Sunflower',rose:'Rose',daisy:'Daisy',poppy:'Poppy',bluebell:'Bluebell',lotus:'Lotus',snapdragon:'Snapdragon',bark:'Bark',water:'Water',mushroom:'Mushroom',clover:'Clover',cone:'Pinecone',shell:'Seashell',cloud:'Cloud',acorn:'Acorn',reed:'Reed',brick:'Brick',snow:'Snow',ash:'Ash',starlight:'Starlight'};
+const FLOWER_CLUES=new Set(['dandelion','sunflower','rose','daisy','poppy','bluebell','lotus','snapdragon']);
 const VISION_TARGETS=[
   {label:'a single tree leaf',clue:'leaf'},
   {label:'a patch of green moss',clue:'moss'},
   {label:'a natural rock or pebble',clue:'stone'},
-  {label:'a flower blossom',clue:'flower'},
+  {label:'a clearly visible flower blossom',clue:'flower'},
   {label:'rough tree bark',clue:'bark'},
   {label:'a puddle of water',clue:'water'},
   {label:'a mushroom cap',clue:'mushroom'},
@@ -45,10 +53,21 @@ const VISION_TARGETS=[
   {label:'blurry camera motion',clue:null},
   {label:'plain grass or soil with no centered object',clue:null}
 ];
+const FLOWER_TARGETS=[
+  {label:'a yellow dandelion flower or white dandelion seed head',clue:'dandelion'},
+  {label:'a large yellow sunflower with a dark brown center',clue:'sunflower'},
+  {label:'a layered rose flower',clue:'rose'},
+  {label:'a white daisy flower with a yellow center',clue:'daisy'},
+  {label:'a red poppy flower with a dark center',clue:'poppy'},
+  {label:'a cluster of bluebell flowers shaped like blue bells',clue:'bluebell'},
+  {label:'a lotus flower growing above water',clue:'lotus'},
+  {label:'an orange or pink snapdragon flower',clue:'snapdragon'},
+  {label:'a different kind of flower',clue:null}
+];
 const $=query=>document.querySelector(query);
 const storedFound=()=>{try{return JSON.parse(localStorage.getItem('wildlings-found')||'[]')}catch{return []}};
 const storedTrailSeed=()=>{try{return Number(localStorage.getItem('wildlings-trail-seed'))||20260802}catch{return 20260802}};
-const state={heading:0,targetBearing:110,hasOrientation:false,dragging:false,dragX:0,scan:0,discovered:false,active:null,queue:[],queueIndex:0,found:new Set(storedFound()),trailSeed:storedTrailSeed(),facing:'environment',stream:null,habitat:'meadow',audio:null,cameraReady:false,visionMode:'idle',classifier:null,RawImage:null,visionBusy:false,stableClue:null,stableHits:0,stableScoreTotal:0};
+const state={heading:0,targetBearing:110,hasOrientation:false,dragging:false,dragX:0,scan:0,discovered:false,active:null,queue:[],queueIndex:0,found:new Set(storedFound()),trailSeed:storedTrailSeed(),facing:'environment',stream:null,habitat:'meadow',audio:null,cameraReady:false,visionMode:'idle',classifier:null,RawImage:null,visionBusy:false,stableClue:null,stableHits:0,stableScoreTotal:0,detectionHistory:[]};
 
 function seeded(seed){let value=seed>>>0;return()=>{value+=0x6d2b79f5;let mixed=value;mixed=Math.imul(mixed^(mixed>>>15),mixed|1);mixed^=mixed+Math.imul(mixed^(mixed>>>7),mixed|61);return((mixed^(mixed>>>14))>>>0)/4294967296}}
 function hashString(value){let h=2166136261;for(const char of value){h^=char.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
@@ -64,7 +83,7 @@ function creatureArt(c,mini=false){
 function clueArt(type){
   const line=`stroke="#172019" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"`;
   if(type==='leaf'||type==='clover')return`<svg viewBox="0 0 160 160"><path d="M80 137V69" ${line}/><path d="M79 82C50 68 28 42 31 22c14 8 29 6 42 23 8-14 17-22 28-29 1 16 9 25 26 31-7 20-23 37-48 35Z" fill="${type==='leaf'?'#c85a39':'#5d995e'}" ${line}/>${type==='clover'?'<circle cx="61" cy="48" r="19" fill="#69a769"/><circle cx="91" cy="45" r="19" fill="#69a769"/><circle cx="79" cy="67" r="19" fill="#69a769"/>':''}</svg>`;
-  if(type==='flower')return`<svg viewBox="0 0 160 160"><path d="M80 137V77" ${line}/><g fill="#f1d56e" ${line}><circle cx="80" cy="47" r="18"/><circle cx="55" cy="63" r="18"/><circle cx="105" cy="63" r="18"/><circle cx="66" cy="89" r="18"/><circle cx="94" cy="89" r="18"/></g><circle cx="80" cy="69" r="15" fill="#8a613c"/></svg>`;
+  if(type==='flower'||FLOWER_CLUES.has(type)){const colors={dandelion:'#efe1a1',sunflower:'#e9b52d',rose:'#cf493d',daisy:'#f4f0e5',poppy:'#df4d37',bluebell:'#587fc2',lotus:'#f0d79f',snapdragon:'#e89a31'};return`<svg viewBox="0 0 160 160"><path d="M80 137V77" ${line}/><g fill="${colors[type]||'#f1d56e'}" ${line}><circle cx="80" cy="47" r="18"/><circle cx="55" cy="63" r="18"/><circle cx="105" cy="63" r="18"/><circle cx="66" cy="89" r="18"/><circle cx="94" cy="89" r="18"/></g><circle cx="80" cy="69" r="15" fill="${type==='daisy'?'#e3a82f':'#8a613c'}"/></svg>`}
   if(type==='water'||type==='shell'||type==='reed')return`<svg viewBox="0 0 160 160"><ellipse cx="80" cy="106" rx="57" ry="22" fill="#6eb0ba" ${line}/><path d="M42 105q18-14 37 0t38 0" fill="none" stroke="#d6f0eb" stroke-width="4"/>${type==='reed'?'<path d="M62 104V32m18 72V44m20 60V27" stroke="#63835d" stroke-width="7"/>':''}</svg>`;
   if(type==='mushroom')return`<svg viewBox="0 0 160 160"><path d="M68 68h25l10 65H58Z" fill="#e1d5bc" ${line}/><path d="M27 72C31 24 126 19 135 72Z" fill="#9a6d76" ${line}/><circle cx="67" cy="47" r="7" fill="#f4f0e5"/><circle cx="102" cy="55" r="6" fill="#f4f0e5"/></svg>`;
   if(type==='cloud'||type==='snow'||type==='starlight')return`<svg viewBox="0 0 160 160">${type==='starlight'?'<path d="M80 19l10 39 33-17-22 32 35 17-40-2 3 40-19-35-20 35 4-40-40 2 35-17-22-32 33 17Z" fill="#efc85d" stroke="#172019" stroke-width="3"/>':'<path d="M31 103c-18-28 7-50 31-38 4-36 58-36 62 1 30-5 36 37 7 45H44c-6 0-10-3-13-8Z" fill="#dce5e4" stroke="#172019" stroke-width="3"/>'}</svg>`;
@@ -84,7 +103,7 @@ function buildLocalField(lat=37.7749,lon=-122.4194,label=''){
 
 function spawnNext(){
   if(state.visionMode==='loading'||state.visionMode==='active'){
-    state.active=null;state.discovered=false;state.scan=0;state.stableClue=null;state.stableHits=0;state.stableScoreTotal=0;
+    state.active=null;state.discovered=false;state.scan=0;state.stableClue=null;state.stableHits=0;state.stableScoreTotal=0;state.detectionHistory=[];
     const target=$('#ar-target');target.className='ar-target';target.innerHTML='';delete target.dataset.clue;
     $('#discovery-card').classList.remove('show');$('#reticle').style.setProperty('--scan','0%');$('#reticle').classList.remove('reticle-lock','reticle-checking');
     $('#search-copy').innerHTML='<strong>Show me something real</strong><span>Hold a leaf or rock inside the circle</span>';
@@ -122,8 +141,8 @@ function reveal(){
 function befriend(){
   if(!state.discovered)return;const isNew=!state.found.has(state.active.id);state.found.add(state.active.id);try{localStorage.setItem('wildlings-found',JSON.stringify([...state.found]))}catch{}updateCount();burst();toast(isNew?`${state.active.name} joined your field guide`:`${state.active.name} remembers you`);$('#discovery-card').classList.remove('show');$('#ar-target').classList.remove('visible');setTimeout(spawnNext,1000)
 }
-function updateCount(){$('#found-count').textContent=state.found.size}
-function renderGuide(){$('#field-grid').innerHTML=CREATURES.map(c=>{const found=state.found.has(c.id);return`<article class="field-card ${found?'':'unknown'}"><div class="mini-art">${creatureArt(c,true)}</div><strong>${found?c.name:'Unknown'}</strong><small>${found?c.rarity:'Keep looking'}</small></article>`}).join('')}
+function updateCount(){const validFound=CREATURES.filter(creature=>state.found.has(creature.id)).length;$('#found-count').textContent=validFound;$('#total-count').textContent=CREATURES.length}
+function renderGuide(){$('#field-grid').innerHTML=CREATURES.map(c=>{const found=state.found.has(c.id),species=SPECIES_LABELS[c.clue]||c.clue;return`<article class="field-card ${found?'':'unknown'}" aria-label="${found?c.name:`Unknown ${species} Wildling`}"><div class="mini-art" aria-hidden="true">${creatureArt(c,true)}</div><strong>${found?c.name:'Unknown'}</strong><small class="species-label">${species}</small><small class="profile-status">${found?c.rarity:'Species clue'}</small></article>`}).join('')}
 function openSheet(id){document.querySelectorAll('.sheet').forEach(s=>s.classList.toggle('open',s.id===id));if(id==='guide-sheet')renderGuide()}
 function closeSheets(){document.querySelectorAll('.sheet').forEach(s=>s.classList.remove('open'))}
 
@@ -174,9 +193,9 @@ function drawCameraCrop(){
   const sx=Math.max(0,Math.min(video.videoWidth-size,centerX-size/2)),sy=Math.max(0,Math.min(video.videoHeight-size,centerY-size/2));
   const context=canvas.getContext('2d',{willReadFrequently:true});context.clearRect(0,0,canvas.width,canvas.height);context.drawImage(video,sx,sy,size,size,0,0,canvas.width,canvas.height);return{canvas,quality:frameQuality(canvas)}
 }
-function showPossibleClue(clue,score){
+function showPossibleClue(clue){
   const name=CLUE_LABELS[clue]||clue;state.scan=Math.min(75,state.stableHits*25);$('#reticle').style.setProperty('--scan',`${state.scan}%`);$('#reticle').classList.add('reticle-checking');$('#reticle').classList.remove('reticle-lock');
-  $('#search-copy').innerHTML=`<strong>Checking ${name}</strong><span>Keep only that object inside the circle</span>`;setVisionStatus(`${name} · match ${state.stableHits} of 4`,'checking')
+  $('#search-copy').innerHTML=`<strong>Checking ${name}</strong><span>Keep only that object inside the circle</span>`;setVisionStatus(`${name} · ${state.stableHits} of 4 steady matches`,'checking')
 }
 function showDetectedClue(clue,score){
   state.active=creatureForClue(clue);
@@ -188,9 +207,23 @@ function showDetectedClue(clue,score){
   reveal()
 }
 function clearDetectedClue(message='Center one outdoor object',detail='Fill the circle and hold still',status='Nature Lens is looking'){
-  state.scan=0;state.stableClue=null;state.stableHits=0;state.stableScoreTotal=0;$('#ar-target').classList.remove('visible');
+  state.scan=0;state.stableClue=null;state.stableHits=0;state.stableScoreTotal=0;state.detectionHistory=[];$('#ar-target').classList.remove('visible');
   $('#reticle').style.setProperty('--scan','0%');$('#reticle').classList.remove('reticle-lock','reticle-checking');
   $('#search-copy').innerHTML=`<strong>${message}</strong><span>${detail}</span>`;setVisionStatus(status,'ready')
+}
+function showUncertainDetection(message='Not sure yet',detail='Keep one object centered',status='Checking the object'){
+  state.detectionHistory.push(null);if(state.detectionHistory.length>5)state.detectionHistory.shift();
+  state.scan=Math.max(0,state.scan-18);$('#reticle').style.setProperty('--scan',`${state.scan}%`);$('#reticle').classList.toggle('reticle-checking',state.scan>0);$('#reticle').classList.remove('reticle-lock');
+  $('#search-copy').innerHTML=`<strong>${message}</strong><span>${detail}</span>`;setVisionStatus(status,state.scan>0?'checking':'ready')
+}
+function pickVisionTarget(results,targets,{minScore=.14,minMargin=.018,minDominance=1.16}={}){
+  const best=results[0],runnerUp=results[1],target=targets.find(item=>item.label===best?.label),margin=best.score-(runnerUp?.score||0),dominance=best.score/Math.max(.001,runnerUp?.score||0);
+  return target?.clue&&best.score>=minScore&&margin>=minMargin&&dominance>=minDominance?{target,score:best.score}:null
+}
+function rememberDetectedClue(clue,score){
+  state.detectionHistory.push({clue,score});if(state.detectionHistory.length>5)state.detectionHistory.shift();
+  const matches=state.detectionHistory.filter(item=>item?.clue===clue);state.stableClue=clue;state.stableHits=matches.length;state.stableScoreTotal=matches.reduce((total,item)=>total+item.score,0);
+  if(state.stableHits>=4)showDetectedClue(clue,state.stableScoreTotal/state.stableHits);else showPossibleClue(clue)
 }
 async function scanNatureFrame(){
   if(state.visionMode!=='active'||state.visionBusy||state.discovered||document.querySelector('.sheet.open'))return;
@@ -200,13 +233,17 @@ async function scanNatureFrame(){
     if(frame.quality.mean>238){clearDetectedClue('Too much glare','Tilt the object away from bright light','Reduce glare');return}
     if(frame.quality.contrast<14||frame.quality.edge<4.8){clearDetectedClue('Move a little closer','Fill the circle with one clear object','Object not defined');return}
     const image=state.RawImage.fromCanvas(frame.canvas),labels=VISION_TARGETS.map(target=>target.label);
-    const results=await state.classifier(image,labels,{hypothesis_template:'The object in the center is {}.'});
-    const best=results[0],runnerUp=results[1],target=VISION_TARGETS.find(item=>item.label===best?.label),margin=best.score-(runnerUp?.score||0),dominance=best.score/Math.max(.001,runnerUp?.score||0);
-    const confident=target?.clue&&best.score>=.14&&margin>=.018&&dominance>=1.16;
-    if(!confident){clearDetectedClue('Not sure yet','Show one leaf, rock, flower, or other clue','No clear match');return}
-    if(state.stableClue===target.clue){state.stableHits+=1;state.stableScoreTotal+=best.score}else{state.stableClue=target.clue;state.stableHits=1;state.stableScoreTotal=best.score}
-    const averageScore=state.stableScoreTotal/state.stableHits;
-    if(state.stableHits>=4)showDetectedClue(target.clue,averageScore);else showPossibleClue(target.clue,best.score)
+    const results=await state.classifier(image,labels,{hypothesis_template:'The object in the center is {}.'}),generalMatch=pickVisionTarget(results,VISION_TARGETS);
+    if(!generalMatch){showUncertainDetection('Not sure yet','Show one leaf, rock, flower, or other clue','No clear match');return}
+    let clue=generalMatch.target.clue,score=generalMatch.score;
+    if(clue==='flower'){
+      setVisionStatus('Flower seen · identifying species','checking');
+      const flowerResults=await state.classifier(image,FLOWER_TARGETS.map(target=>target.label),{hypothesis_template:'The flower in the center is {}.'});
+      const flowerMatch=pickVisionTarget(flowerResults,FLOWER_TARGETS,{minScore:.15,minMargin:.018,minDominance:1.12});
+      if(!flowerMatch){showUncertainDetection('Flower found','Move closer so one bloom fills the circle','Checking flower species');return}
+      clue=flowerMatch.target.clue;score=(score+flowerMatch.score)/2
+    }
+    rememberDetectedClue(clue,score)
   }catch(error){console.warn('Nature Lens frame skipped',error);clearDetectedClue()}finally{state.visionBusy=false}
 }
 async function visionLoop(){

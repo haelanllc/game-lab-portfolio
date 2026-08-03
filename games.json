@@ -2,7 +2,7 @@
   {
     "id": "wildlings-ar",
     "title": "Wildlings AR",
-    "description": "An outdoor camera game with on-device vision: hold up a real leaf, rock, flower, bark, moss, pinecone, acorn, mushroom, or puddle and watch the detected object transform into a little local creature.",
+    "description": "An outdoor camera game with 24 creatures and on-device vision: identify real leaves, rocks, flowers, bark, moss, pinecones, acorns, mushrooms, water, and more, then watch each clue transform.",
     "status": "Ready",
     "playUrl": "/games/wildlings-ar/",
     "codeUrl": "",

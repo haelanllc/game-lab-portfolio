@@ -3,7 +3,8 @@
     "serve": "python3 -m http.server 4173",
     "test:shelves": "node scripts/smoke-shelves.js",
     "test:plus": "node scripts/smoke-plus.js",
-    "test:tide-skimmer": "node scripts/smoke-tide-skimmer.js"
+    "test:tide-skimmer": "node scripts/smoke-tide-skimmer.js",
+    "test:wildlings": "node scripts/smoke-wildlings.js"
   },
   "devDependencies": {
     "playwright": "^1.61.1"
