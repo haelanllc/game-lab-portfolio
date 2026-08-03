@@ -2,6 +2,7 @@
 
 ## 2026-08-03
 
+- Added a three-tap creature chase after every reveal: Wildlings scamper around the camera view, can escape after 15 seconds, and only become available to befriend after being caught.
 - Expanded Wildlings AR from 18 to 24 creatures with six cheerful flower species: rose, daisy, poppy, bluebell, lotus, and snapdragon.
 - Added a permanent species clue beneath every field-guide profile, including undiscovered creatures, so players always know which real-world object to seek.
 - Improved Nature Lens with broad-object recognition followed by a flower-specific classification pass and a four-of-five rolling consensus that tolerates one uncertain camera frame without making a wrong reveal.

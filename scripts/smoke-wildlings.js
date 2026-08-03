@@ -5,6 +5,8 @@ const vm = require('node:vm');
 
 const projectRoot = path.resolve(__dirname, '..');
 const gameSource = fs.readFileSync(path.join(projectRoot, 'games/wildlings-ar/game.js'), 'utf8');
+const gameMarkup = fs.readFileSync(path.join(projectRoot, 'games/wildlings-ar/index.html'), 'utf8');
+const gameStyles = fs.readFileSync(path.join(projectRoot, 'games/wildlings-ar/style.css'), 'utf8');
 const definitions = `${gameSource.split('const $=')[0]}\n;globalThis.wildlings={CREATURES,SPECIES_LABELS,FLOWER_CLUES,FLOWER_TARGETS};`;
 const context = {};
 
@@ -29,4 +31,11 @@ for (const creature of flowerCreatures) {
   assert.ok(FLOWER_TARGETS.some(target => target.clue === creature.clue), `Missing flower detector for ${creature.clue}`);
 }
 
-console.log(`Wildlings smoke test passed: ${CREATURES.length} creatures, ${flowerCreatures.length} flower species.`);
+assert.match(gameSource, /function startCatch\(\)/, 'Missing catch start logic');
+assert.match(gameSource, /function attemptCatch\(\)/, 'Missing catch tap logic');
+assert.match(gameSource, /function escapeCatch\(\)/, 'Missing creature escape logic');
+assert.match(gameMarkup, /id="catch-progress"/, 'Missing catch progress interface');
+assert.match(gameMarkup, /id="befriend"[^>]*>♥<\/button>/, 'Missing post-catch friendship control');
+assert.match(gameStyles, /@keyframes scamper/, 'Missing running animation');
+
+console.log(`Wildlings smoke test passed: ${CREATURES.length} creatures, ${flowerCreatures.length} flower species, catch chase ready.`);
