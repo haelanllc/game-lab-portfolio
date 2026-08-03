@@ -23,11 +23,11 @@
     <div class="start-copy">
       <p class="eyebrow">A camera game for curious walkers</p>
       <h1 id="game-title">Find the <em>Wildlings.</em></h1>
-      <p>Turn slowly. A leaf, stone, or flower may be <span>something alive</span>. Every place in the world keeps a different little population.</p>
+      <p>Hold a real leaf, stone, or flower inside the camera circle. The Nature Lens will <span>see it awaken</span>. Every place in the world keeps a different little population.</p>
     </div>
     <div class="start-actions">
       <button class="primary-action" id="start-button"><span>Open the field guide</span><span>→</span></button>
-      <p class="permission-note">Uses your camera, motion, and approximate location while you play. Images never leave this device.</p>
+      <p class="permission-note">Uses your camera and approximate location while you play. The recognition model runs on your phone; images never leave this device.</p>
     </div>
   </section>
 
@@ -37,7 +37,8 @@
       <div class="count-chip"><small>Guide</small><strong><span id="found-count">0</span> / 18</strong></div>
     </div>
     <div class="compass" aria-hidden="true"><div class="compass-track"><span>W</span><span>NW</span><span>N</span><span>NE</span><span>E</span></div></div>
-    <div class="search-copy" id="search-copy"><strong>Turn slowly</strong><span>A nearby clue is rustling</span></div>
+    <div class="search-copy" id="search-copy"><strong>Preparing the Nature Lens</strong><span>Hold a real leaf or rock inside the circle</span></div>
+    <div class="vision-chip" id="vision-status"><i></i><span>Waiting for camera</span></div>
     <div class="reticle" id="reticle"><div class="scan-ring"></div></div>
     <div class="edge-arrow" id="edge-arrow"><span>↑</span></div>
     <button class="ar-target" id="ar-target" aria-label="Hidden nature clue"></button>
@@ -63,15 +64,16 @@
     <div class="sheet-handle"></div>
     <div class="sheet-head"><div><p>Field method</p><h2 id="info-title">How to look</h2></div><button class="close-sheet" aria-label="Close instructions">×</button></div>
     <div class="about-copy">
-      <p><strong>1.</strong> Go outdoors and turn your camera slowly. The arrow points toward a hidden clue.</p>
-      <p><strong>2.</strong> Hold the clue inside the circle. A leaf, bit of bark, flower, stone, cloud, or puddle will transform.</p>
+      <p><strong>1.</strong> Go outdoors and place a real leaf, rock, flower, bark, moss, pinecone, acorn, mushroom, or puddle inside the circle.</p>
+      <p><strong>2.</strong> Hold still while the Nature Lens recognizes it. The real object becomes the clue and transforms into a matching creature.</p>
       <p><strong>3.</strong> Tap the ＋ to befriend the Wildling. Walk somewhere new to meet a different local population.</p>
       <hr>
-      <p>The camera view stays on your device. Location is rounded into a broad habitat cell and is not stored or sent anywhere.</p>
+      <p>The recognition model downloads on first play, then analyzes small camera crops on your device. Camera images are never uploaded. Location is rounded into a broad habitat cell and is not stored or sent anywhere.</p>
       <div class="setting-row"><span>Camera direction</span><button id="flip-camera">Flip camera</button></div>
       <div class="setting-row"><span>Start a new local trail</span><button id="new-trail">New trail</button></div>
     </div>
   </section>
+  <canvas id="vision-canvas" width="224" height="224" hidden></canvas>
   <div class="toast" id="toast" role="status"></div>
   <script src="game.js"></script>
 </body>
