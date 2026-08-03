@@ -4,9 +4,11 @@
     "test:shelves": "node scripts/smoke-shelves.js",
     "test:plus": "node scripts/smoke-plus.js",
     "test:tide-skimmer": "node scripts/smoke-tide-skimmer.js",
-    "test:wildlings": "node scripts/smoke-wildlings.js"
+    "test:wildlings": "node scripts/smoke-wildlings.js",
+    "test:flower-vision": "node scripts/test-flower-vision.mjs"
   },
   "devDependencies": {
+    "@huggingface/transformers": "3.7.3",
     "playwright": "^1.61.1"
   }
 }

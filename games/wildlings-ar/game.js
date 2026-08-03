@@ -1,4 +1,4 @@
-const CREATURES = [
+const BASE_CREATURES = [
   {id:'maple-mote',name:'Maple Mote',clue:'leaf',rarity:'Common',bio:'A tiny keeper of autumn color.',body:'#c85a39',belly:'#f0bc55',habitat:'woodland',form:'ears'},
   {id:'mosskin',name:'Mosskin',clue:'moss',rarity:'Common',bio:'Sleeps wherever the ground feels soft.',body:'#73905b',belly:'#c9d5a5',habitat:'woodland',form:'round'},
   {id:'pebble-pip',name:'Pebble Pip',clue:'stone',rarity:'Common',bio:'Collects the smallest stones for very serious reasons.',body:'#7f8b82',belly:'#d6d2bd',habitat:'urban',form:'ears'},
@@ -24,6 +24,41 @@ const CREATURES = [
   {id:'cinderfinch',name:'Cinderfinch',clue:'ash',rarity:'Rare',bio:'Follows campfire stories after the flames go out.',body:'#4e4a45',belly:'#e47843',habitat:'dry',form:'wings'},
   {id:'star-nook',name:'Star Nook',clue:'starlight',rarity:'Legendary',bio:'A patient listener from somewhere very far away.',body:'#273f55',belly:'#f1cb6a',habitat:'any',form:'horns'}
 ];
+
+const REGIONAL_LINEAGES = [
+  {sprite:'maple-mote',clue:'leaf',names:['Amber Sprig','Copper Canopy','Ruby Rustle','Golden Frond','Silver Vein']},
+  {sprite:'mosskin',clue:'moss',names:['Velvet Mossling','Ferny Cushion','Emerald Nap','Lichen Loaf','Dewy Tuft']},
+  {sprite:'pebble-pip',clue:'stone',names:['Granite Skip','Quartz Nibble','Slate Scoot','Jasper Jot','Marble Munch']},
+  {sprite:'barkback',clue:'bark',names:['Cedar Crinkle','Birch Bouncer','Oak Knurl','Willow Rind','Redwood Ruffle']},
+  {sprite:'puddle-purl',clue:'water',names:['Ripple Rollo','Brook Bubble','Rainy Rill','Lagoon Loop','Drizzle Drop']},
+  {sprite:'mooncap',clue:'mushroom',names:['Chanterelle Chuckle','Porcini Pounce','Inkcap Wink','Morel Muddle','Truffle Trot']},
+  {sprite:'clover-skip',clue:'clover',names:['Lucky Lilt','Shamrock Shuffle','Meadow Trefoil','Clover Curl','Greenwish']},
+  {sprite:'pinecone-pal',clue:'cone',names:['Spruce Tumble','Fir Fidget','Cedar Conekin','Larch Loper','Sequoia Scale']},
+  {sprite:'tide-twill',clue:'shell',names:['Coral Coil','Pearl Paddle','Whelk Whirl','Scallop Skim','Nautilus Nod']},
+  {sprite:'cloudlet',clue:'cloud',names:['Nimbus Nudge','Cirrus Scoot','Cumulus Cuddle','Misty Mallow','Raincloud Roll']},
+  {sprite:'acorn-orbit',clue:'acorn',names:['Oaklet Orbit','Chestnut Chuck','Hazel Hop','Bur Oak Bounce','Woodland Nutkin']},
+  {sprite:'reed-whistle',clue:'reed',names:['Cattail Cadence','Rush Ripple','Bulrush Beat','Sedge Song','Marsh Piper']},
+  {sprite:'brickbit',clue:'brick',names:['Terracotta Tuck','Clay Click','Mortar Mite','Ember Brickle','Cobble Kiln']},
+  {sprite:'frost-fleck',clue:'snow',names:['Powder Pounce','Crystal Kip','Flurry Floof','Glacier Glint','Icicle Skip']},
+  {sprite:'cinderfinch',clue:'ash',names:['Sooty Spark','Charcoal Chirp','Ember Ashling','Cinder Swoop','Campfire Fleck']}
+];
+const REGIONAL_RARITIES=['Common','Common','Uncommon','Uncommon','Rare'];
+const slugifyName=name=>name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+const REGIONAL_CREATURES=REGIONAL_LINEAGES.flatMap((lineage,lineageIndex)=>{
+  const original=BASE_CREATURES.find(creature=>creature.id===lineage.sprite);
+  return lineage.names.map((name,variantIndex)=>({
+    ...original,
+    id:`regional-${slugifyName(name)}`,
+    name,
+    clue:lineage.clue,
+    rarity:REGIONAL_RARITIES[variantIndex],
+    bio:`A ${lineage.clue} Wildling shaped by a different corner of the world.`,
+    sprite:lineage.sprite,
+    regional:true,
+    artFilter:`hue-rotate(${(lineageIndex*29+variantIndex*51)%360}deg) saturate(${.84+variantIndex*.12}) brightness(${.92+(variantIndex%3)*.08})`
+  }))
+});
+const CREATURES=[...BASE_CREATURES,...REGIONAL_CREATURES];
 
 const CLUE_LABELS={leaf:'maple leaf',moss:'patch of moss',stone:'small stone',flower:'flower',dandelion:'dandelion',sunflower:'sunflower',rose:'rose',daisy:'daisy',poppy:'poppy',bluebell:'bluebell',lotus:'lotus',snapdragon:'snapdragon',bark:'piece of bark',water:'rain puddle',mushroom:'mushroom cap',clover:'clover',cone:'pinecone',shell:'seashell',cloud:'small cloud',acorn:'acorn',reed:'river reed',brick:'warm brick',snow:'snow crystal',ash:'charcoal fleck',starlight:'pinprick of light'};
 const SPECIES_LABELS={leaf:'Leaf',moss:'Moss',stone:'Rock',dandelion:'Dandelion',sunflower:'Sunflower',rose:'Rose',daisy:'Daisy',poppy:'Poppy',bluebell:'Bluebell',lotus:'Lotus',snapdragon:'Snapdragon',bark:'Bark',water:'Water',mushroom:'Mushroom',clover:'Clover',cone:'Pinecone',shell:'Seashell',cloud:'Cloud',acorn:'Acorn',reed:'Reed',brick:'Brick',snow:'Snow',ash:'Ash',starlight:'Starlight'};
@@ -54,20 +89,40 @@ const VISION_TARGETS=[
   {label:'plain grass or soil with no centered object',clue:null}
 ];
 const FLOWER_TARGETS=[
-  {label:'a yellow dandelion flower or white dandelion seed head',clue:'dandelion'},
-  {label:'a large yellow sunflower with a dark brown center',clue:'sunflower'},
-  {label:'a layered rose flower',clue:'rose'},
-  {label:'a white daisy flower with a yellow center',clue:'daisy'},
-  {label:'a red poppy flower with a dark center',clue:'poppy'},
-  {label:'a cluster of bluebell flowers shaped like blue bells',clue:'bluebell'},
-  {label:'a lotus flower growing above water',clue:'lotus'},
-  {label:'an orange or pink snapdragon flower',clue:'snapdragon'},
-  {label:'a different kind of flower',clue:null}
+  {label:'a round yellow dandelion flower with many thin petals',clue:'dandelion'},
+  {label:'a white spherical dandelion seed head',clue:'dandelion'},
+  {label:'a low dandelion bloom above toothed leaves',clue:'dandelion'},
+  {label:'a large sunflower with broad yellow petals and a dark seed disk',clue:'sunflower'},
+  {label:'one tall sunflower facing the camera',clue:'sunflower'},
+  {label:'a sunflower head with a large brown circular center',clue:'sunflower'},
+  {label:'a rose blossom with layered spiral petals',clue:'rose'},
+  {label:'a many-petaled rose bloom seen close up',clue:'rose'},
+  {label:'a cup-shaped rose with tightly overlapping petals',clue:'rose'},
+  {label:'a white daisy with thin petals and a yellow button center',clue:'daisy'},
+  {label:'a small round daisy flower seen from the front',clue:'daisy'},
+  {label:'a daisy bloom with a single ring of white petals',clue:'daisy'},
+  {label:'a single open red poppy with four broad papery petals and a dark black center',clue:'poppy'},
+  {label:'a flat red poppy seen from the front with a black seed center',clue:'poppy'},
+  {label:'one cup-shaped red poppy bloom on a thin stem',clue:'poppy'},
+  {label:'a drooping cluster of small blue bell-shaped flowers',clue:'bluebell'},
+  {label:'many bluebells hanging downward from curved stems',clue:'bluebell'},
+  {label:'a woodland bluebell with narrow blue petals',clue:'bluebell'},
+  {label:'a layered pink or white lotus flower floating above water',clue:'lotus'},
+  {label:'a symmetrical lotus bloom beside a round lily pad',clue:'lotus'},
+  {label:'an open lotus with many pointed petals around a yellow center',clue:'lotus'},
+  {label:'a tall upright stalk covered with many small tubular snapdragon flowers',clue:'snapdragon'},
+  {label:'a cluster of orange or pink dragon-mouth blossoms on a vertical stem',clue:'snapdragon'},
+  {label:'many narrow blossoms on one tall spike, not a single flat flower',clue:'snapdragon'},
+  {label:'a different kind of flower not described here',clue:null},
+  {label:'only green leaves with no visible flower',clue:null},
+  {label:'a hand or background rather than one flower',clue:null}
 ];
 const $=query=>document.querySelector(query);
 const storedFound=()=>{try{return JSON.parse(localStorage.getItem('wildlings-found')||'[]')}catch{return []}};
 const storedTrailSeed=()=>{try{return Number(localStorage.getItem('wildlings-trail-seed'))||20260802}catch{return 20260802}};
-const state={heading:0,targetBearing:110,hasOrientation:false,dragging:false,dragX:0,scan:0,discovered:false,active:null,queue:[],queueIndex:0,found:new Set(storedFound()),trailSeed:storedTrailSeed(),facing:'environment',stream:null,habitat:'meadow',audio:null,cameraReady:false,visionMode:'idle',classifier:null,RawImage:null,visionBusy:false,stableClue:null,stableHits:0,stableScoreTotal:0,detectionHistory:[],catching:false,caught:false,catchHits:0,catchX:0,catchY:0,catchVX:0,catchVY:0,catchFrame:0,catchLastTime:0,catchDeadline:0,catchSecond:-1,catchReadyTimer:0};
+const storedWalkProgress=()=>{try{return JSON.parse(localStorage.getItem('wildlings-walk-progress')||'{}')}catch{return {}}};
+const storedWalkCompanion=()=>{try{return localStorage.getItem('wildlings-walk-companion')||''}catch{return ''}};
+const state={heading:0,targetBearing:110,hasOrientation:false,dragging:false,dragX:0,scan:0,discovered:false,active:null,queue:[],queueIndex:0,found:new Set(storedFound()),trailSeed:storedTrailSeed(),facing:'environment',stream:null,habitat:'meadow',audio:null,cameraReady:false,visionMode:'idle',classifier:null,RawImage:null,visionBusy:false,stableClue:null,stableHits:0,stableScoreTotal:0,detectionHistory:[],catching:false,caught:false,catchHits:0,catchX:0,catchY:0,catchVX:0,catchVY:0,catchFrame:0,catchLastTime:0,catchDeadline:0,catchSecond:-1,catchReadyTimer:0,guideQuery:'',walkCompanionId:storedWalkCompanion(),walkProgress:storedWalkProgress(),walkWatchId:null,lastWalkPosition:null};
 
 function seeded(seed){let value=seed>>>0;return()=>{value+=0x6d2b79f5;let mixed=value;mixed=Math.imul(mixed^(mixed>>>15),mixed|1);mixed^=mixed+Math.imul(mixed^(mixed>>>7),mixed|61);return((mixed^(mixed>>>14))>>>0)/4294967296}}
 function hashString(value){let h=2166136261;for(const char of value){h^=char.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
@@ -77,7 +132,8 @@ function shuffle(items,random){const copy=[...items];for(let index=copy.length-1
 function creatureArt(c,mini=false){
   const alt=mini?c.name:'';
   const loading=mini?' loading="lazy"':'';
-  return `<img class="wildling-sprite" src="assets/creatures/${c.id}.png" alt="${alt}"${loading}>`
+  const style=c.artFilter?` style="filter:${c.artFilter}"`:'';
+  return `<img class="wildling-sprite" src="assets/creatures/${c.sprite||c.id}.png" alt="${alt}"${loading}${style}>`
 }
 
 function clueArt(type){
@@ -140,10 +196,42 @@ function reveal(){
 }
 
 function befriend(){
-  if(!state.discovered||!state.caught)return;const isNew=!state.found.has(state.active.id);state.found.add(state.active.id);try{localStorage.setItem('wildlings-found',JSON.stringify([...state.found]))}catch{}updateCount();burst();toast(isNew?`${state.active.name} is your friend now`:`${state.active.name} remembers you`);$('#discovery-card').classList.remove('show');$('#ar-target').classList.remove('visible');state.caught=false;setTimeout(spawnNext,1000)
+  if(!state.discovered||!state.caught)return;const isNew=!state.found.has(state.active.id);state.found.add(state.active.id);try{localStorage.setItem('wildlings-found',JSON.stringify([...state.found]))}catch{}updateCount();burst();if(!state.walkCompanionId)selectWalkCompanion(state.active.id,false);toast(isNew?`${state.active.name} is your friend now`:`${state.active.name} remembers you`);$('#discovery-card').classList.remove('show');$('#ar-target').classList.remove('visible');state.caught=false;setTimeout(spawnNext,1000)
 }
 function updateCount(){const validFound=CREATURES.filter(creature=>state.found.has(creature.id)).length;$('#found-count').textContent=validFound;$('#total-count').textContent=CREATURES.length}
-function renderGuide(){$('#field-grid').innerHTML=CREATURES.map(c=>{const found=state.found.has(c.id),species=SPECIES_LABELS[c.clue]||c.clue;return`<article class="field-card ${found?'':'unknown'}" aria-label="${found?c.name:`Unknown ${species} Wildling`}"><div class="mini-art" aria-hidden="true">${creatureArt(c,true)}</div><strong>${found?c.name:'Unknown'}</strong><small class="species-label">${species}</small><small class="profile-status">${found?c.rarity:'Species clue'}</small></article>`}).join('')}
+function walkDistanceFor(id){return Math.max(0,Number(state.walkProgress[id])||0)}
+function walkLevelFor(id){return Math.min(100,1+Math.floor(walkDistanceFor(id)/250))}
+function formatWalkDistance(meters){return meters>=1000?`${(meters/1000).toFixed(meters>=10000?0:1)} km`:`${Math.floor(meters)} m`}
+function persistWalkProgress(){try{localStorage.setItem('wildlings-walk-progress',JSON.stringify(state.walkProgress))}catch{}}
+function updateWalkChip(){
+  const chip=$('#walk-chip'),creature=CREATURES.find(item=>item.id===state.walkCompanionId&&state.found.has(item.id));
+  if(!creature){chip.hidden=true;return}
+  chip.hidden=false;$('#walk-art').innerHTML=creatureArt(creature);$('#walk-name').textContent=creature.name;$('#walk-level').textContent=`Lv ${walkLevelFor(creature.id)}`;$('#walk-distance').textContent=formatWalkDistance(walkDistanceFor(creature.id))
+}
+function selectWalkCompanion(id,announce=true){
+  const creature=CREATURES.find(item=>item.id===id);if(!creature||!state.found.has(id))return;
+  state.walkCompanionId=id;state.lastWalkPosition=null;try{localStorage.setItem('wildlings-walk-companion',id)}catch{}updateWalkChip();startWalkTracking();if(document.querySelector('#guide-sheet.open'))renderGuide();if(announce){closeSheets();toast(`${creature.name} is walking with you`)}
+}
+function haversineMeters(a,b){
+  const radians=value=>value*Math.PI/180,earth=6371000,dLat=radians(b.latitude-a.latitude),dLon=radians(b.longitude-a.longitude),lat1=radians(a.latitude),lat2=radians(b.latitude),h=Math.sin(dLat/2)**2+Math.cos(lat1)*Math.cos(lat2)*Math.sin(dLon/2)**2;return earth*2*Math.atan2(Math.sqrt(h),Math.sqrt(1-h))
+}
+function handleWalkPosition(position){
+  if(!state.walkCompanionId||!state.found.has(state.walkCompanionId)||!document.body.classList.contains('playing'))return;
+  const current={latitude:position.coords.latitude,longitude:position.coords.longitude,accuracy:position.coords.accuracy,timestamp:position.timestamp||Date.now()};
+  if(!Number.isFinite(current.latitude)||!Number.isFinite(current.longitude)||current.accuracy>80)return;
+  const previous=state.lastWalkPosition;state.lastWalkPosition=current;if(!previous)return;
+  const meters=haversineMeters(previous,current),seconds=Math.max(1,(current.timestamp-previous.timestamp)/1000),speed=meters/seconds;if(meters<2||meters>250||speed>8)return;
+  const id=state.walkCompanionId,oldLevel=walkLevelFor(id);state.walkProgress[id]=walkDistanceFor(id)+meters;persistWalkProgress();updateWalkChip();const newLevel=walkLevelFor(id);if(newLevel>oldLevel){const creature=CREATURES.find(item=>item.id===id);toast(`${creature.name} reached level ${newLevel}!`);ping(920,.1)}
+}
+function startWalkTracking(){
+  if(!navigator.geolocation||!state.walkCompanionId||state.walkWatchId!==null)return;
+  state.walkWatchId=navigator.geolocation.watchPosition(handleWalkPosition,()=>{state.lastWalkPosition=null},{enableHighAccuracy:true,maximumAge:15000,timeout:20000})
+}
+function renderGuide(){
+  const query=state.guideQuery.trim().toLowerCase(),visible=CREATURES.filter(c=>!query||c.name.toLowerCase().includes(query)||(SPECIES_LABELS[c.clue]||c.clue).toLowerCase().includes(query));
+  $('#guide-result-count').textContent=`${visible.length} of ${CREATURES.length}`;
+  $('#field-grid').innerHTML=visible.length?visible.map(c=>{const found=state.found.has(c.id),species=SPECIES_LABELS[c.clue]||c.clue,walking=state.walkCompanionId===c.id,status=found?`${c.rarity} · Lv ${walkLevelFor(c.id)}`:'Species clue';return`<article class="field-card ${found?'':'unknown'} ${walking?'walking':''}" aria-label="${found?c.name:`Unknown ${species} Wildling`}"><div class="mini-art" aria-hidden="true">${creatureArt(c,true)}</div><strong>${found?c.name:'Unknown'}</strong><small class="species-label">${species}</small><small class="profile-status">${status}</small>${c.regional?'<small class="regional-mark">Regional form</small>':''}${found?`<button class="walk-button" data-walk-id="${c.id}" ${walking?'disabled':''}>${walking?'Walking':'Walk together'}</button>`:''}</article>`}).join(''):'<p class="guide-empty">No Wildlings match that search.</p>'
+}
 function openSheet(id){if(state.catching){toast(`Catch ${state.active.name} first!`);return}document.querySelectorAll('.sheet').forEach(s=>s.classList.toggle('open',s.id===id));if(id==='guide-sheet')renderGuide()}
 function closeSheets(){document.querySelectorAll('.sheet').forEach(s=>s.classList.remove('open'))}
 
@@ -253,6 +341,12 @@ function pickVisionTarget(results,targets,{minScore=.14,minMargin=.018,minDomina
   const best=results[0],runnerUp=results[1],target=targets.find(item=>item.label===best?.label),margin=best.score-(runnerUp?.score||0),dominance=best.score/Math.max(.001,runnerUp?.score||0);
   return target?.clue&&best.score>=minScore&&margin>=minMargin&&dominance>=minDominance?{target,score:best.score}:null
 }
+function pickGroupedVisionTarget(results,targets,{minScore=.08,minMargin=.01,minDominance=1.08}={}){
+  const scores=new Map();for(const result of results){const target=targets.find(item=>item.label===result.label),key=target?.clue||'other';scores.set(key,(scores.get(key)||0)+result.score)}
+  const ranked=[...scores.entries()].sort((a,b)=>b[1]-a[1]),[bestClue,bestScore]=ranked[0]||['other',0],[runnerClue,runnerScore]=ranked[1]||['other',0],margin=bestScore-runnerScore,dominance=bestScore/Math.max(.001,runnerScore);
+  const poppySnapdragon=new Set([bestClue,runnerClue]);if(poppySnapdragon.has('poppy')&&poppySnapdragon.has('snapdragon')&&(margin<.018||dominance<1.16))return{ambiguous:true,bestClue,runnerClue,score:bestScore};
+  const target=targets.find(item=>item.clue===bestClue);return bestClue!=='other'&&target&&bestScore>=minScore&&margin>=minMargin&&dominance>=minDominance?{target,score:bestScore,runnerClue}:null
+}
 function rememberDetectedClue(clue,score){
   state.detectionHistory.push({clue,score});if(state.detectionHistory.length>5)state.detectionHistory.shift();
   const matches=state.detectionHistory.filter(item=>item?.clue===clue);state.stableClue=clue;state.stableHits=matches.length;state.stableScoreTotal=matches.reduce((total,item)=>total+item.score,0);
@@ -272,8 +366,9 @@ async function scanNatureFrame(){
     if(clue==='flower'){
       setVisionStatus('Flower seen · identifying species','checking');
       const flowerResults=await state.classifier(image,FLOWER_TARGETS.map(target=>target.label),{hypothesis_template:'The flower in the center is {}.'});
-      const flowerMatch=pickVisionTarget(flowerResults,FLOWER_TARGETS,{minScore:.15,minMargin:.018,minDominance:1.12});
-      if(!flowerMatch){showUncertainDetection('Flower found','Move closer so one bloom fills the circle','Checking flower species');return}
+      const flowerMatch=pickGroupedVisionTarget(flowerResults,FLOWER_TARGETS);
+      if(flowerMatch?.ambiguous){showUncertainDetection('Poppy or snapdragon?','Fill the circle with one flat bloom or one full flower stalk','Need a clearer flower shape');return}
+      if(!flowerMatch){showUncertainDetection('Flower found','Move closer so one bloom or stalk fills the circle','Checking flower species');return}
       clue=flowerMatch.target.clue;score=(score+flowerMatch.score)/2
     }
     rememberDetectedClue(clue,score)
@@ -291,13 +386,16 @@ async function startNatureLens(){
     state.visionMode='active';setVisionStatus('Nature Lens is looking','ready');spawnNext();visionLoop()
   }catch(error){console.warn('Nature Lens unavailable',error);state.visionMode='fallback';$('#reticle').classList.remove('vision-ready');setVisionStatus('Virtual trail · lens offline');toast('Nature Lens could not load — virtual trail is active');if(state.queue.length)spawnNext()}
 }
-async function begin(){document.body.classList.add('playing');updateCount();await Promise.allSettled([startCamera(),startMotion()]);startLocation();startNatureLens()}
+async function begin(){document.body.classList.add('playing');updateCount();updateWalkChip();startWalkTracking();await Promise.allSettled([startCamera(),startMotion()]);startLocation();startNatureLens()}
 function toast(message){const el=$('#toast');el.textContent=message;el.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.remove('show'),2600)}
 function ping(freq,volume){try{state.audio||=new(window.AudioContext||window.webkitAudioContext)();const osc=state.audio.createOscillator(),gain=state.audio.createGain();osc.frequency.value=freq;osc.type='sine';gain.gain.setValueAtTime(volume,state.audio.currentTime);gain.gain.exponentialRampToValueAtTime(.001,state.audio.currentTime+.3);osc.connect(gain).connect(state.audio.destination);osc.start();osc.stop(state.audio.currentTime+.31)}catch{}}
 function burst(){const rect=$('#ar-target').getBoundingClientRect();for(let i=0;i<18;i++){const spark=document.createElement('i');spark.className='spark';spark.style.left=`${rect.left+rect.width/2}px`;spark.style.top=`${rect.top+rect.height/2}px`;const angle=Math.random()*Math.PI*2,distance=40+Math.random()*100;spark.style.setProperty('--sx',`${Math.cos(angle)*distance}px`);spark.style.setProperty('--sy',`${Math.sin(angle)*distance}px`);document.body.append(spark);setTimeout(()=>spark.remove(),800)}}
 
 $('#start-button').addEventListener('click',begin);$('#befriend').addEventListener('click',befriend);$('#ar-target').addEventListener('click',attemptCatch);
 $('#guide-button').addEventListener('click',()=>openSheet('guide-sheet'));$('#info-button').addEventListener('click',()=>openSheet('info-sheet'));document.querySelectorAll('.close-sheet').forEach(button=>button.addEventListener('click',closeSheets));
+$('#guide-search').addEventListener('input',event=>{state.guideQuery=event.target.value;renderGuide()});
+$('#field-grid').addEventListener('click',event=>{const button=event.target.closest('.walk-button');if(button)selectWalkCompanion(button.dataset.walkId)});
+$('#walk-chip').addEventListener('click',()=>openSheet('guide-sheet'));
 $('#hint-button').addEventListener('click',()=>{if(state.visionMode==='active'||state.visionMode==='loading'){toast('Fill the circle with one real outdoor object and hold still for four matches');return}const diff=normalizeAngle(state.targetBearing-state.heading);toast(Math.abs(diff)<35?'Very close — hold the clue in the circle':diff>0?'Turn to your right':'Turn to your left')});
 $('#flip-camera').addEventListener('click',async()=>{state.facing=state.facing==='environment'?'user':'environment';await startCamera()});
 $('#new-trail').addEventListener('click',()=>{state.trailSeed=Date.now();try{localStorage.setItem('wildlings-trail-seed',state.trailSeed)}catch{}closeSheets();startLocation();toast('A new local trail has opened')});

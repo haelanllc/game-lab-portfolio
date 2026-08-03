@@ -2,6 +2,10 @@
 
 ## 2026-08-03
 
+- Expanded Wildlings AR to 99 collectible creatures with 75 named regional forms across 15 nature species, plus guide search and clear regional-profile labels.
+- Added walking companions: choose any befriended Wildling, keep the game open during a real walk, and gain one saved level for every 250 meters while retaining only cumulative distance—not the route.
+- Reworked flower identification around multiple shape-specific descriptions per species, including a stricter poppy-versus-snapdragon check that asks for a clearer view instead of making a close guess.
+- Added a repeatable real-photo flower-vision test command using the same pinned on-device classification package as the game.
 - Added a three-tap creature chase after every reveal: Wildlings scamper around the camera view, can escape after 15 seconds, and only become available to befriend after being caught.
 - Expanded Wildlings AR from 18 to 24 creatures with six cheerful flower species: rose, daisy, poppy, bluebell, lotus, and snapdragon.
 - Added a permanent species clue beneath every field-guide profile, including undiscovered creatures, so players always know which real-world object to seek.
