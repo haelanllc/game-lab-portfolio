@@ -1,4 +1,5 @@
 const assert = require('node:assert/strict');
+const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
@@ -7,24 +8,32 @@ const projectRoot = path.resolve(__dirname, '..');
 const gameSource = fs.readFileSync(path.join(projectRoot, 'games/wildlings-ar/game.js'), 'utf8');
 const gameMarkup = fs.readFileSync(path.join(projectRoot, 'games/wildlings-ar/index.html'), 'utf8');
 const gameStyles = fs.readFileSync(path.join(projectRoot, 'games/wildlings-ar/style.css'), 'utf8');
-const definitions = `${gameSource.split('const $=')[0]}\n;globalThis.wildlings={CREATURES,REGIONAL_CREATURES,SPECIES_LABELS,FLOWER_CLUES,FLOWER_TARGETS};`;
+const definitions = `${gameSource.split('const $=')[0]}\n;globalThis.wildlings={CREATURES,ADDITIONAL_CREATURES,SPECIES_LABELS,FLOWER_CLUES,FLOWER_TARGETS};`;
 const context = {};
 
 vm.createContext(context);
 vm.runInContext(definitions, context);
 
-const { CREATURES, REGIONAL_CREATURES, SPECIES_LABELS, FLOWER_CLUES, FLOWER_TARGETS } = context.wildlings;
+const { CREATURES, ADDITIONAL_CREATURES, SPECIES_LABELS, FLOWER_CLUES, FLOWER_TARGETS } = context.wildlings;
 assert.equal(CREATURES.length, 99, 'Wildlings should have 99 creatures');
-assert.equal(REGIONAL_CREATURES.length, 75, 'Wildlings should have 75 regional creatures');
+assert.equal(ADDITIONAL_CREATURES.length, 75, 'Wildlings should have 75 additional creatures');
 assert.equal(new Set(CREATURES.map(creature => creature.id)).size, CREATURES.length, 'Creature IDs must be unique');
 assert.equal(new Set(CREATURES.map(creature => creature.name)).size, CREATURES.length, 'Creature names must be unique');
 
 for (const creature of CREATURES) {
   assert.ok(SPECIES_LABELS[creature.clue], `Missing species label for ${creature.id}`);
   assert.ok(
-    fs.existsSync(path.join(projectRoot, `games/wildlings-ar/assets/creatures/${creature.sprite || creature.id}.png`)),
+    fs.existsSync(path.join(projectRoot, `games/wildlings-ar/assets/creatures/${creature.id}.png`)),
     `Missing sprite for ${creature.id}`,
   );
+}
+const spriteHashes = CREATURES.map(creature => crypto.createHash('sha256').update(
+  fs.readFileSync(path.join(projectRoot, `games/wildlings-ar/assets/creatures/${creature.id}.png`)),
+).digest('hex'));
+assert.equal(new Set(spriteHashes).size, CREATURES.length, 'Every creature must have different artwork bytes');
+for (const creature of ADDITIONAL_CREATURES) {
+  assert.equal('sprite' in creature, false, `${creature.id} must not reuse another creature sprite`);
+  assert.equal('artFilter' in creature, false, `${creature.id} must not be a color-filtered variant`);
 }
 
 const flowerCreatures = CREATURES.filter(creature => FLOWER_CLUES.has(creature.clue));
@@ -44,4 +53,4 @@ assert.match(gameSource, /function pickGroupedVisionTarget\(/, 'Missing grouped 
 assert.match(gameMarkup, /id="walk-chip"/, 'Missing walking companion interface');
 assert.match(gameMarkup, /id="guide-search"/, 'Missing searchable field guide');
 
-console.log(`Wildlings smoke test passed: ${CREATURES.length} creatures, ${REGIONAL_CREATURES.length} regional forms, ${flowerCreatures.length} flower species, catch and walking ready.`);
+console.log(`Wildlings smoke test passed: ${CREATURES.length} creatures, ${ADDITIONAL_CREATURES.length} individually illustrated additions, ${flowerCreatures.length} flower species, catch and walking ready.`);

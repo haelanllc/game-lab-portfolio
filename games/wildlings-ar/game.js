@@ -25,40 +25,37 @@ const BASE_CREATURES = [
   {id:'star-nook',name:'Star Nook',clue:'starlight',rarity:'Legendary',bio:'A patient listener from somewhere very far away.',body:'#273f55',belly:'#f1cb6a',habitat:'any',form:'horns'}
 ];
 
-const REGIONAL_LINEAGES = [
-  {sprite:'maple-mote',clue:'leaf',names:['Amber Sprig','Copper Canopy','Ruby Rustle','Golden Frond','Silver Vein']},
-  {sprite:'mosskin',clue:'moss',names:['Velvet Mossling','Ferny Cushion','Emerald Nap','Lichen Loaf','Dewy Tuft']},
-  {sprite:'pebble-pip',clue:'stone',names:['Granite Skip','Quartz Nibble','Slate Scoot','Jasper Jot','Marble Munch']},
-  {sprite:'barkback',clue:'bark',names:['Cedar Crinkle','Birch Bouncer','Oak Knurl','Willow Rind','Redwood Ruffle']},
-  {sprite:'puddle-purl',clue:'water',names:['Ripple Rollo','Brook Bubble','Rainy Rill','Lagoon Loop','Drizzle Drop']},
-  {sprite:'mooncap',clue:'mushroom',names:['Chanterelle Chuckle','Porcini Pounce','Inkcap Wink','Morel Muddle','Truffle Trot']},
-  {sprite:'clover-skip',clue:'clover',names:['Lucky Lilt','Shamrock Shuffle','Meadow Trefoil','Clover Curl','Greenwish']},
-  {sprite:'pinecone-pal',clue:'cone',names:['Spruce Tumble','Fir Fidget','Cedar Conekin','Larch Loper','Sequoia Scale']},
-  {sprite:'tide-twill',clue:'shell',names:['Coral Coil','Pearl Paddle','Whelk Whirl','Scallop Skim','Nautilus Nod']},
-  {sprite:'cloudlet',clue:'cloud',names:['Nimbus Nudge','Cirrus Scoot','Cumulus Cuddle','Misty Mallow','Raincloud Roll']},
-  {sprite:'acorn-orbit',clue:'acorn',names:['Oaklet Orbit','Chestnut Chuck','Hazel Hop','Bur Oak Bounce','Woodland Nutkin']},
-  {sprite:'reed-whistle',clue:'reed',names:['Cattail Cadence','Rush Ripple','Bulrush Beat','Sedge Song','Marsh Piper']},
-  {sprite:'brickbit',clue:'brick',names:['Terracotta Tuck','Clay Click','Mortar Mite','Ember Brickle','Cobble Kiln']},
-  {sprite:'frost-fleck',clue:'snow',names:['Powder Pounce','Crystal Kip','Flurry Floof','Glacier Glint','Icicle Skip']},
-  {sprite:'cinderfinch',clue:'ash',names:['Sooty Spark','Charcoal Chirp','Ember Ashling','Cinder Swoop','Campfire Fleck']}
+const ADDITIONAL_ROSTER_GROUPS = [
+  {template:'maple-mote',clue:'leaf',names:['Amber Sprig','Copper Canopy','Ruby Rustle','Golden Frond','Silver Vein']},
+  {template:'mosskin',clue:'moss',names:['Velvet Mossling','Ferny Cushion','Emerald Nap','Lichen Loaf','Dewy Tuft']},
+  {template:'pebble-pip',clue:'stone',names:['Granite Skip','Quartz Nibble','Slate Scoot','Jasper Jot','Marble Munch']},
+  {template:'barkback',clue:'bark',names:['Cedar Crinkle','Birch Bouncer','Oak Knurl','Willow Rind','Redwood Ruffle']},
+  {template:'puddle-purl',clue:'water',names:['Ripple Rollo','Brook Bubble','Rainy Rill','Lagoon Loop','Drizzle Drop']},
+  {template:'mooncap',clue:'mushroom',names:['Chanterelle Chuckle','Porcini Pounce','Inkcap Wink','Morel Muddle','Truffle Trot']},
+  {template:'clover-skip',clue:'clover',names:['Lucky Lilt','Shamrock Shuffle','Meadow Trefoil','Clover Curl','Greenwish']},
+  {template:'pinecone-pal',clue:'cone',names:['Spruce Tumble','Fir Fidget','Cedar Conekin','Larch Loper','Sequoia Scale']},
+  {template:'tide-twill',clue:'shell',names:['Coral Coil','Pearl Paddle','Whelk Whirl','Scallop Skim','Nautilus Nod']},
+  {template:'cloudlet',clue:'cloud',names:['Nimbus Nudge','Cirrus Scoot','Cumulus Cuddle','Misty Mallow','Raincloud Roll']},
+  {template:'acorn-orbit',clue:'acorn',names:['Oaklet Orbit','Chestnut Chuck','Hazel Hop','Bur Oak Bounce','Woodland Nutkin']},
+  {template:'reed-whistle',clue:'reed',names:['Cattail Cadence','Rush Ripple','Bulrush Beat','Sedge Song','Marsh Piper']},
+  {template:'brickbit',clue:'brick',names:['Terracotta Tuck','Clay Click','Mortar Mite','Ember Brickle','Cobble Kiln']},
+  {template:'frost-fleck',clue:'snow',names:['Powder Pounce','Crystal Kip','Flurry Floof','Glacier Glint','Icicle Skip']},
+  {template:'cinderfinch',clue:'ash',names:['Sooty Spark','Charcoal Chirp','Ember Ashling','Cinder Swoop','Campfire Fleck']}
 ];
-const REGIONAL_RARITIES=['Common','Common','Uncommon','Uncommon','Rare'];
+const ADDITIONAL_RARITIES=['Common','Common','Uncommon','Uncommon','Rare'];
 const slugifyName=name=>name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
-const REGIONAL_CREATURES=REGIONAL_LINEAGES.flatMap((lineage,lineageIndex)=>{
-  const original=BASE_CREATURES.find(creature=>creature.id===lineage.sprite);
-  return lineage.names.map((name,variantIndex)=>({
-    ...original,
+const ADDITIONAL_CREATURES=ADDITIONAL_ROSTER_GROUPS.flatMap(group=>{
+  const habitatTemplate=BASE_CREATURES.find(creature=>creature.id===group.template);
+  return group.names.map((name,variantIndex)=>({
+    ...habitatTemplate,
     id:`regional-${slugifyName(name)}`,
     name,
-    clue:lineage.clue,
-    rarity:REGIONAL_RARITIES[variantIndex],
-    bio:`A ${lineage.clue} Wildling shaped by a different corner of the world.`,
-    sprite:lineage.sprite,
-    regional:true,
-    artFilter:`hue-rotate(${(lineageIndex*29+variantIndex*51)%360}deg) saturate(${.84+variantIndex*.12}) brightness(${.92+(variantIndex%3)*.08})`
+    clue:group.clue,
+    rarity:ADDITIONAL_RARITIES[variantIndex],
+    bio:`A one-of-a-kind ${group.clue} Wildling with a shape and nature all its own.`
   }))
 });
-const CREATURES=[...BASE_CREATURES,...REGIONAL_CREATURES];
+const CREATURES=[...BASE_CREATURES,...ADDITIONAL_CREATURES];
 
 const CLUE_LABELS={leaf:'maple leaf',moss:'patch of moss',stone:'small stone',flower:'flower',dandelion:'dandelion',sunflower:'sunflower',rose:'rose',daisy:'daisy',poppy:'poppy',bluebell:'bluebell',lotus:'lotus',snapdragon:'snapdragon',bark:'piece of bark',water:'rain puddle',mushroom:'mushroom cap',clover:'clover',cone:'pinecone',shell:'seashell',cloud:'small cloud',acorn:'acorn',reed:'river reed',brick:'warm brick',snow:'snow crystal',ash:'charcoal fleck',starlight:'pinprick of light'};
 const SPECIES_LABELS={leaf:'Leaf',moss:'Moss',stone:'Rock',dandelion:'Dandelion',sunflower:'Sunflower',rose:'Rose',daisy:'Daisy',poppy:'Poppy',bluebell:'Bluebell',lotus:'Lotus',snapdragon:'Snapdragon',bark:'Bark',water:'Water',mushroom:'Mushroom',clover:'Clover',cone:'Pinecone',shell:'Seashell',cloud:'Cloud',acorn:'Acorn',reed:'Reed',brick:'Brick',snow:'Snow',ash:'Ash',starlight:'Starlight'};
@@ -132,8 +129,7 @@ function shuffle(items,random){const copy=[...items];for(let index=copy.length-1
 function creatureArt(c,mini=false){
   const alt=mini?c.name:'';
   const loading=mini?' loading="lazy"':'';
-  const style=c.artFilter?` style="filter:${c.artFilter}"`:'';
-  return `<img class="wildling-sprite" src="assets/creatures/${c.sprite||c.id}.png" alt="${alt}"${loading}${style}>`
+  return `<img class="wildling-sprite" src="assets/creatures/${c.id}.png" alt="${alt}"${loading}>`
 }
 
 function clueArt(type){
@@ -230,7 +226,7 @@ function startWalkTracking(){
 function renderGuide(){
   const query=state.guideQuery.trim().toLowerCase(),visible=CREATURES.filter(c=>!query||c.name.toLowerCase().includes(query)||(SPECIES_LABELS[c.clue]||c.clue).toLowerCase().includes(query));
   $('#guide-result-count').textContent=`${visible.length} of ${CREATURES.length}`;
-  $('#field-grid').innerHTML=visible.length?visible.map(c=>{const found=state.found.has(c.id),species=SPECIES_LABELS[c.clue]||c.clue,walking=state.walkCompanionId===c.id,status=found?`${c.rarity} · Lv ${walkLevelFor(c.id)}`:'Species clue';return`<article class="field-card ${found?'':'unknown'} ${walking?'walking':''}" aria-label="${found?c.name:`Unknown ${species} Wildling`}"><div class="mini-art" aria-hidden="true">${creatureArt(c,true)}</div><strong>${found?c.name:'Unknown'}</strong><small class="species-label">${species}</small><small class="profile-status">${status}</small>${c.regional?'<small class="regional-mark">Regional form</small>':''}${found?`<button class="walk-button" data-walk-id="${c.id}" ${walking?'disabled':''}>${walking?'Walking':'Walk together'}</button>`:''}</article>`}).join(''):'<p class="guide-empty">No Wildlings match that search.</p>'
+  $('#field-grid').innerHTML=visible.length?visible.map(c=>{const found=state.found.has(c.id),species=SPECIES_LABELS[c.clue]||c.clue,walking=state.walkCompanionId===c.id,status=found?`${c.rarity} · Lv ${walkLevelFor(c.id)}`:'Species clue';return`<article class="field-card ${found?'':'unknown'} ${walking?'walking':''}" aria-label="${found?c.name:`Unknown ${species} Wildling`}"><div class="mini-art" aria-hidden="true">${creatureArt(c,true)}</div><strong>${found?c.name:'Unknown'}</strong><small class="species-label">${species}</small><small class="profile-status">${status}</small>${found?`<button class="walk-button" data-walk-id="${c.id}" ${walking?'disabled':''}>${walking?'Walking':'Walk together'}</button>`:''}</article>`}).join(''):'<p class="guide-empty">No Wildlings match that search.</p>'
 }
 function openSheet(id){if(state.catching){toast(`Catch ${state.active.name} first!`);return}document.querySelectorAll('.sheet').forEach(s=>s.classList.toggle('open',s.id===id));if(id==='guide-sheet')renderGuide()}
 function closeSheets(){document.querySelectorAll('.sheet').forEach(s=>s.classList.remove('open'))}

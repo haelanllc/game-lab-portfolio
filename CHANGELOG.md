@@ -2,7 +2,9 @@
 
 ## 2026-08-03
 
-- Expanded Wildlings AR to 99 collectible creatures with 75 named regional forms across 15 nature species, plus guide search and clear regional-profile labels.
+- Expanded Wildlings AR to 99 collectible creatures with 75 individually illustrated additions across 15 nature species, plus guide search and permanent species clues.
+- Replaced the first-pass recolor system with 75 separate creature sprites and distinct silhouettes, anatomy, nature features, and cheerful expressions; removed the regional-form labels entirely.
+- Added a pinned local Pillow manifest and repeatable sprite-preparation command for chroma-key removal and mobile-sized transparent exports.
 - Added walking companions: choose any befriended Wildling, keep the game open during a real walk, and gain one saved level for every 250 meters while retaining only cumulative distance—not the route.
 - Reworked flower identification around multiple shape-specific descriptions per species, including a stricter poppy-versus-snapdragon check that asks for a clearer view instead of making a close guess.
 - Added a repeatable real-photo flower-vision test command using the same pinned on-device classification package as the game.
