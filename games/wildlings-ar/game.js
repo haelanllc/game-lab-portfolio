@@ -21,22 +21,34 @@ const CREATURES = [
 
 const CLUE_LABELS={leaf:'maple leaf',moss:'patch of moss',stone:'small stone',flower:'wildflower',bark:'piece of bark',water:'rain puddle',mushroom:'mushroom cap',clover:'clover',cone:'pinecone',shell:'seashell',cloud:'small cloud',acorn:'acorn',reed:'river reed',brick:'warm brick',snow:'snow crystal',ash:'charcoal fleck',starlight:'pinprick of light'};
 const VISION_TARGETS=[
-  {label:'one leaf close to the camera',clue:'leaf'},
-  {label:'a natural rock or stone close to the camera',clue:'stone'},
-  {label:'a flower close to the camera',clue:'flower'},
-  {label:'tree bark close to the camera',clue:'bark'},
-  {label:'moss close to the camera',clue:'moss'},
-  {label:'a pine cone close to the camera',clue:'cone'},
-  {label:'an acorn close to the camera',clue:'acorn'},
-  {label:'a mushroom close to the camera',clue:'mushroom'},
-  {label:'a puddle or water close to the camera',clue:'water'},
-  {label:'a hand close to the camera',clue:null},
-  {label:'an empty outdoor background',clue:null}
+  {label:'a single tree leaf',clue:'leaf'},
+  {label:'a patch of green moss',clue:'moss'},
+  {label:'a natural rock or pebble',clue:'stone'},
+  {label:'a flower blossom',clue:'flower'},
+  {label:'rough tree bark',clue:'bark'},
+  {label:'a puddle of water',clue:'water'},
+  {label:'a mushroom cap',clue:'mushroom'},
+  {label:'a three-leaf clover plant',clue:'clover'},
+  {label:'a brown pine cone',clue:'cone'},
+  {label:'a seashell',clue:'shell'},
+  {label:'a white cloud in the sky',clue:'cloud'},
+  {label:'an acorn',clue:'acorn'},
+  {label:'tall reeds or cattails',clue:'reed'},
+  {label:'a clay brick',clue:'brick'},
+  {label:'snow or ice crystals',clue:'snow'},
+  {label:'charcoal or wood ash',clue:'ash'},
+  {label:'a bright star or small point of light',clue:'starlight'},
+  {label:'only a human hand',clue:null},
+  {label:'only a person\'s face',clue:null},
+  {label:'an indoor room',clue:null},
+  {label:'an empty outdoor scene',clue:null},
+  {label:'blurry camera motion',clue:null},
+  {label:'plain grass or soil with no centered object',clue:null}
 ];
 const $=query=>document.querySelector(query);
 const storedFound=()=>{try{return JSON.parse(localStorage.getItem('wildlings-found')||'[]')}catch{return []}};
 const storedTrailSeed=()=>{try{return Number(localStorage.getItem('wildlings-trail-seed'))||20260802}catch{return 20260802}};
-const state={heading:0,targetBearing:110,hasOrientation:false,dragging:false,dragX:0,scan:0,discovered:false,active:null,queue:[],queueIndex:0,found:new Set(storedFound()),trailSeed:storedTrailSeed(),facing:'environment',stream:null,habitat:'meadow',audio:null,cameraReady:false,visionMode:'idle',classifier:null,RawImage:null,visionBusy:false,stableClue:null,stableHits:0};
+const state={heading:0,targetBearing:110,hasOrientation:false,dragging:false,dragX:0,scan:0,discovered:false,active:null,queue:[],queueIndex:0,found:new Set(storedFound()),trailSeed:storedTrailSeed(),facing:'environment',stream:null,habitat:'meadow',audio:null,cameraReady:false,visionMode:'idle',classifier:null,RawImage:null,visionBusy:false,stableClue:null,stableHits:0,stableScoreTotal:0};
 
 function seeded(seed){let value=seed>>>0;return()=>{value+=0x6d2b79f5;let mixed=value;mixed=Math.imul(mixed^(mixed>>>15),mixed|1);mixed^=mixed+Math.imul(mixed^(mixed>>>7),mixed|61);return((mixed^(mixed>>>14))>>>0)/4294967296}}
 function hashString(value){let h=2166136261;for(const char of value){h^=char.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
@@ -72,9 +84,9 @@ function buildLocalField(lat=37.7749,lon=-122.4194,label=''){
 
 function spawnNext(){
   if(state.visionMode==='loading'||state.visionMode==='active'){
-    state.active=null;state.discovered=false;state.scan=0;state.stableClue=null;state.stableHits=0;
+    state.active=null;state.discovered=false;state.scan=0;state.stableClue=null;state.stableHits=0;state.stableScoreTotal=0;
     const target=$('#ar-target');target.className='ar-target';target.innerHTML='';delete target.dataset.clue;
-    $('#discovery-card').classList.remove('show');$('#reticle').style.setProperty('--scan','0%');
+    $('#discovery-card').classList.remove('show');$('#reticle').style.setProperty('--scan','0%');$('#reticle').classList.remove('reticle-lock','reticle-checking');
     $('#search-copy').innerHTML='<strong>Show me something real</strong><span>Hold a leaf or rock inside the circle</span>';
     return
   }
@@ -102,7 +114,7 @@ function updateView(){
 }
 
 function reveal(){
-  if(state.discovered)return;state.discovered=true;$('#ar-target').classList.add('visible','discovered');$('#reticle').classList.remove('reticle-lock');$('#edge-arrow').classList.remove('show');
+  if(state.discovered)return;state.discovered=true;$('#ar-target').classList.add('visible','discovered');$('#reticle').classList.remove('reticle-lock','reticle-checking');$('#edge-arrow').classList.remove('show');
   $('#search-copy').innerHTML=`<strong>${state.active.name}</strong><span>A new Wildling appeared</span>`;$('#discovery-rarity').textContent=`${state.active.rarity} wildling · ${state.habitat}`;$('#discovery-name').textContent=state.active.name;$('#discovery-copy').textContent=state.active.bio;
   setTimeout(()=>$('#discovery-card').classList.add('show'),430);ping(620,.08);setTimeout(()=>ping(880,.1),90)
 }
@@ -117,7 +129,18 @@ function closeSheets(){document.querySelectorAll('.sheet').forEach(s=>s.classLis
 
 async function startCamera(){
   if(!navigator.mediaDevices?.getUserMedia){toast('Camera unavailable — field demo is active');return}
-  try{state.stream?.getTracks().forEach(track=>track.stop());state.stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:state.facing},width:{ideal:1280},height:{ideal:1920}},audio:false});$('#camera').srcObject=state.stream;state.cameraReady=true;document.body.classList.add('camera-ready');document.body.classList.toggle('front-camera',state.facing==='user')}
+  try{
+    state.cameraReady=false;clearDetectedClue('Starting the camera','Keep the object zone clear','Camera is focusing');
+    state.stream?.getTracks().forEach(track=>track.stop());
+    state.stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:state.facing},width:{ideal:1920},height:{ideal:1080},frameRate:{ideal:30,max:30}},audio:false});
+    const video=$('#camera'),track=state.stream.getVideoTracks()[0];video.srcObject=state.stream;await video.play();
+    const capabilities=track?.getCapabilities?.()||{},advanced={};
+    if(capabilities.focusMode?.includes('continuous'))advanced.focusMode='continuous';
+    if(capabilities.exposureMode?.includes('continuous'))advanced.exposureMode='continuous';
+    if(capabilities.whiteBalanceMode?.includes('continuous'))advanced.whiteBalanceMode='continuous';
+    if(Object.keys(advanced).length)await track.applyConstraints({advanced:[advanced]}).catch(()=>{});
+    state.cameraReady=true;document.body.classList.add('camera-ready');document.body.classList.toggle('front-camera',state.facing==='user')
+  }
   catch{state.cameraReady=false;toast('Camera blocked — field demo is active')}
 }
 async function startMotion(){
@@ -136,34 +159,54 @@ function creatureForClue(clue){
   const localMatch=state.queue.find(creature=>matches.includes(creature));
   return localMatch||matches[Math.abs(hashString(`${clue}-${state.trailSeed}`))%matches.length]||CREATURES[0]
 }
+function frameQuality(canvas){
+  const {data}=canvas.getContext('2d',{willReadFrequently:true}).getImageData(0,0,canvas.width,canvas.height);let total=0,squared=0,edges=0,samples=0;
+  for(let y=2;y<canvas.height;y+=3){for(let x=2;x<canvas.width;x+=3){const i=(y*canvas.width+x)*4,left=i-8,above=i-canvas.width*8;const lum=data[i]*.2126+data[i+1]*.7152+data[i+2]*.0722;const lumLeft=data[left]*.2126+data[left+1]*.7152+data[left+2]*.0722;const lumAbove=data[above]*.2126+data[above+1]*.7152+data[above+2]*.0722;total+=lum;squared+=lum*lum;edges+=(Math.abs(lum-lumLeft)+Math.abs(lum-lumAbove))/2;samples++}}
+  const mean=total/samples,contrast=Math.sqrt(Math.max(0,squared/samples-mean*mean));return{mean,contrast,edge:edges/samples}
+}
 function drawCameraCrop(){
-  const video=$('#camera'),canvas=$('#vision-canvas');if(video.readyState<2||!video.videoWidth)return null;
-  const size=Math.min(video.videoWidth,video.videoHeight)*.56,sx=(video.videoWidth-size)/2,sy=(video.videoHeight-size)/2;
-  const context=canvas.getContext('2d',{willReadFrequently:true});context.drawImage(video,sx,sy,size,size,0,0,canvas.width,canvas.height);return canvas
+  const video=$('#camera'),canvas=$('#vision-canvas'),reticle=$('#reticle');if(video.readyState<2||!video.videoWidth)return null;
+  const videoRect=video.getBoundingClientRect(),targetRect=reticle.getBoundingClientRect(),scale=Math.max(videoRect.width/video.videoWidth,videoRect.height/video.videoHeight);
+  const renderedWidth=video.videoWidth*scale,renderedHeight=video.videoHeight*scale,offsetX=(renderedWidth-videoRect.width)/2,offsetY=(renderedHeight-videoRect.height)/2;
+  let centerX=(targetRect.left+targetRect.width/2-videoRect.left+offsetX)/scale;const centerY=(targetRect.top+targetRect.height/2-videoRect.top+offsetY)/scale;
+  if(state.facing==='user')centerX=video.videoWidth-centerX;
+  const requestedSize=Math.max(targetRect.width,targetRect.height)*1.35/scale,size=Math.min(requestedSize,video.videoWidth,video.videoHeight);
+  const sx=Math.max(0,Math.min(video.videoWidth-size,centerX-size/2)),sy=Math.max(0,Math.min(video.videoHeight-size,centerY-size/2));
+  const context=canvas.getContext('2d',{willReadFrequently:true});context.clearRect(0,0,canvas.width,canvas.height);context.drawImage(video,sx,sy,size,size,0,0,canvas.width,canvas.height);return{canvas,quality:frameQuality(canvas)}
+}
+function showPossibleClue(clue,score){
+  const name=CLUE_LABELS[clue]||clue;state.scan=Math.min(75,state.stableHits*25);$('#reticle').style.setProperty('--scan',`${state.scan}%`);$('#reticle').classList.add('reticle-checking');$('#reticle').classList.remove('reticle-lock');
+  $('#search-copy').innerHTML=`<strong>Checking ${name}</strong><span>Keep only that object inside the circle</span>`;setVisionStatus(`${name} · match ${state.stableHits} of 4`,'checking')
 }
 function showDetectedClue(clue,score){
-  if(state.stableClue!==clue){state.stableClue=clue;state.stableHits=0;state.scan=Math.max(0,state.scan-28)}
-  state.stableHits+=1;state.active=creatureForClue(clue);
+  state.active=creatureForClue(clue);
   const target=$('#ar-target');
   if(!target.dataset.clue||target.dataset.clue!==clue){target.dataset.clue=clue;target.innerHTML=`<div class="clue-art">${clueArt(clue)}</div><div class="creature-art">${creatureArt(state.active)}</div>`}
   target.className='ar-target visible';target.style.left='50%';target.style.top='50%';
-  state.scan=Math.min(100,state.scan+(score>.5?42:34));$('#reticle').style.setProperty('--scan',`${state.scan}%`);$('#reticle').classList.add('reticle-lock');
+  state.scan=100;$('#reticle').style.setProperty('--scan','100%');$('#reticle').classList.remove('reticle-checking');$('#reticle').classList.add('reticle-lock');
   const name=CLUE_LABELS[clue]||clue;$('#search-copy').innerHTML=`<strong>Real ${name} detected</strong><span>Hold still — something is waking</span>`;setVisionStatus(`${name} seen · ${Math.round(score*100)}%`,'seeing');
-  if(state.scan>=100)reveal()
+  reveal()
 }
-function clearDetectedClue(){
-  state.scan=Math.max(0,state.scan-22);if(state.scan===0){state.stableClue=null;state.stableHits=0;$('#ar-target').classList.remove('visible')}
-  $('#reticle').style.setProperty('--scan',`${state.scan}%`);$('#reticle').classList.remove('reticle-lock');
-  $('#search-copy').innerHTML='<strong>Show me something real</strong><span>Hold a leaf or rock inside the circle</span>';setVisionStatus('Nature Lens is looking','ready')
+function clearDetectedClue(message='Center one outdoor object',detail='Fill the circle and hold still',status='Nature Lens is looking'){
+  state.scan=0;state.stableClue=null;state.stableHits=0;state.stableScoreTotal=0;$('#ar-target').classList.remove('visible');
+  $('#reticle').style.setProperty('--scan','0%');$('#reticle').classList.remove('reticle-lock','reticle-checking');
+  $('#search-copy').innerHTML=`<strong>${message}</strong><span>${detail}</span>`;setVisionStatus(status,'ready')
 }
 async function scanNatureFrame(){
   if(state.visionMode!=='active'||state.visionBusy||state.discovered||document.querySelector('.sheet.open'))return;
-  const canvas=drawCameraCrop();if(!canvas)return;state.visionBusy=true;
+  const frame=drawCameraCrop();if(!frame)return;state.visionBusy=true;
   try{
-    const image=state.RawImage.fromCanvas(canvas);const labels=VISION_TARGETS.map(target=>target.label);
-    const results=await state.classifier(image,labels,{hypothesis_template:'This is a photo of {}.'});
-    const best=results[0],runnerUp=results[1];const target=VISION_TARGETS.find(item=>item.label===best?.label);
-    if(target?.clue&&best.score>=.27&&best.score-(runnerUp?.score||0)>=.025)showDetectedClue(target.clue,best.score);else clearDetectedClue()
+    if(frame.quality.mean<18&&frame.quality.contrast<14){clearDetectedClue('The view is too dark','Find more light, then hold still','More light needed');return}
+    if(frame.quality.mean>238){clearDetectedClue('Too much glare','Tilt the object away from bright light','Reduce glare');return}
+    if(frame.quality.contrast<14||frame.quality.edge<4.8){clearDetectedClue('Move a little closer','Fill the circle with one clear object','Object not defined');return}
+    const image=state.RawImage.fromCanvas(frame.canvas),labels=VISION_TARGETS.map(target=>target.label);
+    const results=await state.classifier(image,labels,{hypothesis_template:'The object in the center is {}.'});
+    const best=results[0],runnerUp=results[1],target=VISION_TARGETS.find(item=>item.label===best?.label),margin=best.score-(runnerUp?.score||0),dominance=best.score/Math.max(.001,runnerUp?.score||0);
+    const confident=target?.clue&&best.score>=.14&&margin>=.018&&dominance>=1.16;
+    if(!confident){clearDetectedClue('Not sure yet','Show one leaf, rock, flower, or other clue','No clear match');return}
+    if(state.stableClue===target.clue){state.stableHits+=1;state.stableScoreTotal+=best.score}else{state.stableClue=target.clue;state.stableHits=1;state.stableScoreTotal=best.score}
+    const averageScore=state.stableScoreTotal/state.stableHits;
+    if(state.stableHits>=4)showDetectedClue(target.clue,averageScore);else showPossibleClue(target.clue,best.score)
   }catch(error){console.warn('Nature Lens frame skipped',error);clearDetectedClue()}finally{state.visionBusy=false}
 }
 async function visionLoop(){
@@ -185,7 +228,7 @@ function burst(){const rect=$('#ar-target').getBoundingClientRect();for(let i=0;
 
 $('#start-button').addEventListener('click',begin);$('#befriend').addEventListener('click',befriend);$('#ar-target').addEventListener('click',()=>state.discovered&&befriend());
 $('#guide-button').addEventListener('click',()=>openSheet('guide-sheet'));$('#info-button').addEventListener('click',()=>openSheet('info-sheet'));document.querySelectorAll('.close-sheet').forEach(button=>button.addEventListener('click',closeSheets));
-$('#hint-button').addEventListener('click',()=>{if(state.visionMode==='active'||state.visionMode==='loading'){toast('Fill the circle with one real leaf, rock, or flower and hold still');return}const diff=normalizeAngle(state.targetBearing-state.heading);toast(Math.abs(diff)<35?'Very close — hold the clue in the circle':diff>0?'Turn to your right':'Turn to your left')});
+$('#hint-button').addEventListener('click',()=>{if(state.visionMode==='active'||state.visionMode==='loading'){toast('Fill the circle with one real outdoor object and hold still for four matches');return}const diff=normalizeAngle(state.targetBearing-state.heading);toast(Math.abs(diff)<35?'Very close — hold the clue in the circle':diff>0?'Turn to your right':'Turn to your left')});
 $('#flip-camera').addEventListener('click',async()=>{state.facing=state.facing==='environment'?'user':'environment';await startCamera()});
 $('#new-trail').addEventListener('click',()=>{state.trailSeed=Date.now();try{localStorage.setItem('wildlings-trail-seed',state.trailSeed)}catch{}closeSheets();startLocation();toast('A new local trail has opened')});
 window.addEventListener('pointerdown',event=>{if(event.target.closest('button,.sheet'))return;state.dragging=true;state.dragX=event.clientX});window.addEventListener('pointermove',event=>{if(!state.dragging||state.hasOrientation)return;state.heading=(state.heading-(event.clientX-state.dragX)*.38+360)%360;state.dragX=event.clientX});window.addEventListener('pointerup',()=>state.dragging=false);

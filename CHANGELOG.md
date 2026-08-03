@@ -7,6 +7,8 @@
 - Upgraded Wildlings with an on-device Nature Lens that classifies real leaves, rocks, flowers, bark, moss, pinecones, acorns, mushrooms, and water in the center camera crop before revealing a matching creature.
 - Replaced the placeholder creature drawings with 18 generated transparent sprites blending Fossil Fury's pulp-comic texture with Clash of Critters' chunky, competitive mobile-battler energy.
 - Revised the full Wildlings roster to remove angry or frowning expressions and replaced the fairy-like Dandy Drift with a cheerful, non-humanoid dandelion puff creature.
+- Recut all 18 Wildlings with creature-specific isolation boxes so profile art no longer includes fragments of neighboring sprites.
+- Aligned Nature Lens analysis to the visible object zone, added lighting and focus checks, expanded recognition to every field-guide clue, and required four consistent classifications before a creature reveal.
 
 ## 2026-07-21
 
