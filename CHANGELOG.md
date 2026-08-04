@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-08-04
+
+- Reassigned the complete 99-creature roster to 99 different real-world clues instead of reusing broad labels like Leaf, Rock, or Flower across multiple profiles.
+- Added a two-stage object lens: broad recognition stays fast on phones, then a smaller exact-clue pass distinguishes targets such as granite, quartz, slate, jasper, and marble without comparing all 99 at once.
+- Added a repeatable exact-clue camera test that runs the production model and confidence rules against labeled real-world reference photos.
+
 ## 2026-08-03
 
 - Expanded Wildlings AR to 99 collectible creatures with 75 individually illustrated additions across 15 nature species, plus guide search and permanent species clues.

@@ -26,21 +26,21 @@ const BASE_CREATURES = [
 ];
 
 const ADDITIONAL_ROSTER_GROUPS = [
-  {template:'maple-mote',clue:'leaf',names:['Amber Sprig','Copper Canopy','Ruby Rustle','Golden Frond','Silver Vein']},
-  {template:'mosskin',clue:'moss',names:['Velvet Mossling','Ferny Cushion','Emerald Nap','Lichen Loaf','Dewy Tuft']},
-  {template:'pebble-pip',clue:'stone',names:['Granite Skip','Quartz Nibble','Slate Scoot','Jasper Jot','Marble Munch']},
-  {template:'barkback',clue:'bark',names:['Cedar Crinkle','Birch Bouncer','Oak Knurl','Willow Rind','Redwood Ruffle']},
-  {template:'puddle-purl',clue:'water',names:['Ripple Rollo','Brook Bubble','Rainy Rill','Lagoon Loop','Drizzle Drop']},
-  {template:'mooncap',clue:'mushroom',names:['Chanterelle Chuckle','Porcini Pounce','Inkcap Wink','Morel Muddle','Truffle Trot']},
-  {template:'clover-skip',clue:'clover',names:['Lucky Lilt','Shamrock Shuffle','Meadow Trefoil','Clover Curl','Greenwish']},
-  {template:'pinecone-pal',clue:'cone',names:['Spruce Tumble','Fir Fidget','Cedar Conekin','Larch Loper','Sequoia Scale']},
-  {template:'tide-twill',clue:'shell',names:['Coral Coil','Pearl Paddle','Whelk Whirl','Scallop Skim','Nautilus Nod']},
-  {template:'cloudlet',clue:'cloud',names:['Nimbus Nudge','Cirrus Scoot','Cumulus Cuddle','Misty Mallow','Raincloud Roll']},
-  {template:'acorn-orbit',clue:'acorn',names:['Oaklet Orbit','Chestnut Chuck','Hazel Hop','Bur Oak Bounce','Woodland Nutkin']},
-  {template:'reed-whistle',clue:'reed',names:['Cattail Cadence','Rush Ripple','Bulrush Beat','Sedge Song','Marsh Piper']},
-  {template:'brickbit',clue:'brick',names:['Terracotta Tuck','Clay Click','Mortar Mite','Ember Brickle','Cobble Kiln']},
-  {template:'frost-fleck',clue:'snow',names:['Powder Pounce','Crystal Kip','Flurry Floof','Glacier Glint','Icicle Skip']},
-  {template:'cinderfinch',clue:'ash',names:['Sooty Spark','Charcoal Chirp','Ember Ashling','Cinder Swoop','Campfire Fleck']}
+  {template:'maple-mote',parentClue:'leaf',names:['Amber Sprig','Copper Canopy','Ruby Rustle','Golden Frond','Silver Vein'],clues:['oak-leaf','copper-beech-leaf','red-maple-leaf','fern-frond','eucalyptus-leaf']},
+  {template:'mosskin',parentClue:'moss',names:['Velvet Mossling','Ferny Cushion','Emerald Nap','Lichen Loaf','Dewy Tuft'],clues:['sphagnum-moss','fiddlehead','fallen-log','lichen','dew-grass']},
+  {template:'pebble-pip',parentClue:'stone',names:['Granite Skip','Quartz Nibble','Slate Scoot','Jasper Jot','Marble Munch'],clues:['granite','quartz','slate','jasper','marble']},
+  {template:'barkback',parentClue:'bark',names:['Cedar Crinkle','Birch Bouncer','Oak Knurl','Willow Rind','Redwood Ruffle'],clues:['cedar-bark','birch-bark','oak-bark','willow-bark','redwood-bark']},
+  {template:'puddle-purl',parentClue:'water',names:['Ripple Rollo','Brook Bubble','Rainy Rill','Lagoon Loop','Drizzle Drop'],clues:['pond-ripple','brook-water','raindrop','lagoon-water','morning-dew']},
+  {template:'mooncap',parentClue:'mushroom',names:['Chanterelle Chuckle','Porcini Pounce','Inkcap Wink','Morel Muddle','Truffle Trot'],clues:['chanterelle','porcini','inkcap','morel','truffle']},
+  {template:'clover-skip',parentClue:'clover',names:['Lucky Lilt','Shamrock Shuffle','Meadow Trefoil','Clover Curl','Greenwish'],clues:['red-clover','white-clover','birdsfoot-trefoil','wood-sorrel','four-leaf-clover']},
+  {template:'pinecone-pal',parentClue:'cone',names:['Spruce Tumble','Fir Fidget','Cedar Conekin','Larch Loper','Sequoia Scale'],clues:['spruce-cone','fir-cone','cedar-cone','larch-cone','sequoia-cone']},
+  {template:'tide-twill',parentClue:'shell',names:['Coral Coil','Pearl Paddle','Whelk Whirl','Scallop Skim','Nautilus Nod'],clues:['coral','oyster-shell','whelk-shell','scallop-shell','nautilus-shell']},
+  {template:'cloudlet',parentClue:'cloud',names:['Nimbus Nudge','Cirrus Scoot','Cumulus Cuddle','Misty Mallow','Raincloud Roll'],clues:['storm-cloud','cirrus-cloud','cumulus-cloud','fog','mammatus-cloud']},
+  {template:'acorn-orbit',parentClue:'acorn',names:['Oaklet Orbit','Chestnut Chuck','Hazel Hop','Bur Oak Bounce','Woodland Nutkin'],clues:['oak-acorn','chestnut','hazelnut','bur-oak-acorn','walnut']},
+  {template:'reed-whistle',parentClue:'reed',names:['Cattail Cadence','Rush Ripple','Bulrush Beat','Sedge Song','Marsh Piper'],clues:['cattail','rush-grass','bulrush','sedge-grass','horsetail-reed']},
+  {template:'brickbit',parentClue:'brick',names:['Terracotta Tuck','Clay Click','Mortar Mite','Ember Brickle','Cobble Kiln'],clues:['terracotta-tile','clay-brick','mortar','kiln-brick','cobblestone']},
+  {template:'frost-fleck',parentClue:'snow',names:['Powder Pounce','Crystal Kip','Flurry Floof','Glacier Glint','Icicle Skip'],clues:['powder-snow','snowflake','snowball','glacier-ice','icicle']},
+  {template:'cinderfinch',parentClue:'ash',names:['Sooty Spark','Charcoal Chirp','Ember Ashling','Cinder Swoop','Campfire Fleck'],clues:['soot','charcoal','wood-ember','burnt-leaf','campfire-ash']}
 ];
 const ADDITIONAL_RARITIES=['Common','Common','Uncommon','Uncommon','Rare'];
 const slugifyName=name=>name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
@@ -50,15 +50,94 @@ const ADDITIONAL_CREATURES=ADDITIONAL_ROSTER_GROUPS.flatMap(group=>{
     ...habitatTemplate,
     id:`regional-${slugifyName(name)}`,
     name,
-    clue:group.clue,
+    clue:group.clues[variantIndex],
     rarity:ADDITIONAL_RARITIES[variantIndex],
-    bio:`A one-of-a-kind ${group.clue} Wildling with a shape and nature all its own.`
+    bio:`A one-of-a-kind Wildling that wakes for ${group.clues[variantIndex].replaceAll('-',' ')}.`
   }))
 });
 const CREATURES=[...BASE_CREATURES,...ADDITIONAL_CREATURES];
 
-const CLUE_LABELS={leaf:'maple leaf',moss:'patch of moss',stone:'small stone',flower:'flower',dandelion:'dandelion',sunflower:'sunflower',rose:'rose',daisy:'daisy',poppy:'poppy',bluebell:'bluebell',lotus:'lotus',snapdragon:'snapdragon',bark:'piece of bark',water:'rain puddle',mushroom:'mushroom cap',clover:'clover',cone:'pinecone',shell:'seashell',cloud:'small cloud',acorn:'acorn',reed:'river reed',brick:'warm brick',snow:'snow crystal',ash:'charcoal fleck',starlight:'pinprick of light'};
-const SPECIES_LABELS={leaf:'Leaf',moss:'Moss',stone:'Rock',dandelion:'Dandelion',sunflower:'Sunflower',rose:'Rose',daisy:'Daisy',poppy:'Poppy',bluebell:'Bluebell',lotus:'Lotus',snapdragon:'Snapdragon',bark:'Bark',water:'Water',mushroom:'Mushroom',clover:'Clover',cone:'Pinecone',shell:'Seashell',cloud:'Cloud',acorn:'Acorn',reed:'Reed',brick:'Brick',snow:'Snow',ash:'Ash',starlight:'Starlight'};
+const SPECIFIC_CLUES = [
+  {clue:'oak-leaf',parent:'leaf',label:'Oak Leaf',camera:'an oak leaf with clearly shaped lobes'},
+  {clue:'copper-beech-leaf',parent:'leaf',label:'Copper Beech Leaf',camera:'a dark copper or purple oval beech leaf'},
+  {clue:'red-maple-leaf',parent:'leaf',label:'Red Maple Leaf',camera:'a red maple leaf with pointed lobes'},
+  {clue:'fern-frond',parent:'leaf',label:'Fern Frond',camera:'a long feather-shaped green fern frond'},
+  {clue:'eucalyptus-leaf',parent:'leaf',label:'Eucalyptus Leaf',camera:'a long smooth silver-green eucalyptus leaf'},
+  {clue:'sphagnum-moss',parent:'moss',label:'Sphagnum Moss',camera:'a soft wet clump of pale sphagnum moss'},
+  {clue:'fiddlehead',parent:'leaf',label:'Fiddlehead',camera:'a tightly curled young fern fiddlehead'},
+  {clue:'fallen-log',parent:'bark',label:'Fallen Log',camera:'a small fallen log covered with plants'},
+  {clue:'lichen',parent:'moss',label:'Lichen',camera:'a flat crusty patch of pale green lichen'},
+  {clue:'dew-grass',parent:'leaf',label:'Dewy Grass',camera:'grass blades covered with round dew drops'},
+  {clue:'granite',parent:'stone',label:'Granite',camera:'a rough salt-and-pepper granite rock with visible black white and pink mineral grains'},
+  {clue:'quartz',parent:'stone',label:'Quartz Crystal',camera:'a clear or white pointed quartz crystal'},
+  {clue:'slate',parent:'stone',label:'Slate',camera:'a thin flat layered blue-gray slate slab'},
+  {clue:'jasper',parent:'stone',label:'Jasper',camera:'a smooth polished opaque solid-red jasper gemstone without visible crystal grains'},
+  {clue:'marble',parent:'stone',label:'Marble',camera:'a smooth white marble stone with long flowing gray veins'},
+  {clue:'cedar-bark',parent:'bark',label:'Cedar Bark',camera:'stringy reddish cedar tree bark'},
+  {clue:'birch-bark',parent:'bark',label:'Birch Bark',camera:'white peeling birch bark with dark marks'},
+  {clue:'oak-bark',parent:'bark',label:'Oak Bark',camera:'deeply ridged gray-brown oak tree bark'},
+  {clue:'willow-bark',parent:'bark',label:'Willow Bark',camera:'rough gray willow tree bark with narrow ridges'},
+  {clue:'redwood-bark',parent:'bark',label:'Redwood Bark',camera:'thick soft red fibrous redwood bark'},
+  {clue:'pond-ripple',parent:'water',label:'Pond Ripple',camera:'circular ripples spreading across pond water'},
+  {clue:'brook-water',parent:'water',label:'Brook Water',camera:'clear shallow moving brook water over pebbles'},
+  {clue:'raindrop',parent:'water',label:'Raindrop',camera:'a large round raindrop resting on a surface'},
+  {clue:'lagoon-water',parent:'water',label:'Lagoon Water',camera:'still turquoise lagoon or pond water'},
+  {clue:'morning-dew',parent:'water',label:'Morning Dew',camera:'a single bright dew drop on a leaf'},
+  {clue:'chanterelle',parent:'mushroom',label:'Chanterelle',camera:'a golden trumpet-shaped chanterelle mushroom'},
+  {clue:'porcini',parent:'mushroom',label:'Porcini',camera:'a stout porcini mushroom with a thick pale stem and brown cap'},
+  {clue:'inkcap',parent:'mushroom',label:'Inkcap',camera:'a tall dark inkcap mushroom with a narrow cap'},
+  {clue:'morel',parent:'mushroom',label:'Morel',camera:'a morel mushroom with a honeycomb-textured cap'},
+  {clue:'truffle',parent:'mushroom',label:'Truffle',camera:'a round knobbly dark truffle fungus'},
+  {clue:'red-clover',parent:'clover',label:'Red Clover',camera:'a red clover plant with a round pink flower head'},
+  {clue:'white-clover',parent:'clover',label:'White Clover',camera:'a white clover plant with a round white flower head'},
+  {clue:'birdsfoot-trefoil',parent:'clover',label:'Bird’s-foot Trefoil',camera:'birds-foot trefoil with small yellow pea-shaped flowers'},
+  {clue:'wood-sorrel',parent:'clover',label:'Wood Sorrel',camera:'wood sorrel with three heart-shaped leaflets'},
+  {clue:'four-leaf-clover',parent:'clover',label:'Four-leaf Clover',camera:'one clover leaf with exactly four leaflets'},
+  {clue:'spruce-cone',parent:'cone',label:'Spruce Cone',camera:'a long papery spruce cone'},
+  {clue:'fir-cone',parent:'cone',label:'Fir Cone',camera:'an upright compact fir cone'},
+  {clue:'cedar-cone',parent:'cone',label:'Cedar Cone',camera:'a small round woody cedar cone shaped like a rosette'},
+  {clue:'larch-cone',parent:'cone',label:'Larch Cone',camera:'a small oval larch cone among soft needles'},
+  {clue:'sequoia-cone',parent:'cone',label:'Sequoia Cone',camera:'a small hard oval sequoia cone with thick scales'},
+  {clue:'coral',parent:'shell',label:'Coral',camera:'a branching piece of coral'},
+  {clue:'oyster-shell',parent:'shell',label:'Oyster Shell',camera:'a rough irregular layered oyster shell'},
+  {clue:'whelk-shell',parent:'shell',label:'Whelk Shell',camera:'a tall pointed spiral whelk shell'},
+  {clue:'scallop-shell',parent:'shell',label:'Scallop Shell',camera:'a fan-shaped ridged scallop shell'},
+  {clue:'nautilus-shell',parent:'shell',label:'Nautilus Shell',camera:'a smooth cream spiral nautilus shell'},
+  {clue:'storm-cloud',parent:'cloud',label:'Storm Cloud',camera:'a dark towering storm cloud'},
+  {clue:'cirrus-cloud',parent:'cloud',label:'Cirrus Cloud',camera:'thin wispy feather-like cirrus clouds'},
+  {clue:'cumulus-cloud',parent:'cloud',label:'Cumulus Cloud',camera:'a bright white puffy cumulus cloud'},
+  {clue:'fog',parent:'cloud',label:'Fog',camera:'a low blanket of mist or fog'},
+  {clue:'mammatus-cloud',parent:'cloud',label:'Mammatus Cloud',camera:'a cloud with many rounded pouch shapes underneath'},
+  {clue:'oak-acorn',parent:'acorn',label:'Oak Acorn',camera:'a smooth oak acorn with a shallow scaly cap'},
+  {clue:'chestnut',parent:'acorn',label:'Chestnut',camera:'a glossy brown chestnut with a pointed tip'},
+  {clue:'hazelnut',parent:'acorn',label:'Hazelnut',camera:'a small round hazelnut partly inside a leafy husk'},
+  {clue:'bur-oak-acorn',parent:'acorn',label:'Bur Oak Acorn',camera:'an acorn with a large shaggy fringed cap'},
+  {clue:'walnut',parent:'acorn',label:'Walnut',camera:'a deeply wrinkled walnut shell'},
+  {clue:'cattail',parent:'reed',label:'Cattail',camera:'a tall reed with a brown sausage-shaped cattail head'},
+  {clue:'rush-grass',parent:'reed',label:'Rush Grass',camera:'a clump of round upright green rush stems'},
+  {clue:'bulrush',parent:'reed',label:'Bulrush',camera:'a tall bulrush with a loose brown flower cluster'},
+  {clue:'sedge-grass',parent:'reed',label:'Sedge Grass',camera:'a triangular-stem sedge with narrow arching leaves'},
+  {clue:'horsetail-reed',parent:'reed',label:'Horsetail Reed',camera:'a segmented green horsetail plant with jointed stems'},
+  {clue:'terracotta-tile',parent:'brick',label:'Terracotta Tile',camera:'a curved orange terracotta roof tile'},
+  {clue:'clay-brick',parent:'brick',label:'Clay Brick',camera:'a rectangular red clay brick'},
+  {clue:'mortar',parent:'brick',label:'Mortar',camera:'rough pale mortar between bricks'},
+  {clue:'kiln-brick',parent:'brick',label:'Kiln Brick',camera:'a pale heat-scorched refractory kiln brick'},
+  {clue:'cobblestone',parent:'stone',label:'Cobblestone',camera:'a rounded worn cobblestone paving rock'},
+  {clue:'powder-snow',parent:'snow',label:'Powder Snow',camera:'a loose mound of fresh powder snow'},
+  {clue:'snowflake',parent:'snow',label:'Snowflake',camera:'one visible six-point snowflake crystal'},
+  {clue:'snowball',parent:'snow',label:'Snowball',camera:'a compact round handmade snowball'},
+  {clue:'glacier-ice',parent:'snow',label:'Glacier Ice',camera:'dense blue translucent glacier ice'},
+  {clue:'icicle',parent:'snow',label:'Icicle',camera:'a long clear hanging icicle'},
+  {clue:'soot',parent:'ash',label:'Soot',camera:'fine black soot coating a surface'},
+  {clue:'charcoal',parent:'ash',label:'Charcoal',camera:'a black porous lump of wood charcoal'},
+  {clue:'wood-ember',parent:'ash',label:'Wood Ember',camera:'a safe glowing red wood ember'},
+  {clue:'burnt-leaf',parent:'leaf',label:'Burnt Leaf',camera:'a blackened curled burnt leaf'},
+  {clue:'campfire-ash',parent:'ash',label:'Campfire Ash',camera:'a cold pale pile of campfire ash'}
+];
+const SPECIFIC_CLUE_BY_ID=new Map(SPECIFIC_CLUES.map(item=>[item.clue,item]));
+
+const CLUE_LABELS={leaf:'tree leaf',moss:'patch of moss',stone:'small rock',flower:'flower',dandelion:'dandelion',sunflower:'sunflower',rose:'rose',daisy:'daisy',poppy:'poppy',bluebell:'bluebell',lotus:'lotus',snapdragon:'snapdragon',bark:'tree bark',water:'rain puddle',mushroom:'mushroom',clover:'clover',cone:'pinecone',shell:'seashell',cloud:'cloud',acorn:'acorn',reed:'river reed',brick:'brick',snow:'snow',ash:'wood ash',starlight:'pinprick of light',...Object.fromEntries(SPECIFIC_CLUES.map(item=>[item.clue,item.label.toLowerCase()]))};
+const SPECIES_LABELS={leaf:'Tree Leaf',moss:'Moss Patch',stone:'Small Rock',dandelion:'Dandelion',sunflower:'Sunflower',rose:'Rose',daisy:'Daisy',poppy:'Poppy',bluebell:'Bluebell',lotus:'Lotus',snapdragon:'Snapdragon',bark:'Tree Bark',water:'Rain Puddle',mushroom:'Mushroom',clover:'Clover',cone:'Pinecone',shell:'Seashell',cloud:'Cloud',acorn:'Acorn',reed:'River Reed',brick:'Brick',snow:'Snow',ash:'Wood Ash',starlight:'Starlight',...Object.fromEntries(SPECIFIC_CLUES.map(item=>[item.clue,item.label]))};
 const FLOWER_CLUES=new Set(['dandelion','sunflower','rose','daisy','poppy','bluebell','lotus','snapdragon']);
 const VISION_TARGETS=[
   {label:'a single tree leaf',clue:'leaf'},
@@ -85,6 +164,7 @@ const VISION_TARGETS=[
   {label:'blurry camera motion',clue:null},
   {label:'plain grass or soil with no centered object',clue:null}
 ];
+const REFINEMENT_TARGETS_BY_PARENT=Object.fromEntries([...new Set(SPECIFIC_CLUES.map(item=>item.parent))].map(parent=>[parent,SPECIFIC_CLUES.filter(item=>item.parent===parent).map(item=>({label:item.camera,clue:item.clue}))]));
 const FLOWER_TARGETS=[
   {label:'a round yellow dandelion flower with many thin petals',clue:'dandelion'},
   {label:'a white spherical dandelion seed head',clue:'dandelion'},
@@ -133,6 +213,7 @@ function creatureArt(c,mini=false){
 }
 
 function clueArt(type){
+  type=SPECIFIC_CLUE_BY_ID.get(type)?.parent||type;
   const line=`stroke="#172019" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"`;
   if(type==='leaf'||type==='clover')return`<svg viewBox="0 0 160 160"><path d="M80 137V69" ${line}/><path d="M79 82C50 68 28 42 31 22c14 8 29 6 42 23 8-14 17-22 28-29 1 16 9 25 26 31-7 20-23 37-48 35Z" fill="${type==='leaf'?'#c85a39':'#5d995e'}" ${line}/>${type==='clover'?'<circle cx="61" cy="48" r="19" fill="#69a769"/><circle cx="91" cy="45" r="19" fill="#69a769"/><circle cx="79" cy="67" r="19" fill="#69a769"/>':''}</svg>`;
   if(type==='flower'||FLOWER_CLUES.has(type)){const colors={dandelion:'#efe1a1',sunflower:'#e9b52d',rose:'#cf493d',daisy:'#f4f0e5',poppy:'#df4d37',bluebell:'#587fc2',lotus:'#f0d79f',snapdragon:'#e89a31'};return`<svg viewBox="0 0 160 160"><path d="M80 137V77" ${line}/><g fill="${colors[type]||'#f1d56e'}" ${line}><circle cx="80" cy="47" r="18"/><circle cx="55" cy="63" r="18"/><circle cx="105" cy="63" r="18"/><circle cx="66" cy="89" r="18"/><circle cx="94" cy="89" r="18"/></g><circle cx="80" cy="69" r="15" fill="${type==='daisy'?'#e3a82f':'#8a613c'}"/></svg>`}
@@ -366,6 +447,15 @@ async function scanNatureFrame(){
       if(flowerMatch?.ambiguous){showUncertainDetection('Poppy or snapdragon?','Fill the circle with one flat bloom or one full flower stalk','Need a clearer flower shape');return}
       if(!flowerMatch){showUncertainDetection('Flower found','Move closer so one bloom or stalk fills the circle','Checking flower species');return}
       clue=flowerMatch.target.clue;score=(score+flowerMatch.score)/2
+    }else{
+      const refinementTargets=REFINEMENT_TARGETS_BY_PARENT[clue];
+      if(refinementTargets?.length){
+        const broadName=SPECIES_LABELS[clue]||clue;setVisionStatus(`${broadName} seen · identifying exact clue`,'checking');
+        const refinementResults=await state.classifier(image,refinementTargets.map(target=>target.label),{hypothesis_template:'The exact outdoor object in the center is {}.'});
+        const exactMatch=pickVisionTarget(refinementResults,refinementTargets,{minScore:.16,minMargin:.02,minDominance:1.12});
+        if(!exactMatch){setVisionStatus(`Exact type unclear · checking ${broadName}`,'checking');rememberDetectedClue(clue,score*.8);return}
+        clue=exactMatch.target.clue;score=(score+exactMatch.score)/2
+      }
     }
     rememberDetectedClue(clue,score)
   }catch(error){console.warn('Nature Lens frame skipped',error);clearDetectedClue()}finally{state.visionBusy=false}
