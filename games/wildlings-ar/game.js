@@ -164,7 +164,10 @@ const VISION_TARGETS=[
   {label:'blurry camera motion',clue:null},
   {label:'plain grass or soil with no centered object',clue:null}
 ];
-const REFINEMENT_TARGETS_BY_PARENT=Object.fromEntries([...new Set(SPECIFIC_CLUES.map(item=>item.parent))].map(parent=>[parent,SPECIFIC_CLUES.filter(item=>item.parent===parent).map(item=>({label:item.camera,clue:item.clue}))]));
+const REFINEMENT_TARGETS_BY_PARENT=Object.fromEntries([...new Set(SPECIFIC_CLUES.map(item=>item.parent))].map(parent=>[parent,SPECIFIC_CLUES.filter(item=>item.parent===parent).flatMap(item=>[
+  {label:item.camera,clue:item.clue},
+  {label:`one clearly visible ${item.label.toLowerCase()} centered in a close-up nature photo`,clue:item.clue}
+])]));
 const FLOWER_TARGETS=[
   {label:'a round yellow dandelion flower with many thin petals',clue:'dandelion'},
   {label:'a white spherical dandelion seed head',clue:'dandelion'},
@@ -187,19 +190,24 @@ const FLOWER_TARGETS=[
   {label:'a layered pink or white lotus flower floating above water',clue:'lotus'},
   {label:'a symmetrical lotus bloom beside a round lily pad',clue:'lotus'},
   {label:'an open lotus with many pointed petals around a yellow center',clue:'lotus'},
-  {label:'a tall upright stalk covered with many small tubular snapdragon flowers',clue:'snapdragon'},
-  {label:'a cluster of orange or pink dragon-mouth blossoms on a vertical stem',clue:'snapdragon'},
-  {label:'many narrow blossoms on one tall spike, not a single flat flower',clue:'snapdragon'},
+  {label:'a pink Antirrhinum snapdragon flower with a two-lipped dragon-mouth shape',clue:'snapdragon'},
+  {label:'several pink Antirrhinum snapdragon blossoms growing along a tall upright stem',clue:'snapdragon'},
+  {label:'a snapdragon plant with narrow leaves and hooded tubular dragon-mouth flowers',clue:'snapdragon'},
   {label:'a different kind of flower not described here',clue:null},
   {label:'only green leaves with no visible flower',clue:null},
   {label:'a hand or background rather than one flower',clue:null}
+];
+const CAMERA_VIEWS=[
+  {key:'tight',label:'tight',scale:1.05},
+  {key:'natural',label:'natural',scale:1.35},
+  {key:'context',label:'context',scale:1.7}
 ];
 const $=query=>document.querySelector(query);
 const storedFound=()=>{try{return JSON.parse(localStorage.getItem('wildlings-found')||'[]')}catch{return []}};
 const storedTrailSeed=()=>{try{return Number(localStorage.getItem('wildlings-trail-seed'))||20260802}catch{return 20260802}};
 const storedWalkProgress=()=>{try{return JSON.parse(localStorage.getItem('wildlings-walk-progress')||'{}')}catch{return {}}};
 const storedWalkCompanion=()=>{try{return localStorage.getItem('wildlings-walk-companion')||''}catch{return ''}};
-const state={heading:0,targetBearing:110,hasOrientation:false,dragging:false,dragX:0,scan:0,discovered:false,active:null,queue:[],queueIndex:0,found:new Set(storedFound()),trailSeed:storedTrailSeed(),facing:'environment',stream:null,habitat:'meadow',audio:null,cameraReady:false,visionMode:'idle',classifier:null,RawImage:null,visionBusy:false,stableClue:null,stableHits:0,stableScoreTotal:0,detectionHistory:[],catching:false,caught:false,catchHits:0,catchX:0,catchY:0,catchVX:0,catchVY:0,catchFrame:0,catchLastTime:0,catchDeadline:0,catchSecond:-1,catchReadyTimer:0,guideQuery:'',walkCompanionId:storedWalkCompanion(),walkProgress:storedWalkProgress(),walkWatchId:null,lastWalkPosition:null};
+const state={heading:0,targetBearing:110,hasOrientation:false,dragging:false,dragX:0,scan:0,discovered:false,active:null,queue:[],queueIndex:0,found:new Set(storedFound()),trailSeed:storedTrailSeed(),facing:'environment',stream:null,habitat:'meadow',audio:null,cameraReady:false,visionMode:'idle',classifier:null,RawImage:null,visionBusy:false,stableClue:null,stableHits:0,stableViewCount:0,stableScoreTotal:0,detectionHistory:[],cropIndex:0,catching:false,caught:false,catchHits:0,catchX:0,catchY:0,catchVX:0,catchVY:0,catchFrame:0,catchLastTime:0,catchDeadline:0,catchSecond:-1,catchReadyTimer:0,guideQuery:'',walkCompanionId:storedWalkCompanion(),walkProgress:storedWalkProgress(),walkWatchId:null,lastWalkPosition:null};
 
 function seeded(seed){let value=seed>>>0;return()=>{value+=0x6d2b79f5;let mixed=value;mixed=Math.imul(mixed^(mixed>>>15),mixed|1);mixed^=mixed+Math.imul(mixed^(mixed>>>7),mixed|61);return((mixed^(mixed>>>14))>>>0)/4294967296}}
 function hashString(value){let h=2166136261;for(const char of value){h^=char.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
@@ -269,7 +277,7 @@ function updateView(){
 function reveal(){
   if(state.discovered)return;state.discovered=true;state.caught=false;const target=$('#ar-target');target.classList.add('visible','discovered');target.setAttribute('aria-label',`${state.active.name} is getting ready to run`);$('#reticle').classList.remove('reticle-lock','reticle-checking');$('#edge-arrow').classList.remove('show');$('#discovery-card').classList.remove('show');
   $('#search-copy').innerHTML=`<strong>${state.active.name} spotted you!</strong><span>Get ready to catch it</span>`;$('#discovery-rarity').textContent=`${state.active.rarity} · ${SPECIES_LABELS[state.active.clue]||state.active.clue} wildling`;$('#discovery-name').textContent=state.active.name;$('#discovery-copy').textContent=state.active.bio;
-  setVisionStatus('Creature found · chase starting','seeing');ping(620,.08);setTimeout(()=>ping(880,.1),90);state.catchReadyTimer=setTimeout(startCatch,520)
+  setVisionStatus(state.visionMode==='active'?`Confirmed · ${state.stableHits} matches · ${state.stableViewCount} views`:'Creature found · chase starting','seeing');ping(620,.08);setTimeout(()=>ping(880,.1),90);state.catchReadyTimer=setTimeout(startCatch,520)
 }
 
 function befriend(){
@@ -360,6 +368,17 @@ async function startCamera(){
   }
   catch{state.cameraReady=false;toast('Camera blocked — field demo is active')}
 }
+async function refocusCamera(){
+  const track=state.stream?.getVideoTracks?.()[0];if(!track){toast('Open the camera first');return}
+  const capabilities=track.getCapabilities?.()||{},focusModes=capabilities.focusMode||[];
+  try{
+    if(focusModes.includes('single-shot')){
+      await track.applyConstraints({advanced:[{focusMode:'single-shot'}]});toast('Refocusing on the object zone');
+      if(focusModes.includes('continuous'))setTimeout(()=>track.applyConstraints({advanced:[{focusMode:'continuous'}]}).catch(()=>{}),900)
+    }else if(focusModes.includes('continuous')){await track.applyConstraints({advanced:[{focusMode:'continuous'}]});toast('Continuous focus refreshed')}
+    else toast('This camera focuses automatically')
+  }catch{toast('This camera focuses automatically')}
+}
 async function startMotion(){
   try{if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function'){const permission=await DeviceOrientationEvent.requestPermission();if(permission!=='granted')throw new Error('denied')}
     window.addEventListener('deviceorientation',event=>{const compass=event.webkitCompassHeading;const next=Number.isFinite(compass)?compass:360-(event.alpha||0);if(event.alpha!==null){state.hasOrientation=true;state.heading=next}},true)}catch{toast('Drag the view to look around')}
@@ -377,40 +396,44 @@ function creatureForClue(clue){
   return localMatch||matches[Math.abs(hashString(`${clue}-${state.trailSeed}`))%matches.length]||CREATURES[0]
 }
 function frameQuality(canvas){
-  const {data}=canvas.getContext('2d',{willReadFrequently:true}).getImageData(0,0,canvas.width,canvas.height);let total=0,squared=0,edges=0,samples=0;
+  const {data}=canvas.getContext('2d',{willReadFrequently:true}).getImageData(0,0,canvas.width,canvas.height);let total=0,squared=0,edges=0,samples=0;const signature=[];
   for(let y=2;y<canvas.height;y+=3){for(let x=2;x<canvas.width;x+=3){const i=(y*canvas.width+x)*4,left=i-8,above=i-canvas.width*8;const lum=data[i]*.2126+data[i+1]*.7152+data[i+2]*.0722;const lumLeft=data[left]*.2126+data[left+1]*.7152+data[left+2]*.0722;const lumAbove=data[above]*.2126+data[above+1]*.7152+data[above+2]*.0722;total+=lum;squared+=lum*lum;edges+=(Math.abs(lum-lumLeft)+Math.abs(lum-lumAbove))/2;samples++}}
-  const mean=total/samples,contrast=Math.sqrt(Math.max(0,squared/samples-mean*mean));return{mean,contrast,edge:edges/samples}
+  for(let y=14;y<canvas.height;y+=28){for(let x=14;x<canvas.width;x+=28){const i=(y*canvas.width+x)*4;signature.push(data[i]*.2126+data[i+1]*.7152+data[i+2]*.0722)}}
+  const mean=total/samples,contrast=Math.sqrt(Math.max(0,squared/samples-mean*mean));return{mean,contrast,edge:edges/samples,signature}
 }
-function drawCameraCrop(){
+function frameMotion(first,second){
+  if(!first?.length||first.length!==second?.length)return 0;return first.reduce((total,value,index)=>total+Math.abs(value-second[index]),0)/first.length
+}
+function drawCameraCrop(view=CAMERA_VIEWS[1]){
   const video=$('#camera'),canvas=$('#vision-canvas'),reticle=$('#reticle');if(video.readyState<2||!video.videoWidth)return null;
   const videoRect=video.getBoundingClientRect(),targetRect=reticle.getBoundingClientRect(),scale=Math.max(videoRect.width/video.videoWidth,videoRect.height/video.videoHeight);
   const renderedWidth=video.videoWidth*scale,renderedHeight=video.videoHeight*scale,offsetX=(renderedWidth-videoRect.width)/2,offsetY=(renderedHeight-videoRect.height)/2;
   let centerX=(targetRect.left+targetRect.width/2-videoRect.left+offsetX)/scale;const centerY=(targetRect.top+targetRect.height/2-videoRect.top+offsetY)/scale;
   if(state.facing==='user')centerX=video.videoWidth-centerX;
-  const requestedSize=Math.max(targetRect.width,targetRect.height)*1.35/scale,size=Math.min(requestedSize,video.videoWidth,video.videoHeight);
+  const requestedSize=Math.max(targetRect.width,targetRect.height)*view.scale/scale,size=Math.min(requestedSize,video.videoWidth,video.videoHeight);
   const sx=Math.max(0,Math.min(video.videoWidth-size,centerX-size/2)),sy=Math.max(0,Math.min(video.videoHeight-size,centerY-size/2));
-  const context=canvas.getContext('2d',{willReadFrequently:true});context.clearRect(0,0,canvas.width,canvas.height);context.drawImage(video,sx,sy,size,size,0,0,canvas.width,canvas.height);return{canvas,quality:frameQuality(canvas)}
+  const context=canvas.getContext('2d',{willReadFrequently:true});context.clearRect(0,0,canvas.width,canvas.height);context.drawImage(video,sx,sy,size,size,0,0,canvas.width,canvas.height);return{canvas,quality:frameQuality(canvas),view}
 }
 function showPossibleClue(clue){
-  const name=CLUE_LABELS[clue]||clue;state.scan=Math.min(75,state.stableHits*25);$('#reticle').style.setProperty('--scan',`${state.scan}%`);$('#reticle').classList.add('reticle-checking');$('#reticle').classList.remove('reticle-lock');
-  $('#search-copy').innerHTML=`<strong>Checking ${name}</strong><span>Keep only that object inside the circle</span>`;setVisionStatus(`${name} · ${state.stableHits} of 4 steady matches`,'checking')
+  const name=CLUE_LABELS[clue]||clue;state.scan=Math.min(92,state.stableHits*17+state.stableViewCount*12);$('#reticle').style.setProperty('--scan',`${state.scan}%`);$('#reticle').classList.add('reticle-checking');$('#reticle').classList.remove('reticle-lock');
+  $('#search-copy').innerHTML=`<strong>Checking ${name}</strong><span>Keep only that object inside the circle</span>`;setVisionStatus(`${name} · ${state.stableHits}/4 matches · ${state.stableViewCount}/2 views`,'checking')
 }
-function showDetectedClue(clue,score){
+function showDetectedClue(clue,score,viewCount=state.stableViewCount){
   state.active=creatureForClue(clue);
   const target=$('#ar-target');
   if(!target.dataset.clue||target.dataset.clue!==clue){target.dataset.clue=clue;target.innerHTML=`<div class="clue-art">${clueArt(clue)}</div><div class="creature-art">${creatureArt(state.active)}</div>`}
   target.className='ar-target visible';target.style.left='50%';target.style.top='50%';
   state.scan=100;$('#reticle').style.setProperty('--scan','100%');$('#reticle').classList.remove('reticle-checking');$('#reticle').classList.add('reticle-lock');
-  const name=CLUE_LABELS[clue]||clue;$('#search-copy').innerHTML=`<strong>Real ${name} detected</strong><span>Hold still — something is waking</span>`;setVisionStatus(`${name} seen · ${Math.round(score*100)}%`,'seeing');
+  const name=CLUE_LABELS[clue]||clue;$('#search-copy').innerHTML=`<strong>Real ${name} detected</strong><span>Confirmed from more than one view</span>`;setVisionStatus(`${name} confirmed · ${viewCount} views`,'seeing');
   reveal()
 }
 function clearDetectedClue(message='Center one outdoor object',detail='Fill the circle and hold still',status='Nature Lens is looking'){
-  state.scan=0;state.stableClue=null;state.stableHits=0;state.stableScoreTotal=0;state.detectionHistory=[];$('#ar-target').classList.remove('visible');
+  state.scan=0;state.stableClue=null;state.stableHits=0;state.stableViewCount=0;state.stableScoreTotal=0;state.detectionHistory=[];$('#ar-target').classList.remove('visible');
   $('#reticle').style.setProperty('--scan','0%');$('#reticle').classList.remove('reticle-lock','reticle-checking');
   $('#search-copy').innerHTML=`<strong>${message}</strong><span>${detail}</span>`;setVisionStatus(status,'ready')
 }
 function showUncertainDetection(message='Not sure yet',detail='Keep one object centered',status='Checking the object'){
-  state.detectionHistory.push(null);if(state.detectionHistory.length>5)state.detectionHistory.shift();
+  state.detectionHistory.push(null);if(state.detectionHistory.length>6)state.detectionHistory.shift();
   state.scan=Math.max(0,state.scan-18);$('#reticle').style.setProperty('--scan',`${state.scan}%`);$('#reticle').classList.toggle('reticle-checking',state.scan>0);$('#reticle').classList.remove('reticle-lock');
   $('#search-copy').innerHTML=`<strong>${message}</strong><span>${detail}</span>`;setVisionStatus(status,state.scan>0?'checking':'ready')
 }
@@ -419,20 +442,22 @@ function pickVisionTarget(results,targets,{minScore=.14,minMargin=.018,minDomina
   return target?.clue&&best.score>=minScore&&margin>=minMargin&&dominance>=minDominance?{target,score:best.score}:null
 }
 function pickGroupedVisionTarget(results,targets,{minScore=.08,minMargin=.01,minDominance=1.08}={}){
-  const scores=new Map();for(const result of results){const target=targets.find(item=>item.label===result.label),key=target?.clue||'other';scores.set(key,(scores.get(key)||0)+result.score)}
-  const ranked=[...scores.entries()].sort((a,b)=>b[1]-a[1]),[bestClue,bestScore]=ranked[0]||['other',0],[runnerClue,runnerScore]=ranked[1]||['other',0],margin=bestScore-runnerScore,dominance=bestScore/Math.max(.001,runnerScore);
+  const groups=new Map();for(const result of results){const target=targets.find(item=>item.label===result.label),key=target?.clue||'other',group=groups.get(key)||{total:0,count:0};group.total+=result.score;group.count+=1;groups.set(key,group)}
+  const means=[...groups.entries()].map(([clue,group])=>[clue,group.total/group.count]),meanTotal=means.reduce((total,[,score])=>total+score,0)||1,ranked=means.map(([clue,score])=>[clue,score/meanTotal]).sort((a,b)=>b[1]-a[1]),[bestClue,bestScore]=ranked[0]||['other',0],[runnerClue,runnerScore]=ranked[1]||['other',0],margin=bestScore-runnerScore,dominance=bestScore/Math.max(.001,runnerScore);
   const poppySnapdragon=new Set([bestClue,runnerClue]);if(poppySnapdragon.has('poppy')&&poppySnapdragon.has('snapdragon')&&(margin<.018||dominance<1.16))return{ambiguous:true,bestClue,runnerClue,score:bestScore};
   const target=targets.find(item=>item.clue===bestClue);return bestClue!=='other'&&target&&bestScore>=minScore&&margin>=minMargin&&dominance>=minDominance?{target,score:bestScore,runnerClue}:null
 }
-function rememberDetectedClue(clue,score){
-  state.detectionHistory.push({clue,score});if(state.detectionHistory.length>5)state.detectionHistory.shift();
-  const matches=state.detectionHistory.filter(item=>item?.clue===clue);state.stableClue=clue;state.stableHits=matches.length;state.stableScoreTotal=matches.reduce((total,item)=>total+item.score,0);
-  if(state.stableHits>=4)showDetectedClue(clue,state.stableScoreTotal/state.stableHits);else showPossibleClue(clue)
+function rememberDetectedClue(clue,score,viewKey='natural'){
+  state.detectionHistory.push({clue,score,viewKey});if(state.detectionHistory.length>6)state.detectionHistory.shift();
+  const matches=state.detectionHistory.filter(item=>item?.clue===clue);state.stableClue=clue;state.stableHits=matches.length;state.stableViewCount=new Set(matches.map(item=>item.viewKey)).size;state.stableScoreTotal=matches.reduce((total,item)=>total+item.score,0);
+  if(state.stableHits>=4&&state.stableViewCount>=2)showDetectedClue(clue,state.stableScoreTotal/state.stableHits,state.stableViewCount);else showPossibleClue(clue)
 }
 async function scanNatureFrame(){
   if(state.visionMode!=='active'||state.visionBusy||state.discovered||document.querySelector('.sheet.open'))return;
-  const frame=drawCameraCrop();if(!frame)return;state.visionBusy=true;
+  const view=CAMERA_VIEWS[state.cropIndex%CAMERA_VIEWS.length];state.cropIndex=(state.cropIndex+1)%CAMERA_VIEWS.length;const firstFrame=drawCameraCrop(view);if(!firstFrame)return;state.visionBusy=true;
   try{
+    await new Promise(resolve=>setTimeout(resolve,90));const frame=drawCameraCrop(view);if(!frame)return;
+    if(frameMotion(firstFrame.quality.signature,frame.quality.signature)>26){showUncertainDetection('Hold a little steadier','Pause the object inside the circle','Camera movement detected');return}
     if(frame.quality.mean<18&&frame.quality.contrast<14){clearDetectedClue('The view is too dark','Find more light, then hold still','More light needed');return}
     if(frame.quality.mean>238){clearDetectedClue('Too much glare','Tilt the object away from bright light','Reduce glare');return}
     if(frame.quality.contrast<14||frame.quality.edge<4.8){clearDetectedClue('Move a little closer','Fill the circle with one clear object','Object not defined');return}
@@ -452,24 +477,24 @@ async function scanNatureFrame(){
       if(refinementTargets?.length){
         const broadName=SPECIES_LABELS[clue]||clue;setVisionStatus(`${broadName} seen · identifying exact clue`,'checking');
         const refinementResults=await state.classifier(image,refinementTargets.map(target=>target.label),{hypothesis_template:'The exact outdoor object in the center is {}.'});
-        const exactMatch=pickVisionTarget(refinementResults,refinementTargets,{minScore:.16,minMargin:.02,minDominance:1.12});
-        if(!exactMatch){setVisionStatus(`Exact type unclear · checking ${broadName}`,'checking');rememberDetectedClue(clue,score*.8);return}
+        const exactMatch=pickGroupedVisionTarget(refinementResults,refinementTargets,{minScore:.1,minMargin:.025,minDominance:1.12});
+        if(!exactMatch){setVisionStatus(`Exact type unclear · checking ${broadName}`,'checking');rememberDetectedClue(clue,score*.8,view.key);return}
         clue=exactMatch.target.clue;score=(score+exactMatch.score)/2
       }
     }
-    rememberDetectedClue(clue,score)
+    rememberDetectedClue(clue,score,view.key)
   }catch(error){console.warn('Nature Lens frame skipped',error);clearDetectedClue()}finally{state.visionBusy=false}
 }
 async function visionLoop(){
-  if(state.visionMode!=='active')return;await scanNatureFrame();setTimeout(visionLoop,850)
+  if(state.visionMode!=='active')return;await scanNatureFrame();setTimeout(visionLoop,950)
 }
 async function startNatureLens(){
   if(!state.cameraReady){state.visionMode='fallback';setVisionStatus('Virtual trail · camera unavailable');return}
   state.visionMode='loading';$('#reticle').classList.add('vision-ready');setVisionStatus('Loading Nature Lens · first play');spawnNext();
   try{
     const module=await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.3');state.RawImage=module.RawImage;
-    state.classifier=await module.pipeline('zero-shot-image-classification','Xenova/clip-vit-base-patch32',{dtype:'q8',progress_callback:data=>{if(Number.isFinite(data.progress))setVisionStatus(`Learning nature · ${Math.round(data.progress)}%`)}});
-    state.visionMode='active';setVisionStatus('Nature Lens is looking','ready');spawnNext();visionLoop()
+    state.classifier=await module.pipeline('zero-shot-image-classification','Xenova/clip-vit-base-patch16',{dtype:'q8',progress_callback:data=>{if(Number.isFinite(data.progress))setVisionStatus(`Learning precision lens · ${Math.round(data.progress)}%`)}});
+    state.visionMode='active';setVisionStatus('Precision Lens is looking','ready');spawnNext();visionLoop()
   }catch(error){console.warn('Nature Lens unavailable',error);state.visionMode='fallback';$('#reticle').classList.remove('vision-ready');setVisionStatus('Virtual trail · lens offline');toast('Nature Lens could not load — virtual trail is active');if(state.queue.length)spawnNext()}
 }
 async function begin(){document.body.classList.add('playing');updateCount();updateWalkChip();startWalkTracking();await Promise.allSettled([startCamera(),startMotion()]);startLocation();startNatureLens()}
@@ -484,6 +509,7 @@ $('#field-grid').addEventListener('click',event=>{const button=event.target.clos
 $('#walk-chip').addEventListener('click',()=>openSheet('guide-sheet'));
 $('#hint-button').addEventListener('click',()=>{if(state.visionMode==='active'||state.visionMode==='loading'){toast('Fill the circle with one real outdoor object and hold still for four matches');return}const diff=normalizeAngle(state.targetBearing-state.heading);toast(Math.abs(diff)<35?'Very close — hold the clue in the circle':diff>0?'Turn to your right':'Turn to your left')});
 $('#flip-camera').addEventListener('click',async()=>{state.facing=state.facing==='environment'?'user':'environment';await startCamera()});
+$('#refocus-camera').addEventListener('click',refocusCamera);
 $('#new-trail').addEventListener('click',()=>{state.trailSeed=Date.now();try{localStorage.setItem('wildlings-trail-seed',state.trailSeed)}catch{}closeSheets();startLocation();toast('A new local trail has opened')});
 window.addEventListener('pointerdown',event=>{if(event.target.closest('button,.sheet'))return;state.dragging=true;state.dragX=event.clientX});window.addEventListener('pointermove',event=>{if(!state.dragging||state.hasOrientation)return;state.heading=(state.heading-(event.clientX-state.dragX)*.38+360)%360;state.dragX=event.clientX});window.addEventListener('pointerup',()=>state.dragging=false);
 window.addEventListener('keydown',event=>{if(event.key==='ArrowRight')state.heading=(state.heading+5)%360;if(event.key==='ArrowLeft')state.heading=(state.heading+355)%360;if(event.key==='Escape')closeSheets()});

@@ -19,11 +19,14 @@ for(const fixture of fixtures)assert.ok(fs.existsSync(fixture.filePath),`Missing
 
 function groupResults(results){
   const groups=new Map();
-  for(const result of results){const target=targets.find(item=>item.label===result.label),key=target?.clue||'other';groups.set(key,(groups.get(key)||0)+result.score)}
-  return [...groups.entries()].sort((a,b)=>b[1]-a[1]);
+  for(const result of results){const target=targets.find(item=>item.label===result.label),key=target?.clue||'other',group=groups.get(key)||{total:0,count:0};group.total+=result.score;group.count+=1;groups.set(key,group)}
+  const means=[...groups.entries()].map(([clue,group])=>[clue,group.total/group.count]),total=means.reduce((sum,[,score])=>sum+score,0)||1;
+  return means.map(([clue,score])=>[clue,score/total]).sort((a,b)=>b[1]-a[1]);
 }
 
-const classify=await pipeline('zero-shot-image-classification','Xenova/clip-vit-base-patch32',{dtype:'q8'});
+const model=process.env.WILDLINGS_VISION_MODEL||'Xenova/clip-vit-base-patch16';
+console.log(`Using ${model}`);
+const classify=await pipeline('zero-shot-image-classification',model,{dtype:'q8'});
 let correct=0;
 for(const fixture of fixtures){
   const image=await RawImage.read(fixture.filePath),results=await classify(image,targets.map(target=>target.label),{hypothesis_template:'The flower in the center is {}.'}),ranked=groupResults(results),winner=ranked[0][0];

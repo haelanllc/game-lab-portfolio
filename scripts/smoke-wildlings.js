@@ -38,6 +38,7 @@ for (const creature of ADDITIONAL_CREATURES) {
   assert.equal('sprite' in creature, false, `${creature.id} must not reuse another creature sprite`);
   assert.equal('artFilter' in creature, false, `${creature.id} must not be a color-filtered variant`);
   assert.ok(Object.values(REFINEMENT_TARGETS_BY_PARENT).flat().some(target => target.clue === creature.clue), `Missing camera refinement for ${creature.clue}`);
+  assert.equal(Object.values(REFINEMENT_TARGETS_BY_PARENT).flat().filter(target => target.clue === creature.clue).length, 2, `Expected two exact camera descriptions for ${creature.clue}`);
 }
 
 const flowerCreatures = CREATURES.filter(creature => FLOWER_CLUES.has(creature.clue));
@@ -54,6 +55,10 @@ assert.match(gameMarkup, /id="befriend"[^>]*>♥<\/button>/, 'Missing post-catch
 assert.match(gameStyles, /@keyframes scamper/, 'Missing running animation');
 assert.match(gameSource, /function handleWalkPosition\(position\)/, 'Missing walking distance logic');
 assert.match(gameSource, /function pickGroupedVisionTarget\(/, 'Missing grouped flower classifier');
+assert.match(gameSource, /Xenova\/clip-vit-base-patch16/, 'Missing precision patch-16 camera model');
+assert.match(gameSource, /state\.stableHits>=4&&state\.stableViewCount>=2/, 'Missing multi-view camera consensus');
+assert.match(gameSource, /function frameMotion\(/, 'Missing camera movement rejection');
+assert.match(gameMarkup, /id="refocus-camera"/, 'Missing camera refocus control');
 assert.match(gameMarkup, /id="walk-chip"/, 'Missing walking companion interface');
 assert.match(gameMarkup, /id="guide-search"/, 'Missing searchable field guide');
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-08-06
+
+- Upgraded Wildlings AR from the patch-32 Nature Lens to a finer patch-16 vision model and verified it against real poppy, snapdragon, granite, quartz, and jasper photos.
+- Added two exact visual descriptions per collectible clue, prompt-group averaging, and tuned botanical descriptions that cleanly separate real poppies from real snapdragons in the camera benchmark.
+- Replaced the single fixed crop with tight, natural, and context views; a reveal now requires four agreeing readings across at least two views instead of trusting one framing.
+- Added rapid frame-to-frame movement rejection, clearer match-and-view evidence in the camera HUD, and a manual refocus control for supported phone cameras.
+
 ## 2026-08-04
 
 - Reassigned the complete 99-creature roster to 99 different real-world clues instead of reusing broad labels like Leaf, Rock, or Flower across multiple profiles.
