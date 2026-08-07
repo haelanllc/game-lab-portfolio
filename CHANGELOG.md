@@ -2,6 +2,9 @@
 
 ## 2026-08-06
 
+- Expanded Wildlings AR to 105 creatures with six individually generated, separately isolated species: Quillkip, Craggle, Podkin, Bramblebum, Tide Twig, and Dewloom.
+- Added six new camera clue categories—feather, lichen, seed pod, berry, driftwood, and spiderweb—with exact guide labels and dedicated clue transformations.
+- Turned the three-tap catch into a fuller chase with timed dodges, motion trails, a visible countdown meter, two optional golden calm-leaf boosts, speed ramps after each tap, and performance-based catch ratings.
 - Upgraded Wildlings AR from the patch-32 Nature Lens to a finer patch-16 vision model and verified it against real poppy, snapdragon, granite, quartz, and jasper photos.
 - Added two exact visual descriptions per collectible clue, prompt-group averaging, and tuned botanical descriptions that cleanly separate real poppies from real snapdragons in the camera benchmark.
 - Replaced the single fixed crop with tight, natural, and context views; a reveal now requires four agreeing readings across at least two views instead of trusting one framing.

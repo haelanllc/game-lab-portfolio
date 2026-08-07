@@ -55,7 +55,15 @@ const ADDITIONAL_CREATURES=ADDITIONAL_ROSTER_GROUPS.flatMap(group=>{
     bio:`A one-of-a-kind Wildling that wakes for ${group.clues[variantIndex].replaceAll('-',' ')}.`
   }))
 });
-const CREATURES=[...BASE_CREATURES,...ADDITIONAL_CREATURES];
+const NEW_CREATURES=[
+  {id:'quillkip',name:'Quillkip',clue:'barred-owl-feather',rarity:'Rare',bio:'Bounds through the bracken with one magnificent feather held high.',habitat:'woodland'},
+  {id:'craggle',name:'Craggle',clue:'sunburst-lichen',rarity:'Rare',bio:'Carries a tiny golden garden across its patient stone back.',habitat:'dry'},
+  {id:'podkin',name:'Podkin',clue:'milkweed-pod',rarity:'Uncommon',bio:'Keeps every wandering seed tucked safely aboard.',habitat:'meadow'},
+  {id:'bramblebum',name:'Bramblebum',clue:'blackberry',rarity:'Uncommon',bio:'Polishes each berry on its shell before breakfast.',habitat:'woodland'},
+  {id:'tide-twig',name:'Tide Twig',clue:'driftwood',rarity:'Rare',bio:'Side-steps along the tide line collecting wave-smoothed knots.',habitat:'coast'},
+  {id:'dewloom',name:'Dewloom',clue:'dew-spiderweb',rarity:'Legendary',bio:'Spins the roundest morning webs and wears one like a crown.',habitat:'woodland'}
+];
+const CREATURES=[...BASE_CREATURES,...ADDITIONAL_CREATURES,...NEW_CREATURES];
 
 const SPECIFIC_CLUES = [
   {clue:'oak-leaf',parent:'leaf',label:'Oak Leaf',camera:'an oak leaf with clearly shaped lobes'},
@@ -132,12 +140,18 @@ const SPECIFIC_CLUES = [
   {clue:'charcoal',parent:'ash',label:'Charcoal',camera:'a black porous lump of wood charcoal'},
   {clue:'wood-ember',parent:'ash',label:'Wood Ember',camera:'a safe glowing red wood ember'},
   {clue:'burnt-leaf',parent:'leaf',label:'Burnt Leaf',camera:'a blackened curled burnt leaf'},
-  {clue:'campfire-ash',parent:'ash',label:'Campfire Ash',camera:'a cold pale pile of campfire ash'}
+  {clue:'campfire-ash',parent:'ash',label:'Campfire Ash',camera:'a cold pale pile of campfire ash'},
+  {clue:'barred-owl-feather',parent:'feather',label:'Barred Owl Feather',camera:'one brown and cream feather with bold horizontal bars'},
+  {clue:'sunburst-lichen',parent:'lichen',label:'Sunburst Lichen',camera:'a flat golden-orange rosette of sunburst lichen growing on rock'},
+  {clue:'milkweed-pod',parent:'seedpod',label:'Milkweed Pod',camera:'one dry split milkweed seed pod with rows of flat brown seeds'},
+  {clue:'blackberry',parent:'berry',label:'Blackberry',camera:'one ripe blackberry made of many glossy dark purple round lobes'},
+  {clue:'driftwood',parent:'driftwood',label:'Driftwood',camera:'one pale weathered branch of wave-smoothed driftwood'},
+  {clue:'dew-spiderweb',parent:'web',label:'Dew-covered Spiderweb',camera:'a complete circular spiderweb covered with bright round dew drops'}
 ];
 const SPECIFIC_CLUE_BY_ID=new Map(SPECIFIC_CLUES.map(item=>[item.clue,item]));
 
-const CLUE_LABELS={leaf:'tree leaf',moss:'patch of moss',stone:'small rock',flower:'flower',dandelion:'dandelion',sunflower:'sunflower',rose:'rose',daisy:'daisy',poppy:'poppy',bluebell:'bluebell',lotus:'lotus',snapdragon:'snapdragon',bark:'tree bark',water:'rain puddle',mushroom:'mushroom',clover:'clover',cone:'pinecone',shell:'seashell',cloud:'cloud',acorn:'acorn',reed:'river reed',brick:'brick',snow:'snow',ash:'wood ash',starlight:'pinprick of light',...Object.fromEntries(SPECIFIC_CLUES.map(item=>[item.clue,item.label.toLowerCase()]))};
-const SPECIES_LABELS={leaf:'Tree Leaf',moss:'Moss Patch',stone:'Small Rock',dandelion:'Dandelion',sunflower:'Sunflower',rose:'Rose',daisy:'Daisy',poppy:'Poppy',bluebell:'Bluebell',lotus:'Lotus',snapdragon:'Snapdragon',bark:'Tree Bark',water:'Rain Puddle',mushroom:'Mushroom',clover:'Clover',cone:'Pinecone',shell:'Seashell',cloud:'Cloud',acorn:'Acorn',reed:'River Reed',brick:'Brick',snow:'Snow',ash:'Wood Ash',starlight:'Starlight',...Object.fromEntries(SPECIFIC_CLUES.map(item=>[item.clue,item.label]))};
+const CLUE_LABELS={leaf:'tree leaf',moss:'patch of moss',stone:'small rock',flower:'flower',dandelion:'dandelion',sunflower:'sunflower',rose:'rose',daisy:'daisy',poppy:'poppy',bluebell:'bluebell',lotus:'lotus',snapdragon:'snapdragon',bark:'tree bark',water:'rain puddle',mushroom:'mushroom',clover:'clover',cone:'pinecone',shell:'seashell',cloud:'cloud',acorn:'acorn',reed:'river reed',brick:'brick',snow:'snow',ash:'wood ash',starlight:'pinprick of light',feather:'bird feather',lichen:'golden lichen',seedpod:'seed pod',berry:'dark berry',driftwood:'driftwood branch',web:'spiderweb',...Object.fromEntries(SPECIFIC_CLUES.map(item=>[item.clue,item.label.toLowerCase()]))};
+const SPECIES_LABELS={leaf:'Tree Leaf',moss:'Moss Patch',stone:'Small Rock',dandelion:'Dandelion',sunflower:'Sunflower',rose:'Rose',daisy:'Daisy',poppy:'Poppy',bluebell:'Bluebell',lotus:'Lotus',snapdragon:'Snapdragon',bark:'Tree Bark',water:'Rain Puddle',mushroom:'Mushroom',clover:'Clover',cone:'Pinecone',shell:'Seashell',cloud:'Cloud',acorn:'Acorn',reed:'River Reed',brick:'Brick',snow:'Snow',ash:'Wood Ash',starlight:'Starlight',feather:'Bird Feather',lichen:'Lichen',seedpod:'Seed Pod',berry:'Berry',driftwood:'Driftwood',web:'Spiderweb',...Object.fromEntries(SPECIFIC_CLUES.map(item=>[item.clue,item.label]))};
 const FLOWER_CLUES=new Set(['dandelion','sunflower','rose','daisy','poppy','bluebell','lotus','snapdragon']);
 const VISION_TARGETS=[
   {label:'a single tree leaf',clue:'leaf'},
@@ -156,6 +170,12 @@ const VISION_TARGETS=[
   {label:'a clay brick',clue:'brick'},
   {label:'snow or ice crystals',clue:'snow'},
   {label:'charcoal or wood ash',clue:'ash'},
+  {label:'one bird feather',clue:'feather'},
+  {label:'a crusty patch of yellow or orange lichen on a rock',clue:'lichen'},
+  {label:'one dry seed pod',clue:'seedpod'},
+  {label:'one dark berry fruit',clue:'berry'},
+  {label:'one weathered piece of driftwood',clue:'driftwood'},
+  {label:'one visible circular spider web',clue:'web'},
   {label:'a bright star or small point of light',clue:'starlight'},
   {label:'only a human hand',clue:null},
   {label:'only a person\'s face',clue:null},
@@ -207,7 +227,7 @@ const storedFound=()=>{try{return JSON.parse(localStorage.getItem('wildlings-fou
 const storedTrailSeed=()=>{try{return Number(localStorage.getItem('wildlings-trail-seed'))||20260802}catch{return 20260802}};
 const storedWalkProgress=()=>{try{return JSON.parse(localStorage.getItem('wildlings-walk-progress')||'{}')}catch{return {}}};
 const storedWalkCompanion=()=>{try{return localStorage.getItem('wildlings-walk-companion')||''}catch{return ''}};
-const state={heading:0,targetBearing:110,hasOrientation:false,dragging:false,dragX:0,scan:0,discovered:false,active:null,queue:[],queueIndex:0,found:new Set(storedFound()),trailSeed:storedTrailSeed(),facing:'environment',stream:null,habitat:'meadow',audio:null,cameraReady:false,visionMode:'idle',classifier:null,RawImage:null,visionBusy:false,photoMode:false,photoRequested:false,stableClue:null,stableHits:0,stableViewCount:0,stableScoreTotal:0,detectionHistory:[],cropIndex:0,catching:false,caught:false,catchHits:0,catchX:0,catchY:0,catchVX:0,catchVY:0,catchFrame:0,catchLastTime:0,catchDeadline:0,catchSecond:-1,catchReadyTimer:0,guideQuery:'',walkCompanionId:storedWalkCompanion(),walkProgress:storedWalkProgress(),walkWatchId:null,lastWalkPosition:null};
+const state={heading:0,targetBearing:110,hasOrientation:false,dragging:false,dragX:0,scan:0,discovered:false,active:null,queue:[],queueIndex:0,found:new Set(storedFound()),trailSeed:storedTrailSeed(),facing:'environment',stream:null,habitat:'meadow',audio:null,cameraReady:false,visionMode:'idle',classifier:null,RawImage:null,visionBusy:false,photoMode:false,photoRequested:false,stableClue:null,stableHits:0,stableViewCount:0,stableScoreTotal:0,detectionHistory:[],cropIndex:0,catching:false,caught:false,catchHits:0,catchX:0,catchY:0,catchVX:0,catchVY:0,catchFrame:0,catchLastTime:0,catchStartTime:0,catchDeadline:0,catchSecond:-1,catchNextDodge:0,catchNextTrail:0,catchNextBoost:0,catchSlowUntil:0,catchBoosts:0,catchBoostVisible:false,catchReadyTimer:0,guideQuery:'',walkCompanionId:storedWalkCompanion(),walkProgress:storedWalkProgress(),walkWatchId:null,lastWalkPosition:null};
 
 function seeded(seed){let value=seed>>>0;return()=>{value+=0x6d2b79f5;let mixed=value;mixed=Math.imul(mixed^(mixed>>>15),mixed|1);mixed^=mixed+Math.imul(mixed^(mixed>>>7),mixed|61);return((mixed^(mixed>>>14))>>>0)/4294967296}}
 function hashString(value){let h=2166136261;for(const char of value){h^=char.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
@@ -225,6 +245,12 @@ function clueArt(type){
   const line=`stroke="#172019" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"`;
   if(type==='leaf'||type==='clover')return`<svg viewBox="0 0 160 160"><path d="M80 137V69" ${line}/><path d="M79 82C50 68 28 42 31 22c14 8 29 6 42 23 8-14 17-22 28-29 1 16 9 25 26 31-7 20-23 37-48 35Z" fill="${type==='leaf'?'#c85a39':'#5d995e'}" ${line}/>${type==='clover'?'<circle cx="61" cy="48" r="19" fill="#69a769"/><circle cx="91" cy="45" r="19" fill="#69a769"/><circle cx="79" cy="67" r="19" fill="#69a769"/>':''}</svg>`;
   if(type==='flower'||FLOWER_CLUES.has(type)){const colors={dandelion:'#efe1a1',sunflower:'#e9b52d',rose:'#cf493d',daisy:'#f4f0e5',poppy:'#df4d37',bluebell:'#587fc2',lotus:'#f0d79f',snapdragon:'#e89a31'};return`<svg viewBox="0 0 160 160"><path d="M80 137V77" ${line}/><g fill="${colors[type]||'#f1d56e'}" ${line}><circle cx="80" cy="47" r="18"/><circle cx="55" cy="63" r="18"/><circle cx="105" cy="63" r="18"/><circle cx="66" cy="89" r="18"/><circle cx="94" cy="89" r="18"/></g><circle cx="80" cy="69" r="15" fill="${type==='daisy'?'#e3a82f':'#8a613c'}"/></svg>`}
+  if(type==='feather')return`<svg viewBox="0 0 160 160"><path d="M40 132c25-43 47-75 83-105" fill="none" ${line}/><path d="M52 111C28 62 64 25 124 24c2 44-20 79-72 87Z" fill="#d7bf92" ${line}/><path d="m61 92 48-43M68 78 46 68m39-6L65 48m32 2L82 35" fill="none" ${line}/></svg>`;
+  if(type==='lichen')return`<svg viewBox="0 0 160 160"><path d="m29 116 15-67 46-25 40 34-3 59-51 20Z" fill="#6d716c" ${line}/><g fill="#e2a92e" stroke="#172019" stroke-width="2"><circle cx="64" cy="67" r="22"/><circle cx="93" cy="56" r="20"/><circle cx="102" cy="88" r="25"/><circle cx="61" cy="104" r="19"/></g></svg>`;
+  if(type==='seedpod')return`<svg viewBox="0 0 160 160"><path d="M28 91q47-74 104-31-12 62-90 60Z" fill="#b99058" ${line}/><path d="M35 91q47 7 90-26M44 104q44 1 68-24" fill="none" ${line}/><g fill="#ead9b7"><ellipse cx="65" cy="85" rx="8" ry="4"/><ellipse cx="83" cy="81" rx="8" ry="4"/><ellipse cx="101" cy="73" rx="8" ry="4"/></g></svg>`;
+  if(type==='berry')return`<svg viewBox="0 0 160 160"><path d="M82 38q15-22 34-18-5 18-24 27" fill="#6d8759" ${line}/><g fill="#4e3868" ${line}><circle cx="63" cy="60" r="20"/><circle cx="91" cy="58" r="21"/><circle cx="113" cy="76" r="20"/><circle cx="47" cy="85" r="20"/><circle cx="77" cy="87" r="22"/><circle cx="101" cy="104" r="21"/><circle cx="59" cy="117" r="19"/></g></svg>`;
+  if(type==='driftwood')return`<svg viewBox="0 0 160 160"><path d="M25 113q43-19 58-53 14-31 46-34-23 30-15 49 7 18 22 37-31-14-54 2-29 20-57-1Z" fill="#bda783" ${line}/><path d="M70 79 44 54m39 7 8-34m21 49 26-12" fill="none" ${line}/></svg>`;
+  if(type==='web')return`<svg viewBox="0 0 160 160"><g fill="none" ${line}><circle cx="80" cy="79" r="58"/><circle cx="80" cy="79" r="39"/><circle cx="80" cy="79" r="20"/><path d="M80 21v116M22 79h116M39 38l82 82m0-82-82 82"/></g><g fill="#d6eef0"><circle cx="39" cy="38" r="6"/><circle cx="121" cy="79" r="5"/><circle cx="80" cy="21" r="5"/></g></svg>`;
   if(type==='water'||type==='shell'||type==='reed')return`<svg viewBox="0 0 160 160"><ellipse cx="80" cy="106" rx="57" ry="22" fill="#6eb0ba" ${line}/><path d="M42 105q18-14 37 0t38 0" fill="none" stroke="#d6f0eb" stroke-width="4"/>${type==='reed'?'<path d="M62 104V32m18 72V44m20 60V27" stroke="#63835d" stroke-width="7"/>':''}</svg>`;
   if(type==='mushroom')return`<svg viewBox="0 0 160 160"><path d="M68 68h25l10 65H58Z" fill="#e1d5bc" ${line}/><path d="M27 72C31 24 126 19 135 72Z" fill="#9a6d76" ${line}/><circle cx="67" cy="47" r="7" fill="#f4f0e5"/><circle cx="102" cy="55" r="6" fill="#f4f0e5"/></svg>`;
   if(type==='cloud'||type==='snow'||type==='starlight')return`<svg viewBox="0 0 160 160">${type==='starlight'?'<path d="M80 19l10 39 33-17-22 32 35 17-40-2 3 40-19-35-20 35 4-40-40 2 35-17-22-32 33 17Z" fill="#efc85d" stroke="#172019" stroke-width="3"/>':'<path d="M31 103c-18-28 7-50 31-38 4-36 58-36 62 1 30-5 36 37 7 45H44c-6 0-10-3-13-8Z" fill="#dce5e4" stroke="#172019" stroke-width="3"/>'}</svg>`;
@@ -321,7 +347,7 @@ function openSheet(id){if(state.catching){toast(`Catch ${state.active.name} firs
 function closeSheets(){document.querySelectorAll('.sheet').forEach(s=>s.classList.remove('open'))}
 
 function resetCatchState(){
-  cancelAnimationFrame(state.catchFrame);clearTimeout(state.catchReadyTimer);state.catching=false;state.caught=false;state.catchHits=0;state.catchFrame=0;state.catchLastTime=0;state.catchDeadline=0;state.catchSecond=-1;document.body.classList.remove('catch-mode');$('#catch-progress')?.classList.remove('show');$('#catch-progress')?.querySelectorAll('i').forEach(mark=>mark.classList.remove('caught'))
+  cancelAnimationFrame(state.catchFrame);clearTimeout(state.catchReadyTimer);state.catching=false;state.caught=false;state.catchHits=0;state.catchFrame=0;state.catchLastTime=0;state.catchStartTime=0;state.catchDeadline=0;state.catchSecond=-1;state.catchNextDodge=0;state.catchNextTrail=0;state.catchNextBoost=0;state.catchSlowUntil=0;state.catchBoosts=0;state.catchBoostVisible=false;document.body.classList.remove('catch-mode');$('#catch-progress')?.classList.remove('show');$('#catch-progress')?.querySelectorAll('i').forEach(mark=>mark.classList.remove('caught'));$('#catch-meter')?.classList.remove('show','hurry');$('#chase-boost')?.classList.remove('show','collected');document.querySelectorAll('.chase-trail').forEach(trail=>trail.remove())
 }
 function renderCatchProgress(){
   const progress=$('#catch-progress');progress.querySelectorAll('i').forEach((mark,index)=>mark.classList.toggle('caught',index<state.catchHits));progress.setAttribute('aria-label',`${state.catchHits} of 3 catch taps`)
@@ -330,26 +356,38 @@ function catchBounds(target){
   const halfWidth=target.offsetWidth/2,halfHeight=target.offsetHeight/2,minY=Math.max(270,Math.min(350,window.innerHeight*.42));
   return{minX:halfWidth+12,maxX:Math.max(halfWidth+12,window.innerWidth-halfWidth-12),minY,maxY:Math.max(minY,window.innerHeight-halfHeight-88)}
 }
+function dropCatchTrail(target){
+  const rect=target.getBoundingClientRect(),trail=document.createElement('i');trail.className='chase-trail';trail.style.left=`${rect.left+rect.width/2}px`;trail.style.top=`${rect.top+rect.height/2}px`;document.body.append(trail);setTimeout(()=>trail.remove(),500)
+}
+function dodgeCatch(time){
+  const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;if(reduced)return;const target=$('#ar-target'),angle=Math.random()*Math.PI*2,speed=154+state.catchHits*32+Math.random()*30;state.catchVX=Math.cos(angle)*speed;state.catchVY=Math.sin(angle)*speed;state.catchNextDodge=time+850+Math.random()*850;target.classList.add('dashing');setTimeout(()=>target.classList.remove('dashing'),260);setVisionStatus(`Dodge! · ${3-state.catchHits} taps left`,'chase');ping(430,.035)
+}
+function placeCatchBoost(){
+  if(!state.catching||state.catchBoostVisible||state.catchBoosts>=2)return;const boost=$('#chase-boost'),margin=55,minY=Math.max(280,window.innerHeight*.38),maxY=Math.max(minY+20,window.innerHeight-175);boost.style.left=`${margin+Math.random()*Math.max(20,window.innerWidth-margin*2)}px`;boost.style.top=`${minY+Math.random()*(maxY-minY)}px`;boost.classList.add('show');state.catchBoostVisible=true
+}
+function collectCatchBoost(){
+  if(!state.catching||!state.catchBoostVisible)return;const now=performance.now(),boost=$('#chase-boost');state.catchBoostVisible=false;state.catchBoosts+=1;state.catchDeadline+=2000;state.catchSlowUntil=now+1800;state.catchVX*=.48;state.catchVY*=.48;state.catchNextBoost=state.catchBoosts<2?now+3200:Infinity;boost.classList.add('collected');boost.classList.remove('show');setTimeout(()=>boost.classList.remove('collected'),360);setVisionStatus('Calm leaf! · +2s and slow','chase');ping(980,.085)
+}
 function animateCatch(time){
-  if(!state.catching)return;if(time>=state.catchDeadline){escapeCatch();return}const target=$('#ar-target'),bounds=catchBounds(target),delta=state.catchLastTime?Math.min(.04,(time-state.catchLastTime)/1000):0;state.catchLastTime=time;state.catchX+=state.catchVX*delta;state.catchY+=state.catchVY*delta;
+  if(!state.catching)return;if(time>=state.catchDeadline){escapeCatch();return}const target=$('#ar-target'),bounds=catchBounds(target),delta=state.catchLastTime?Math.min(.04,(time-state.catchLastTime)/1000):0,pace=time<state.catchSlowUntil?.48:1;state.catchLastTime=time;if(time>=state.catchNextDodge)dodgeCatch(time);if(time>=state.catchNextTrail){dropCatchTrail(target);state.catchNextTrail=time+130}if(time>=state.catchNextBoost){placeCatchBoost();state.catchNextBoost=Infinity}state.catchX+=state.catchVX*delta*pace;state.catchY+=state.catchVY*delta*pace;
   if(state.catchX<=bounds.minX||state.catchX>=bounds.maxX){state.catchX=Math.max(bounds.minX,Math.min(bounds.maxX,state.catchX));state.catchVX*=-1}
   if(state.catchY<=bounds.minY||state.catchY>=bounds.maxY){state.catchY=Math.max(bounds.minY,Math.min(bounds.maxY,state.catchY));state.catchVY*=-1}
-  target.style.left=`${state.catchX}px`;target.style.top=`${state.catchY}px`;const seconds=Math.max(0,Math.ceil((state.catchDeadline-time)/1000));if(seconds!==state.catchSecond){state.catchSecond=seconds;setVisionStatus(`${seconds}s left · ${3-state.catchHits} taps to catch`,'chase')}
+  target.style.left=`${state.catchX}px`;target.style.top=`${state.catchY}px`;const seconds=Math.max(0,Math.ceil((state.catchDeadline-time)/1000)),total=Math.max(1,state.catchDeadline-state.catchStartTime),timePercent=Math.max(0,Math.min(100,(state.catchDeadline-time)/total*100)),meter=$('#catch-meter');meter.style.setProperty('--chase-time',`${timePercent}%`);meter.classList.toggle('hurry',seconds<=5);if(seconds!==state.catchSecond){state.catchSecond=seconds;setVisionStatus(`${seconds}s left · ${3-state.catchHits} taps to catch`,'chase')}
   state.catchFrame=requestAnimationFrame(animateCatch)
 }
 function startCatch(){
-  if(!state.discovered||state.caught)return;const target=$('#ar-target'),reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches,speed=reducedMotion?62:112,angle=(Math.random()*.7+.18)*Math.PI*(Math.random()<.5?1:-1);state.catching=true;state.catchHits=0;state.catchX=window.innerWidth/2;state.catchY=Math.max(300,window.innerHeight*.56);state.catchVX=Math.cos(angle)*speed;state.catchVY=Math.sin(angle)*speed;state.catchLastTime=0;state.catchDeadline=performance.now()+15000;state.catchSecond=-1;
-  document.body.classList.add('catch-mode');target.classList.add('catching');target.setAttribute('aria-label',`Catch ${state.active.name}. Zero of three taps.`);$('#catch-progress').classList.add('show');renderCatchProgress();$('#search-copy').innerHTML=`<strong>Catch ${state.active.name}!</strong><span>Tap the running creature three times</span>`;state.catchFrame=requestAnimationFrame(animateCatch)
+  if(!state.discovered||state.caught)return;const target=$('#ar-target'),reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches,speed=reducedMotion?62:118,angle=(Math.random()*.7+.18)*Math.PI*(Math.random()<.5?1:-1),now=performance.now();state.catching=true;state.catchHits=0;state.catchX=window.innerWidth/2;state.catchY=Math.max(300,window.innerHeight*.56);state.catchVX=Math.cos(angle)*speed;state.catchVY=Math.sin(angle)*speed;state.catchLastTime=0;state.catchStartTime=now;state.catchDeadline=now+15000;state.catchSecond=-1;state.catchNextDodge=reducedMotion?Infinity:now+800;state.catchNextTrail=reducedMotion?Infinity:now+120;state.catchNextBoost=now+1800;state.catchSlowUntil=0;state.catchBoosts=0;state.catchBoostVisible=false;
+  document.body.classList.add('catch-mode');target.classList.add('catching');target.setAttribute('aria-label',`Catch ${state.active.name}. Zero of three taps.`);$('#catch-progress').classList.add('show');$('#catch-meter').classList.add('show');$('#catch-meter').style.setProperty('--chase-time','100%');renderCatchProgress();$('#search-copy').innerHTML=`<strong>Catch ${state.active.name}!</strong><span>Tap three times · grab a golden calm leaf</span>`;state.catchFrame=requestAnimationFrame(animateCatch)
 }
 function attemptCatch(){
   if(!state.catching)return;state.catchHits+=1;renderCatchProgress();const target=$('#ar-target');target.classList.remove('tagged');void target.offsetWidth;target.classList.add('tagged');setTimeout(()=>target.classList.remove('tagged'),220);ping(710+state.catchHits*90,.08);
-  if(state.catchHits>=3){completeCatch();return}const speed=(window.matchMedia('(prefers-reduced-motion: reduce)').matches?68:126)+state.catchHits*24,angle=Math.random()*Math.PI*2;state.catchVX=Math.cos(angle)*speed;state.catchVY=Math.sin(angle)*speed;target.setAttribute('aria-label',`Catch ${state.active.name}. ${state.catchHits} of three taps.`);$('#search-copy').innerHTML=`<strong>Good catch!</strong><span>${3-state.catchHits} more ${3-state.catchHits===1?'tap':'taps'} before it escapes</span>`
+  if(state.catchHits>=3){completeCatch();return}const speed=(window.matchMedia('(prefers-reduced-motion: reduce)').matches?68:132)+state.catchHits*28,angle=Math.random()*Math.PI*2;state.catchVX=Math.cos(angle)*speed;state.catchVY=Math.sin(angle)*speed;state.catchNextDodge=performance.now()+500;target.setAttribute('aria-label',`Catch ${state.active.name}. ${state.catchHits} of three taps.`);$('#search-copy').innerHTML=`<strong>${state.catchHits===1?'Nice tag!':'Almost yours!'}</strong><span>${3-state.catchHits} more ${3-state.catchHits===1?'tap':'taps'} · watch the next dodge</span>`
 }
 function completeCatch(){
-  cancelAnimationFrame(state.catchFrame);state.catchFrame=0;state.catching=false;state.caught=true;const target=$('#ar-target');target.classList.remove('catching','tagged');target.classList.add('caught');target.style.left='50%';target.style.top='43%';target.setAttribute('aria-label',`${state.active.name} was caught and can now be befriended`);$('#catch-progress').classList.remove('show');$('#search-copy').innerHTML=`<strong>You caught ${state.active.name}!</strong><span>Now you can become friends</span>`;setVisionStatus('Caught · ready to befriend','seeing');burst();setTimeout(()=>$('#discovery-card').classList.add('show'),320)
+  cancelAnimationFrame(state.catchFrame);state.catchFrame=0;state.catching=false;state.caught=true;const elapsed=(performance.now()-state.catchStartTime)/1000,rating=elapsed<5?'Lightning catch!':elapsed<9?'Swift catch!':'Great catch!',target=$('#ar-target');target.classList.remove('catching','tagged','dashing');target.classList.add('caught');target.style.left='50%';target.style.top='43%';target.setAttribute('aria-label',`${state.active.name} was caught and can now be befriended`);$('#catch-progress').classList.remove('show');$('#catch-meter').classList.remove('show','hurry');$('#chase-boost').classList.remove('show');state.catchBoostVisible=false;document.querySelectorAll('.chase-trail').forEach(trail=>trail.remove());$('#search-copy').innerHTML=`<strong>${rating}</strong><span>You caught ${state.active.name} · now become friends</span>`;setVisionStatus(`${rating.replace('!','')} · ${elapsed.toFixed(1)}s`,'seeing');burst();setTimeout(()=>$('#discovery-card').classList.add('show'),320)
 }
 function escapeCatch(){
-  cancelAnimationFrame(state.catchFrame);state.catchFrame=0;state.catching=false;state.caught=false;document.body.classList.remove('catch-mode');const target=$('#ar-target');target.classList.remove('catching','tagged');target.classList.add('escaping');target.style.left=state.catchVX>=0?`${window.innerWidth+150}px`:'-150px';target.style.top=`${Math.max(160,Math.min(window.innerHeight-120,state.catchY+state.catchVY*.5))}px`;target.setAttribute('aria-label',`${state.active.name} escaped`);$('#catch-progress').classList.remove('show');$('#search-copy').innerHTML=`<strong>${state.active.name} got away!</strong><span>Show the clue again for another chance</span>`;setVisionStatus('Escaped · try the clue again','ready');toast('So close! It scampered away');setTimeout(spawnNext,1050)
+  cancelAnimationFrame(state.catchFrame);state.catchFrame=0;state.catching=false;state.caught=false;state.catchBoostVisible=false;document.body.classList.remove('catch-mode');const target=$('#ar-target');target.classList.remove('catching','tagged','dashing');target.classList.add('escaping');target.style.left=state.catchVX>=0?`${window.innerWidth+150}px`:'-150px';target.style.top=`${Math.max(160,Math.min(window.innerHeight-120,state.catchY+state.catchVY*.5))}px`;target.setAttribute('aria-label',`${state.active.name} escaped`);$('#catch-progress').classList.remove('show');$('#catch-meter').classList.remove('show','hurry');$('#chase-boost').classList.remove('show');document.querySelectorAll('.chase-trail').forEach(trail=>trail.remove());$('#search-copy').innerHTML=`<strong>${state.active.name} got away!</strong><span>Show the clue again for another chance</span>`;setVisionStatus('Escaped · try the clue again','ready');toast('So close! It scampered away');setTimeout(spawnNext,1050)
 }
 
 async function startCamera(){
@@ -528,6 +566,7 @@ function ping(freq,volume){try{state.audio||=new(window.AudioContext||window.web
 function burst(){const rect=$('#ar-target').getBoundingClientRect();for(let i=0;i<18;i++){const spark=document.createElement('i');spark.className='spark';spark.style.left=`${rect.left+rect.width/2}px`;spark.style.top=`${rect.top+rect.height/2}px`;const angle=Math.random()*Math.PI*2,distance=40+Math.random()*100;spark.style.setProperty('--sx',`${Math.cos(angle)*distance}px`);spark.style.setProperty('--sy',`${Math.sin(angle)*distance}px`);document.body.append(spark);setTimeout(()=>spark.remove(),800)}}
 
 $('#start-button').addEventListener('click',begin);$('#befriend').addEventListener('click',befriend);$('#ar-target').addEventListener('click',attemptCatch);
+$('#chase-boost').addEventListener('click',collectCatchBoost);
 $('#capture-photo').addEventListener('click',takeNaturePhoto);
 $('#guide-button').addEventListener('click',()=>openSheet('guide-sheet'));$('#info-button').addEventListener('click',()=>openSheet('info-sheet'));document.querySelectorAll('.close-sheet').forEach(button=>button.addEventListener('click',closeSheets));
 $('#guide-search').addEventListener('input',event=>{state.guideQuery=event.target.value;renderGuide()});

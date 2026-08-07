@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
   <meta name="theme-color" content="#18251d">
-  <meta name="description" content="Find 99 tiny outdoor creatures with 99 different real-world camera clues, then catch, befriend, and walk with them.">
+  <meta name="description" content="Find 105 tiny outdoor creatures with 105 different real-world camera clues, then catch, befriend, and walk with them.">
   <title>Wildlings — An outdoor camera game</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -36,12 +36,14 @@
   <main class="hud" aria-live="polite">
     <div class="topbar">
       <div class="place-chip"><span class="place-dot"></span><span><small>Current habitat</small><strong id="place-name">Finding your field…</strong></span></div>
-      <div class="count-chip"><small>Guide</small><strong><span id="found-count">0</span> / <span id="total-count">99</span></strong></div>
+      <div class="count-chip"><small>Guide</small><strong><span id="found-count">0</span> / <span id="total-count">105</span></strong></div>
     </div>
     <div class="compass" aria-hidden="true"><div class="compass-track"><span>W</span><span>NW</span><span>N</span><span>NE</span><span>E</span></div></div>
     <div class="search-copy" id="search-copy"><strong>Preparing the Nature Lens</strong><span>Hold a real leaf or rock inside the circle</span></div>
     <div class="vision-chip" id="vision-status"><i></i><span>Waiting for camera</span></div>
     <div class="catch-progress" id="catch-progress" aria-label="Catch progress"><i></i><i></i><i></i></div>
+    <div class="catch-meter" id="catch-meter" aria-label="Chase time remaining"><i></i></div>
+    <button class="chase-boost" id="chase-boost" aria-label="Catch the golden calm leaf to slow the Wildling and add two seconds"><i></i><span>Calm leaf <em>+2s</em></span></button>
     <div class="reticle" id="reticle"><div class="scan-ring"></div><span class="target-zone-label">Precision zone</span></div>
     <div class="edge-arrow" id="edge-arrow"><span>↑</span></div>
     <button class="ar-target" id="ar-target" aria-label="Hidden nature clue"></button>
@@ -64,8 +66,8 @@
 
   <section class="sheet" id="guide-sheet" aria-labelledby="guide-title">
     <div class="sheet-handle"></div>
-    <div class="sheet-head"><div><p>Your discoveries</p><h2 id="guide-title">Field guide</h2><small class="guide-note">Names stay hidden. All 99 clues are different.</small></div><button class="close-sheet" aria-label="Close field guide">×</button></div>
-    <div class="guide-tools"><label><span>Search creatures or exact clues</span><input id="guide-search" type="search" placeholder="Try quartz or Maple Mote" autocomplete="off"></label><small id="guide-result-count">99 of 99</small></div>
+    <div class="sheet-head"><div><p>Your discoveries</p><h2 id="guide-title">Field guide</h2><small class="guide-note">Names stay hidden. All 105 clues are different.</small></div><button class="close-sheet" aria-label="Close field guide">×</button></div>
+    <div class="guide-tools"><label><span>Search creatures or exact clues</span><input id="guide-search" type="search" placeholder="Try quartz or Quillkip" autocomplete="off"></label><small id="guide-result-count">105 of 105</small></div>
     <div class="field-grid" id="field-grid"></div>
   </section>
 
@@ -75,7 +77,7 @@
     <div class="about-copy">
       <p><strong>1.</strong> Every Wildling has a different real-world clue. Look for exact objects such as an oak leaf, quartz crystal, birch bark, chanterelle, cattail, scallop shell, icicle, or charcoal.</p>
       <p><strong>2.</strong> Fill the precision zone and tap <em>Take photo</em>. The lens freezes the picture, checks tight, natural, and context views, then identifies the object when two views agree. You can also leave it in live mode for four matching readings.</p>
-      <p><strong>3.</strong> When the Wildling runs, tap it three times before it escapes. Once caught, tap the heart to become friends.</p>
+      <p><strong>3.</strong> When the Wildling runs, follow its dodges and tap it three times. Catch a golden calm leaf for two extra seconds and a short slow-down. Once caught, tap the heart to become friends.</p>
       <p><strong>4.</strong> Choose <em>Walk together</em> beneath any friend. Keep the game open while you walk; every 250 meters raises that friend one level.</p>
       <hr>
       <p>The recognition model downloads on first play, then analyzes small camera crops on your device. Camera images are never uploaded. Your raw location and route are never stored or sent; only each friend’s total walking distance is saved on this device.</p>
