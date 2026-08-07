@@ -12,6 +12,8 @@
   <div class="camera-stage" aria-hidden="true">
     <div class="fallback-world"></div>
     <video id="camera" autoplay muted playsinline></video>
+    <canvas id="photo-preview"></canvas>
+    <div class="photo-flash" aria-hidden="true"></div>
     <div class="shade"></div><div class="grain"></div>
   </div>
 
@@ -52,6 +54,7 @@
       <span class="walk-art" id="walk-art" aria-hidden="true"></span>
       <span class="walk-copy"><small>Walking together</small><strong id="walk-name">Maple Mote</strong><em><span id="walk-level">Lv 1</span> · <span id="walk-distance">0 m</span></em></span>
     </button>
+    <button class="capture-photo" id="capture-photo" aria-label="Take a photo and identify the object" disabled><i></i><span>Take photo</span></button>
     <nav class="bottom-nav" aria-label="Game controls">
       <button class="nav-button" id="guide-button"><i>⌑</i><span>Field guide</span></button>
       <button class="nav-button" id="hint-button"><i>⌁</i><span>Find clue</span></button>
@@ -71,7 +74,7 @@
     <div class="sheet-head"><div><p>Field method</p><h2 id="info-title">How to look</h2></div><button class="close-sheet" aria-label="Close instructions">×</button></div>
     <div class="about-copy">
       <p><strong>1.</strong> Every Wildling has a different real-world clue. Look for exact objects such as an oak leaf, quartz crystal, birch bark, chanterelle, cattail, scallop shell, icicle, or charcoal.</p>
-      <p><strong>2.</strong> Fill the precision zone and hold still. The lens checks tight, natural, and context views; it needs four matching readings across at least two views before the clue transforms.</p>
+      <p><strong>2.</strong> Fill the precision zone and tap <em>Take photo</em>. The lens freezes the picture, checks tight, natural, and context views, then identifies the object when two views agree. You can also leave it in live mode for four matching readings.</p>
       <p><strong>3.</strong> When the Wildling runs, tap it three times before it escapes. Once caught, tap the heart to become friends.</p>
       <p><strong>4.</strong> Choose <em>Walk together</em> beneath any friend. Keep the game open while you walk; every 250 meters raises that friend one level.</p>
       <hr>

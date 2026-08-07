@@ -6,6 +6,7 @@
 - Added two exact visual descriptions per collectible clue, prompt-group averaging, and tuned botanical descriptions that cleanly separate real poppies from real snapdragons in the camera benchmark.
 - Replaced the single fixed crop with tight, natural, and context views; a reveal now requires four agreeing readings across at least two views instead of trusting one framing.
 - Added rapid frame-to-frame movement rejection, clearer match-and-view evidence in the camera HUD, and a manual refocus control for supported phone cameras.
+- Added a tactile Take Photo shutter: it freezes the camera frame, identifies the centered object from three crop sizes, accepts two agreeing views, and offers a no-guess Retake state when the photo is unclear.
 
 ## 2026-08-04
 
