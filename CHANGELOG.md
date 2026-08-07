@@ -2,6 +2,8 @@
 
 ## 2026-08-06
 
+- Organized the 105-creature Field Guide into named habitat sections with counts, exact-clue sorting, and All, Near you, Friends, and Unknown filters.
+- Replaced the old coordinate-modulo habitat guess with a deterministic on-device local field based on actual latitude, hemisphere, climate band, and season; added a visible location refresh, nearby badges, and an honest worldwide fallback when permission is unavailable.
 - Expanded Wildlings AR to 105 creatures with six individually generated, separately isolated species: Quillkip, Craggle, Podkin, Bramblebum, Tide Twig, and Dewloom.
 - Added six new camera clue categories—feather, lichen, seed pod, berry, driftwood, and spiderweb—with exact guide labels and dedicated clue transformations.
 - Turned the three-tap catch into a fuller chase with timed dodges, motion trails, a visible countdown meter, two optional golden calm-leaf boosts, speed ramps after each tap, and performance-based catch ratings.

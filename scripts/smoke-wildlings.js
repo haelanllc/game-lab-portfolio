@@ -71,5 +71,10 @@ assert.match(gameMarkup, /id="photo-preview"/, 'Missing frozen photo preview');
 assert.match(gameMarkup, /id="refocus-camera"/, 'Missing camera refocus control');
 assert.match(gameMarkup, /id="walk-chip"/, 'Missing walking companion interface');
 assert.match(gameMarkup, /id="guide-search"/, 'Missing searchable field guide');
+assert.match(gameMarkup, /data-guide-filter="nearby"/, 'Missing nearby-creature guide filter');
+assert.match(gameMarkup, /id="refresh-location"/, 'Missing local field refresh control');
+assert.match(gameSource, /function localFieldProfile\(lat,date=new Date\(\)\)/, 'Missing deterministic latitude and season profile');
+assert.match(gameSource, /const HABITAT_ORDER=/, 'Missing organized habitat sections');
+assert.doesNotMatch(gameSource, /Math\.abs\(lon%11\)/, 'Local habitat must not use fake coordinate modulo rules');
 
 console.log(`Wildlings smoke test passed: ${CREATURES.length} creatures with ${CREATURES.length} different clues, six new species, boosted chase and walking ready.`);

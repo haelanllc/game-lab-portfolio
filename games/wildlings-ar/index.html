@@ -66,19 +66,31 @@
 
   <section class="sheet" id="guide-sheet" aria-labelledby="guide-title">
     <div class="sheet-handle"></div>
-    <div class="sheet-head"><div><p>Your discoveries</p><h2 id="guide-title">Field guide</h2><small class="guide-note">Names stay hidden. All 105 clues are different.</small></div><button class="close-sheet" aria-label="Close field guide">×</button></div>
+    <div class="sheet-head"><div><p>Your discoveries</p><h2 id="guide-title">Field guide</h2><small class="guide-note">Organized by habitat. Names stay hidden until you make friends.</small></div><button class="close-sheet" aria-label="Close field guide">×</button></div>
+    <div class="guide-location">
+      <span class="guide-location-mark" aria-hidden="true"></span>
+      <span><small>Your local field</small><strong id="guide-location-name">Finding your area…</strong><em id="guide-location-copy">Location chooses a nearby lineup without saving your coordinates.</em></span>
+      <button id="refresh-location">Use my location</button>
+    </div>
     <div class="guide-tools"><label><span>Search creatures or exact clues</span><input id="guide-search" type="search" placeholder="Try quartz or Quillkip" autocomplete="off"></label><small id="guide-result-count">105 of 105</small></div>
-    <div class="field-grid" id="field-grid"></div>
+    <div class="guide-filters" aria-label="Filter the field guide">
+      <button class="guide-filter active" data-guide-filter="all" aria-pressed="true">All <span id="guide-all-count">105</span></button>
+      <button class="guide-filter" data-guide-filter="nearby" aria-pressed="false">Near you <span id="guide-nearby-count">0</span></button>
+      <button class="guide-filter" data-guide-filter="friends" aria-pressed="false">Friends <span id="guide-friends-count">0</span></button>
+      <button class="guide-filter" data-guide-filter="unknown" aria-pressed="false">Unknown <span id="guide-unknown-count">105</span></button>
+    </div>
+    <div class="field-sections" id="field-grid"></div>
   </section>
 
   <section class="sheet" id="info-sheet" aria-labelledby="info-title">
     <div class="sheet-handle"></div>
     <div class="sheet-head"><div><p>Field method</p><h2 id="info-title">How to look</h2></div><button class="close-sheet" aria-label="Close instructions">×</button></div>
     <div class="about-copy">
-      <p><strong>1.</strong> Every Wildling has a different real-world clue. Look for exact objects such as an oak leaf, quartz crystal, birch bark, chanterelle, cattail, scallop shell, icicle, or charcoal.</p>
-      <p><strong>2.</strong> Fill the precision zone and tap <em>Take photo</em>. The lens freezes the picture, checks tight, natural, and context views, then identifies the object when two views agree. You can also leave it in live mode for four matching readings.</p>
-      <p><strong>3.</strong> When the Wildling runs, follow its dodges and tap it three times. Catch a golden calm leaf for two extra seconds and a short slow-down. Once caught, tap the heart to become friends.</p>
-      <p><strong>4.</strong> Choose <em>Walk together</em> beneath any friend. Keep the game open while you walk; every 250 meters raises that friend one level.</p>
+      <p><strong>1.</strong> Allow location to build a nearby lineup from your latitude, climate band, hemisphere, and season. Exact coordinates stay on your device. You can still browse all 105 Wildlings, organized by habitat.</p>
+      <p><strong>2.</strong> Every Wildling has a different real-world clue. Look for exact objects such as an oak leaf, quartz crystal, birch bark, chanterelle, cattail, scallop shell, icicle, or charcoal.</p>
+      <p><strong>3.</strong> Fill the precision zone and tap <em>Take photo</em>. The lens freezes the picture, checks tight, natural, and context views, then identifies the object when two views agree. You can also leave it in live mode for four matching readings.</p>
+      <p><strong>4.</strong> When the Wildling runs, follow its dodges and tap it three times. Catch a golden calm leaf for two extra seconds and a short slow-down. Once caught, tap the heart to become friends.</p>
+      <p><strong>5.</strong> Choose <em>Walk together</em> beneath any friend. Keep the game open while you walk; every 250 meters raises that friend one level.</p>
       <hr>
       <p>The recognition model downloads on first play, then analyzes small camera crops on your device. Camera images are never uploaded. Your raw location and route are never stored or sent; only each friend’s total walking distance is saved on this device.</p>
       <div class="setting-row"><span>Object looks soft</span><button id="refocus-camera">Refocus</button></div>

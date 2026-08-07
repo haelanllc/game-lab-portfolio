@@ -227,7 +227,10 @@ const storedFound=()=>{try{return JSON.parse(localStorage.getItem('wildlings-fou
 const storedTrailSeed=()=>{try{return Number(localStorage.getItem('wildlings-trail-seed'))||20260802}catch{return 20260802}};
 const storedWalkProgress=()=>{try{return JSON.parse(localStorage.getItem('wildlings-walk-progress')||'{}')}catch{return {}}};
 const storedWalkCompanion=()=>{try{return localStorage.getItem('wildlings-walk-companion')||''}catch{return ''}};
-const state={heading:0,targetBearing:110,hasOrientation:false,dragging:false,dragX:0,scan:0,discovered:false,active:null,queue:[],queueIndex:0,found:new Set(storedFound()),trailSeed:storedTrailSeed(),facing:'environment',stream:null,habitat:'meadow',audio:null,cameraReady:false,visionMode:'idle',classifier:null,RawImage:null,visionBusy:false,photoMode:false,photoRequested:false,stableClue:null,stableHits:0,stableViewCount:0,stableScoreTotal:0,detectionHistory:[],cropIndex:0,catching:false,caught:false,catchHits:0,catchX:0,catchY:0,catchVX:0,catchVY:0,catchFrame:0,catchLastTime:0,catchStartTime:0,catchDeadline:0,catchSecond:-1,catchNextDodge:0,catchNextTrail:0,catchNextBoost:0,catchSlowUntil:0,catchBoosts:0,catchBoostVisible:false,catchReadyTimer:0,guideQuery:'',walkCompanionId:storedWalkCompanion(),walkProgress:storedWalkProgress(),walkWatchId:null,lastWalkPosition:null};
+const HABITAT_ORDER=['meadow','woodland','wetland','coast','dry','urban','cold','any'];
+const HABITAT_LABELS={meadow:'Meadows',woodland:'Woodlands',wetland:'Wetlands',coast:'Coasts',dry:'Drylands',urban:'Towns & cities',cold:'Snowfields',any:'Sky & night'};
+const SEASONAL_CLUE_PARENTS={spring:new Set(['leaf','moss','water','clover','reed','web','seedpod']),summer:new Set(['leaf','water','clover','reed','shell','berry','driftwood']),autumn:new Set(['leaf','moss','bark','mushroom','cone','acorn','berry','seedpod','ash']),winter:new Set(['stone','bark','cone','cloud','snow','ash','starlight','brick','lichen'])};
+const state={heading:0,targetBearing:110,hasOrientation:false,dragging:false,dragX:0,scan:0,discovered:false,active:null,queue:[],queueIndex:0,found:new Set(storedFound()),trailSeed:storedTrailSeed(),facing:'environment',stream:null,habitat:'meadow',localCreatureIds:new Set(),locationProfile:null,locationStatus:'finding',audio:null,cameraReady:false,visionMode:'idle',classifier:null,RawImage:null,visionBusy:false,photoMode:false,photoRequested:false,stableClue:null,stableHits:0,stableViewCount:0,stableScoreTotal:0,detectionHistory:[],cropIndex:0,catching:false,caught:false,catchHits:0,catchX:0,catchY:0,catchVX:0,catchVY:0,catchFrame:0,catchLastTime:0,catchStartTime:0,catchDeadline:0,catchSecond:-1,catchNextDodge:0,catchNextTrail:0,catchNextBoost:0,catchSlowUntil:0,catchBoosts:0,catchBoostVisible:false,catchReadyTimer:0,guideQuery:'',guideFilter:'all',walkCompanionId:storedWalkCompanion(),walkProgress:storedWalkProgress(),walkWatchId:null,lastWalkPosition:null};
 
 function seeded(seed){let value=seed>>>0;return()=>{value+=0x6d2b79f5;let mixed=value;mixed=Math.imul(mixed^(mixed>>>15),mixed|1);mixed^=mixed+Math.imul(mixed^(mixed>>>7),mixed|61);return((mixed^(mixed>>>14))>>>0)/4294967296}}
 function hashString(value){let h=2166136261;for(const char of value){h^=char.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
@@ -257,15 +260,31 @@ function clueArt(type){
   return`<svg viewBox="0 0 160 160"><path d="M35 112 48 52l38-22 39 27 4 53-47 25Z" fill="${type==='brick'?'#a75b44':type==='cone'||type==='acorn'?'#9b7441':'#8b9089'}" ${line}/><path d="m50 61 55 52M44 86l42-56M74 130l44-66" opacity=".35" ${line}/></svg>`
 }
 
-function buildLocalField(lat=37.7749,lon=-122.4194,label=''){
-  const random=seeded(hashString(`${lat.toFixed(2)},${lon.toFixed(2)},${state.trailSeed}`));
-  const absLat=Math.abs(lat);
-  state.habitat=absLat>58?'cold':Math.abs(lon%11)<1.8?'coast':Math.abs((lat+lon)%9)<2?'wetland':Math.abs(lat%7)<2.5?'woodland':'meadow';
-  const local=shuffle(CREATURES.filter(c=>c.habitat===state.habitat||c.habitat==='any'),random);
-  const visitors=shuffle(CREATURES.filter(c=>!local.includes(c)),random);
-  state.queue=[...local,...visitors].slice(0,8);
-  $('#place-name').textContent=label||`${state.habitat[0].toUpperCase()}${state.habitat.slice(1)} field · ${Math.abs(lat).toFixed(1)}°`;
-  if(!state.discovered)spawnNext()
+function localSeason(lat,date=new Date()){
+  const north=['winter','winter','spring','spring','spring','summer','summer','summer','autumn','autumn','autumn','winter'][date.getMonth()];
+  return lat>=0?north:{winter:'summer',spring:'autumn',summer:'winter',autumn:'spring'}[north]
+}
+function localFieldProfile(lat,date=new Date()){
+  const absLat=Math.abs(lat),season=localSeason(lat,date);
+  if(absLat>=60)return{climate:'Polar',season,primary:'cold',habitats:['cold','urban','any']};
+  if(absLat>=45)return{climate:'Cool temperate',season,primary:season==='winter'?'cold':'woodland',habitats:['woodland','meadow','wetland','cold','urban','any']};
+  if(absLat>=23.5)return{climate:'Temperate',season,primary:season==='summer'?'meadow':'woodland',habitats:['meadow','woodland','wetland','dry','urban','any']};
+  if(absLat>=10)return{climate:'Warm',season,primary:'meadow',habitats:['meadow','woodland','wetland','dry','urban','any']};
+  return{climate:'Tropical',season,primary:'wetland',habitats:['wetland','woodland','meadow','urban','any']}
+}
+function clueParent(creature){return SPECIFIC_CLUE_BY_ID.get(creature.clue)?.parent||creature.clue}
+function fitsSeason(creature,season){return SEASONAL_CLUE_PARENTS[season].has(clueParent(creature))||((season==='spring'||season==='summer')&&FLOWER_CLUES.has(creature.clue))||creature.habitat==='any'}
+function updateLocationDisplay(name,copy){
+  $('#place-name').textContent=name;$('#guide-location-name').textContent=name;$('#guide-location-copy').textContent=copy;const button=$('#refresh-location');button.disabled=state.locationStatus==='finding';button.textContent=state.locationStatus==='finding'?'Finding…':'Refresh';if(document.querySelector('#guide-sheet.open'))renderGuide()
+}
+function buildFallbackField(message='Location off · worldwide trail'){
+  const random=seeded(hashString(`worldwide-${state.trailSeed}`));state.locationStatus='off';state.locationProfile=null;state.habitat='any';state.localCreatureIds=new Set();state.queue=shuffle(CREATURES,random).slice(0,12);updateLocationDisplay(message,'Allow location to make a latitude-and-season lineup. Coordinates are not saved.');if(!state.discovered)spawnNext()
+}
+function buildLocalField(lat,lon,date=new Date()){
+  const profile=localFieldProfile(lat,date),random=seeded(hashString(`${lat.toFixed(2)},${lon.toFixed(2)},${date.getFullYear()}-${date.getMonth()},${state.trailSeed}`)),chosen=[];
+  for(const habitat of profile.habitats){const residents=CREATURES.filter(creature=>creature.habitat===habitat),seasonal=shuffle(residents.filter(creature=>fitsSeason(creature,profile.season)),random),other=shuffle(residents.filter(creature=>!fitsSeason(creature,profile.season)),random);chosen.push(...seasonal.slice(0,3),...other.slice(0,Math.max(0,4-seasonal.length)))}
+  const local=[...new Map(chosen.map(creature=>[creature.id,creature])).values()].slice(0,24);state.locationStatus='ready';state.locationProfile=profile;state.habitat=profile.primary;state.localCreatureIds=new Set(local.map(creature=>creature.id));state.queue=shuffle(local,random).slice(0,12);state.queueIndex=0;
+  const season=profile.season[0].toUpperCase()+profile.season.slice(1),name=`${profile.climate} · ${season}`;updateLocationDisplay(name,`${local.length} Wildlings can visit this local field. Exact coordinates stay on this device.`);if(!state.discovered)spawnNext()
 }
 
 function spawnNext(){
@@ -339,9 +358,11 @@ function startWalkTracking(){
   state.walkWatchId=navigator.geolocation.watchPosition(handleWalkPosition,()=>{state.lastWalkPosition=null},{enableHighAccuracy:true,maximumAge:15000,timeout:20000})
 }
 function renderGuide(){
-  const query=state.guideQuery.trim().toLowerCase(),visible=CREATURES.filter(c=>!query||c.name.toLowerCase().includes(query)||(SPECIES_LABELS[c.clue]||c.clue).toLowerCase().includes(query));
+  const query=state.guideQuery.trim().toLowerCase(),filter=state.guideFilter,validFound=CREATURES.filter(creature=>state.found.has(creature.id)).length,counts={all:CREATURES.length,nearby:state.localCreatureIds.size,friends:validFound,unknown:CREATURES.length-validFound},visible=CREATURES.filter(c=>(!query||c.name.toLowerCase().includes(query)||(SPECIES_LABELS[c.clue]||c.clue).toLowerCase().includes(query))&&(filter==='all'||(filter==='nearby'&&state.localCreatureIds.has(c.id))||(filter==='friends'&&state.found.has(c.id))||(filter==='unknown'&&!state.found.has(c.id))));
   $('#guide-result-count').textContent=`${visible.length} of ${CREATURES.length}`;
-  $('#field-grid').innerHTML=visible.length?visible.map(c=>{const found=state.found.has(c.id),species=SPECIES_LABELS[c.clue]||c.clue,walking=state.walkCompanionId===c.id,status=found?`${c.rarity} · Lv ${walkLevelFor(c.id)}`:'Species clue';return`<article class="field-card ${found?'':'unknown'} ${walking?'walking':''}" aria-label="${found?c.name:`Unknown ${species} Wildling`}"><div class="mini-art" aria-hidden="true">${creatureArt(c,true)}</div><strong>${found?c.name:'Unknown'}</strong><small class="species-label">${species}</small><small class="profile-status">${status}</small>${found?`<button class="walk-button" data-walk-id="${c.id}" ${walking?'disabled':''}>${walking?'Walking':'Walk together'}</button>`:''}</article>`}).join(''):'<p class="guide-empty">No Wildlings match that search.</p>'
+  $('#guide-all-count').textContent=counts.all;$('#guide-nearby-count').textContent=counts.nearby;$('#guide-friends-count').textContent=counts.friends;$('#guide-unknown-count').textContent=counts.unknown;document.querySelectorAll('.guide-filter').forEach(button=>{const active=button.dataset.guideFilter===filter;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active))});
+  const card=c=>{const found=state.found.has(c.id),nearby=state.localCreatureIds.has(c.id),species=SPECIES_LABELS[c.clue]||c.clue,walking=state.walkCompanionId===c.id,status=found?`${c.rarity} · Lv ${walkLevelFor(c.id)}`:'Species clue';return`<article class="field-card ${found?'':'unknown'} ${nearby?'nearby':''} ${walking?'walking':''}" aria-label="${found?c.name:`Unknown ${species} Wildling`}"><div class="mini-art" aria-hidden="true">${creatureArt(c,true)}</div><strong>${found?c.name:'Unknown'}</strong><small class="species-label">${species}</small><small class="profile-status">${status}</small>${found?`<button class="walk-button" data-walk-id="${c.id}" ${walking?'disabled':''}>${walking?'Walking':'Walk together'}</button>`:''}</article>`};
+  $('#field-grid').innerHTML=visible.length?HABITAT_ORDER.map(habitat=>{const residents=visible.filter(c=>c.habitat===habitat).sort((a,b)=>(SPECIES_LABELS[a.clue]||a.clue).localeCompare(SPECIES_LABELS[b.clue]||b.clue));return residents.length?`<section class="habitat-section" data-habitat="${habitat}"><header class="habitat-head"><h3>${HABITAT_LABELS[habitat]}</h3><span>${residents.length} ${residents.length===1?'Wildling':'Wildlings'}</span></header><div class="field-grid">${residents.map(card).join('')}</div></section>`:''}).join(''):`<p class="guide-empty">${filter==='nearby'&&state.locationStatus!=='ready'?'Use your location to build a nearby lineup.':'No Wildlings match this view.'}</p>`
 }
 function openSheet(id){if(state.catching){toast(`Catch ${state.active.name} first!`);return}document.querySelectorAll('.sheet').forEach(s=>s.classList.toggle('open',s.id===id));if(id==='guide-sheet')renderGuide()}
 function closeSheets(){document.querySelectorAll('.sheet').forEach(s=>s.classList.remove('open'))}
@@ -421,9 +442,10 @@ async function startMotion(){
   try{if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function'){const permission=await DeviceOrientationEvent.requestPermission();if(permission!=='granted')throw new Error('denied')}
     window.addEventListener('deviceorientation',event=>{const compass=event.webkitCompassHeading;const next=Number.isFinite(compass)?compass:360-(event.alpha||0);if(event.alpha!==null){state.hasOrientation=true;state.heading=next}},true)}catch{toast('Drag the view to look around')}
 }
-function startLocation(){
-  if(!navigator.geolocation){buildLocalField();return}
-  navigator.geolocation.getCurrentPosition(pos=>buildLocalField(pos.coords.latitude,pos.coords.longitude),()=>buildLocalField(37.7749,-122.4194,'Demo field · local only'),{enableHighAccuracy:false,timeout:6000,maximumAge:300000})
+function startLocation(announce=false){
+  state.locationStatus='finding';buildFallbackField('Finding your field…');state.locationStatus='finding';updateLocationDisplay('Finding your field…','Checking latitude and season on this device.');
+  if(!navigator.geolocation){buildFallbackField();if(announce)toast('Location is not available on this device');return}
+  navigator.geolocation.getCurrentPosition(pos=>{buildLocalField(pos.coords.latitude,pos.coords.longitude);if(announce)toast(`${state.localCreatureIds.size} nearby Wildlings found`)},()=>{buildFallbackField();if(announce)toast('Location stayed private — worldwide trail opened')},{enableHighAccuracy:false,timeout:8000,maximumAge:300000})
 }
 function setVisionStatus(message,mode=''){
   const chip=$('#vision-status');chip.className=`vision-chip ${mode}`.trim();chip.querySelector('span').textContent=message
@@ -570,6 +592,8 @@ $('#chase-boost').addEventListener('click',collectCatchBoost);
 $('#capture-photo').addEventListener('click',takeNaturePhoto);
 $('#guide-button').addEventListener('click',()=>openSheet('guide-sheet'));$('#info-button').addEventListener('click',()=>openSheet('info-sheet'));document.querySelectorAll('.close-sheet').forEach(button=>button.addEventListener('click',closeSheets));
 $('#guide-search').addEventListener('input',event=>{state.guideQuery=event.target.value;renderGuide()});
+document.querySelectorAll('.guide-filter').forEach(button=>button.addEventListener('click',()=>{state.guideFilter=button.dataset.guideFilter;renderGuide()}));
+$('#refresh-location').addEventListener('click',()=>startLocation(true));
 $('#field-grid').addEventListener('click',event=>{const button=event.target.closest('.walk-button');if(button)selectWalkCompanion(button.dataset.walkId)});
 $('#walk-chip').addEventListener('click',()=>openSheet('guide-sheet'));
 $('#hint-button').addEventListener('click',()=>{if(state.visionMode==='active'||state.visionMode==='loading'){toast('Fill the circle with one outdoor object, then tap Take photo');return}const diff=normalizeAngle(state.targetBearing-state.heading);toast(Math.abs(diff)<35?'Very close — hold the clue in the circle':diff>0?'Turn to your right':'Turn to your left')});
